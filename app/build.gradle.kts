@@ -1,3 +1,15 @@
+import java.util.Properties
+
+// Create a new Properties object
+val localProperties = Properties()
+// Find the root project's local.properties file
+val localPropertiesFile = rootProject.file("local.properties")
+// If the file exists, load its contents
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -22,6 +34,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY")
     }
 
     buildTypes {
@@ -77,6 +90,7 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     ksp(libs.hilt.ext.compiler)
     implementation(libs.hilt.ext.work)
+    implementation(libs.hilt.navigation.compose)
 
 
     // Room
