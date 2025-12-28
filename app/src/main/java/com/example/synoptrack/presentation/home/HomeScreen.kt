@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -32,8 +34,6 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.Chat
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -61,17 +61,20 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel(),
+    onNavigateToProfile: () -> Unit
+) {
     // Dummy state variables for UI preview
     var searchQuery by remember { mutableStateOf("") }
     var selectedBottomTab by remember { mutableIntStateOf(0) }
-    var isProfileMenuExpanded by remember { mutableStateOf(false) }
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(22.7196, 75.8577), 15f)
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp), // Allow content to draw behind system bars
         bottomBar = {
             HomeBottomBar(
                 selectedTab = selectedBottomTab,
@@ -80,14 +83,13 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
         }
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
             // 3. The Background: A GoogleMap filling the entire screen
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
+                contentPadding = paddingValues, // Respect bottom bar
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = false, // We have custom FABs
                     myLocationButtonEnabled = false // We have custom FABs
@@ -99,14 +101,13 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
+                    .statusBarsPadding() // Respect status bar
                     .padding(top = 16.dp) // Top spacing
             ) {
                 HomeTopBar(
                     searchQuery = searchQuery,
                     onSearchQueryChange = { searchQuery = it },
-                    onProfileClick = { isProfileMenuExpanded = true },
-                    isMenuExpanded = isProfileMenuExpanded,
-                    onDismissMenu = { isProfileMenuExpanded = false }
+                    onProfileClick = onNavigateToProfile
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 QuickAccessChips()
@@ -115,7 +116,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             HomeFABs(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 16.dp, end = 16.dp)
             )
         }
     }
@@ -125,9 +126,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 fun HomeTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onProfileClick: () -> Unit,
-    isMenuExpanded: Boolean,
-    onDismissMenu: () -> Unit
+    onProfileClick: () -> Unit
 ) {
     // 4. The Floating Top Bar
     Surface(
@@ -168,49 +167,20 @@ fun HomeTopBar(
                 )
             }
 
-            Box {
-                // Profile Image
-                Surface(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable { onProfileClick() },
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile",
-                        modifier = Modifier.padding(4.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-
-                // 5. Profile Menu Logic
-                DropdownMenu(
-                    expanded = isMenuExpanded,
-                    onDismissRequest = onDismissMenu
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Appearance") },
-                        onClick = { onDismissMenu() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Location Settings") },
-                        onClick = { onDismissMenu() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Your Profile") },
-                        onClick = { onDismissMenu() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Settings") },
-                        onClick = { onDismissMenu() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Logout") },
-                        onClick = { onDismissMenu() }
-                    )
-                }
+            // Profile Image
+            Surface(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clickable { onProfileClick() },
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier.padding(4.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
         }
     }
@@ -314,4 +284,3 @@ fun HomeBottomBar(
         )
     }
 }
-
