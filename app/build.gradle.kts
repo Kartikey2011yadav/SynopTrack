@@ -123,4 +123,7 @@ dependencies {
 
     // Navigation Compose
     implementation(libs.navigation.compose)
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }
