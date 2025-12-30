@@ -1,11 +1,17 @@
 package com.example.synoptrack.profile.domain.model
 
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
+
 data class UserProfile(
     val uid: String = "",
+    val email: String = "",
     val displayName: String = "",
     val avatarUrl: String = "",
-    val createdAt: Long = 0,
+    @ServerTimestamp
+    val createdAt: Date? = null,
     val ghostMode: Boolean = false,
-    val theme: String = "system" // "system", "dark", "light"
+    val theme: String = "system", // "system", "dark", "light"
+    val lastLocation: Any? = null // GeoPoint or Map
 )
 

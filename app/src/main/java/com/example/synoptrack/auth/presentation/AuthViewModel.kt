@@ -3,6 +3,7 @@ package com.example.synoptrack.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.synoptrack.auth.domain.repository.AuthRepository
+import com.example.synoptrack.profile.domain.repository.ProfileRepository
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.GoogleAuthProvider
@@ -21,7 +22,8 @@ sealed class SignInState {
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _signInState = MutableStateFlow<SignInState>(SignInState.Initial)
@@ -35,7 +37,20 @@ class AuthViewModel @Inject constructor(
                 val idToken = account.idToken
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
                 authRepository.signInWithGoogle(credential).fold(
-                    onSuccess = { _signInState.value = SignInState.Success("Sign-in successful") },
+                    onSuccess = {
+                        val user = authRepository.currentUser
+                        if (user != null) {
+                            profileRepository.createOrUpdateUser(
+                                uid = user.uid,
+                                email = user.email ?: "",
+                                displayName = user.displayName,
+                                photoUrl = user.photoUrl?.toString()
+                            )
+                            _signInState.value = SignInState.Success("Sign-in successful")
+                        } else {
+                            _signInState.value = SignInState.Error("User not found after sign in")
+                        }
+                    },
                     onFailure = { _signInState.value = SignInState.Error(it.message ?: "An unknown error occurred") }
                 )
             } catch (e: Exception) {

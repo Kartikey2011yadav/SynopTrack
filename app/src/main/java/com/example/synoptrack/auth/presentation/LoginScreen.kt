@@ -57,7 +57,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = hiltVie
         when (val state = signInState) {
             is SignInState.Success -> {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Permissions.route) {
+                    navController.navigate(Screen.NameSetup.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }

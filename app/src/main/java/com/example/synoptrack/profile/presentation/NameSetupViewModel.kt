@@ -2,7 +2,6 @@ package com.example.synoptrack.profile.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.synoptrack.profile.domain.model.UserProfile
 import com.example.synoptrack.auth.domain.repository.AuthRepository
 import com.example.synoptrack.profile.domain.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,7 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ProfileSetupViewModel @Inject constructor(
+class NameSetupViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository
 ) : ViewModel() {
@@ -24,18 +23,17 @@ class ProfileSetupViewModel @Inject constructor(
     private val _isComplete = MutableStateFlow(false)
     val isComplete: StateFlow<Boolean> = _isComplete.asStateFlow()
 
-    fun saveProfile(displayName: String) {
+    fun saveName(displayName: String) {
         viewModelScope.launch {
             _isLoading.value = true
             val currentUser = authRepository.currentUser
             if (currentUser != null) {
-                val profile = UserProfile(
+                val result = profileRepository.createOrUpdateUser(
                     uid = currentUser.uid,
+                    email = currentUser.email ?: "",
                     displayName = displayName,
-                    avatarUrl = currentUser.photoUrl?.toString() ?: "",
-                    createdAt = System.currentTimeMillis()
+                    photoUrl = currentUser.photoUrl?.toString()
                 )
-                val result = profileRepository.saveUserProfile(profile)
                 if (result.isSuccess) {
                     _isComplete.value = true
                 }

@@ -9,9 +9,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun ProfileSetupScreen(
+fun NameSetupScreen(
     onSetupComplete: () -> Unit,
-    viewModel: ProfileSetupViewModel = hiltViewModel()
+    viewModel: NameSetupViewModel = hiltViewModel()
 ) {
     var displayName by remember { mutableStateOf("") }
     val isLoading by viewModel.isLoading.collectAsState()
@@ -31,29 +31,32 @@ fun ProfileSetupScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Setup Profile",
+            text = "What's your name?",
             style = MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Avatar placeholder could be added here
 
         OutlinedTextField(
             value = displayName,
             onValueChange = { displayName = it },
             label = { Text("Display Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { viewModel.saveProfile(displayName) },
+            onClick = { viewModel.saveName(displayName) },
             enabled = displayName.isNotBlank() && !isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp))
             } else {
-                Text("Complete Setup")
+                Text("Continue")
             }
         }
     }

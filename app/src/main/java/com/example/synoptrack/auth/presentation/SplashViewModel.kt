@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.synoptrack.core.navigation.Screen
+
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -32,12 +34,12 @@ class SplashViewModel @Inject constructor(
                 // Check if profile exists
                 val profile = profileRepository.getUserProfile(currentUser.uid).first()
                 if (profile != null) {
-                    _destination.value = "map_os"
+                    _destination.value = Screen.MapOS.route
                 } else {
-                    _destination.value = "profile_setup"
+                    _destination.value = Screen.NameSetup.route
                 }
             } else {
-                _destination.value = "login"
+                _destination.value = Screen.Login.route
             }
         }
     }
