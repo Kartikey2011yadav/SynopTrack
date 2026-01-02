@@ -12,6 +12,13 @@ data class UserProfile(
     val createdAt: Date? = null,
     val ghostMode: Boolean = false,
     val theme: String = "system", // "system", "dark", "light"
-    val lastLocation: Any? = null // GeoPoint or Map
-)
+    val lastLocation: Any? = null, // GeoPoint or Map
 
+    // New fields for Premium/Social features
+    val fcmToken: String = "",
+    val batteryLevel: Int = -1,
+    val isCharging: Boolean = false,
+    val phoneNumber: String? = null,
+    @ServerTimestamp
+    val lastActiveAt: Date? = null
+)

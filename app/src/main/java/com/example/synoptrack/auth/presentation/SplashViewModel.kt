@@ -36,7 +36,7 @@ class SplashViewModel @Inject constructor(
                 if (profile != null) {
                     _destination.value = Screen.MapOS.route
                 } else {
-                    _destination.value = Screen.NameSetup.route
+                    _destination.value = Screen.Registration.route
                 }
             } else {
                 _destination.value = Screen.Login.route

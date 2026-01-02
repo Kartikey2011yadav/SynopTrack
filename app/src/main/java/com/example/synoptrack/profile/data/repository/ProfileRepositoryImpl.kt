@@ -32,6 +32,20 @@ class ProfileRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun getUserProfileOnce(uid: String): Result<UserProfile?> {
+        return try {
+            val snapshot = firestore.collection("users").document(uid).get().await()
+            if (snapshot.exists()) {
+                val profile = snapshot.toObject(UserProfile::class.java)
+                Result.success(profile)
+            } else {
+                Result.success(null)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun saveUserProfile(userProfile: UserProfile): Result<Unit> {
         return try {
             firestore.collection("users").document(userProfile.uid)
@@ -94,4 +108,3 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 }
-

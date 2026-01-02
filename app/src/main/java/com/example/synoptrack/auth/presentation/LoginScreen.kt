@@ -29,6 +29,23 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = hiltVie
     val context = LocalContext.current
     val signInState by viewModel.signInState.collectAsState()
 
+    LaunchedEffect(key1 = true) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is AuthNavigationEvent.NavigateToCompleteProfile -> {
+                    navController.navigate(Screen.Registration.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+                is AuthNavigationEvent.NavigateToPermissionCheck -> {
+                    navController.navigate(Screen.Permission.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
+
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
         .requestEmail()
@@ -57,7 +74,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = hiltVie
         when (val state = signInState) {
             is SignInState.Success -> {
                 LaunchedEffect(Unit) {
-                    navController.navigate(Screen.NameSetup.route) {
+                    navController.navigate(Screen.Registration.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
