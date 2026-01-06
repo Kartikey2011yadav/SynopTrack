@@ -26,36 +26,56 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun PermissionScreen(
-    onPermissionGranted: () -> Unit
+    onPermissionGranted: () -> Unit,
+    onSkip: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
     val snackbarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = LocalLifecycleOwner.current
     var showSettingsButton by remember { mutableStateOf(false) }
-
-    // Create a coroutine scope
     val scope = rememberCoroutineScope()
 
-    // Launcher for the permission request
+    // Check permission on resume
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    onPermissionGranted()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             onPermissionGranted()
         } else {
-            // Check if we should show rationale
             val shouldShowRationale = activity?.let {
                 ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_FINE_LOCATION)
             } ?: false
 
             if (shouldShowRationale) {
-                // User denied but not permanently (First Denial)
+                // User denied (1st time or subsequent non-permanent)
                 scope.launch {
                     snackbarHostState.showSnackbar(
-                        message = "Without location, the map won't work.",
+                        message = "We can't show you on the map without location.",
                         actionLabel = "Retry",
                         duration = SnackbarDuration.Short
                     )
@@ -65,15 +85,6 @@ fun PermissionScreen(
                 showSettingsButton = true
             }
         }
-    }
-
-    // Effect to show snackbar if needed (we can add a state for it)
-    // For now, let's simplify: if denied, we show settings button if permanent, or just retry button if not.
-    // But to follow the requirement strictly:
-
-
-    val requestPermission = {
-        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     Scaffold(
@@ -147,18 +158,11 @@ fun PermissionScreen(
                 Button(
                     onClick = {
                         if (showSettingsButton) {
-                            // Open App Settings
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                 data = Uri.fromParts("package", context.packageName, null)
                             }
                             context.startActivity(intent)
                         } else {
-                            // Request Permission
-                            // We need to handle the result logic here or in the launcher
-                            // The launcher handles the result.
-                            // But we need to handle the "First Denial" logic inside the launcher callback
-                            // which is tricky because we need to show snackbar.
-                            // Let's modify the launcher callback to set a state.
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         }
                     },
@@ -177,20 +181,18 @@ fun PermissionScreen(
                     )
                 }
 
-                if (showSettingsButton) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    TextButton(
-                        onClick = { /* Optional: Logic to skip or continue without permission */ },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Maybe Later",
-                            color = Color.White.copy(alpha = 0.5f)
-                        )
-                    }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(
+                    onClick = onSkip,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Skip for Now",
+                        color = Color.White.copy(alpha = 0.5f)
+                    )
                 }
             }
         }
     }
 }
-

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.core.navigation.Screen
 
@@ -22,10 +23,25 @@ fun SplashScreen(
     viewModel: SplashViewModel = hiltViewModel()
 ) {
     val destination by viewModel.destination.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(destination) {
         destination?.let { dest ->
-            onNavigate(dest)
+            if (dest == Screen.MapOS.route) {
+                // Check Permission
+                val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                if (hasPermission) {
+                    onNavigate(Screen.MapOS.route)
+                } else {
+                    onNavigate(Screen.Permission.route)
+                }
+            } else {
+                onNavigate(dest)
+            }
         }
     }
 

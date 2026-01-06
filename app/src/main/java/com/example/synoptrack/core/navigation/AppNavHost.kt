@@ -42,6 +42,11 @@ fun AppNavHost() {
                     navController.navigate(Screen.MapOS.route) {
                         popUpTo(Screen.Permission.route) { inclusive = true }
                     }
+                },
+                onSkip = {
+                    navController.navigate(Screen.MapOS.route) {
+                        popUpTo(Screen.Permission.route) { inclusive = true }
+                    }
                 }
             )
         }
