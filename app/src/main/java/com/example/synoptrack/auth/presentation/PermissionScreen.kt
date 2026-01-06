@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,15 +43,27 @@ fun PermissionScreen(
     var showSettingsButton by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    val permissionsToRequest = remember {
+        mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }.toTypedArray()
+    }
+
     // Check permission on resume
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (androidx.core.content.ContextCompat.checkSelfPermission(
+                val fineLocationGranted = androidx.core.content.ContextCompat.checkSelfPermission(
                         context,
                         Manifest.permission.ACCESS_FINE_LOCATION
                     ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                ) {
+
+                if (fineLocationGranted) {
                     onPermissionGranted()
                 }
             }
@@ -61,10 +74,13 @@ fun PermissionScreen(
         }
     }
 
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                              permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (locationGranted) {
             onPermissionGranted()
         } else {
             val shouldShowRationale = activity?.let {
@@ -129,7 +145,7 @@ fun PermissionScreen(
 
                 // 2. Title
                 Text(
-                    text = "Enable Location to start the journey",
+                    text = "Enable Permissions",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -141,7 +157,7 @@ fun PermissionScreen(
 
                 // 3. Body
                 Text(
-                    text = "SynopTrack needs your location to connect you with friends and show you the world around you.",
+                    text = "SynopTrack needs your location to show you on the map and notifications to keep you updated.",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         color = Color.White.copy(alpha = 0.7f)
                     ),
@@ -163,7 +179,7 @@ fun PermissionScreen(
                             }
                             context.startActivity(intent)
                         } else {
-                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                            permissionLauncher.launch(permissionsToRequest)
                         }
                     },
                     modifier = Modifier

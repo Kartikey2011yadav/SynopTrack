@@ -27,7 +27,7 @@ fun SplashScreen(
 
     LaunchedEffect(destination) {
         destination?.let { dest ->
-            if (dest == Screen.MapOS.route) {
+            if (dest == Screen.Home.route) {
                 // Check Permission
                 val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
                     context,
@@ -35,7 +35,7 @@ fun SplashScreen(
                 ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
                 if (hasPermission) {
-                    onNavigate(Screen.MapOS.route)
+                    onNavigate(Screen.Home.route)
                 } else {
                     onNavigate(Screen.Permission.route)
                 }

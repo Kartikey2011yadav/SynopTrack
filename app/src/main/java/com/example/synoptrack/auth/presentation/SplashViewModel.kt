@@ -34,7 +34,7 @@ class SplashViewModel @Inject constructor(
                 // Check if profile exists
                 val profile = profileRepository.getUserProfile(currentUser.uid).first()
                 if (profile != null) {
-                    _destination.value = Screen.MapOS.route
+                    _destination.value = Screen.Home.route
                 } else {
                     _destination.value = Screen.Registration.route
                 }

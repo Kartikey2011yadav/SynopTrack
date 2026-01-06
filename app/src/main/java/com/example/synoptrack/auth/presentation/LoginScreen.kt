@@ -73,11 +73,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = hiltVie
     ) {
         when (val state = signInState) {
             is SignInState.Success -> {
-                LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Registration.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                }
+                // Navigation handled by navigationEvent
             }
             is SignInState.Loading -> {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
