@@ -5,12 +5,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.synoptrack.mapos.presentation.MapOSViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -18,20 +23,39 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.example.synoptrack.mapos.presentation.components.SearchBar
 
 @Composable
-fun MapOSScreen() {
+fun MapOSScreen(
+    viewModel: MapOSViewModel = hiltViewModel()
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme() // Observe theme
+    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+    
     val singapore = LatLng(1.35, 103.87)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(singapore, 11f)
     }
 
+    val lastLocation by viewModel.lastKnownLocation.collectAsState()
+    val hasSetInitialCamera = remember { mutableStateOf(false) }
+
+    LaunchedEffect(lastLocation) {
+        lastLocation?.let { loc ->
+            if (!hasSetInitialCamera.value) {
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(loc, 15f),
+                    1000
+                )
+                hasSetInitialCamera.value = true
+            }
+        }
+    }
+
     // specific Map Properties that react to theme changes
     val mapProperties = remember(isDarkTheme) { 
         MapProperties(
-            isMyLocationEnabled = false,
+            isMyLocationEnabled = true, // Enable Blue Dot
             mapStyleOptions = com.example.synoptrack.core.utils.MapStyleManager.getMapStyle(context, isDarkTheme)
         )
     }
@@ -54,7 +78,17 @@ fun MapOSScreen() {
             uiSettings = uiSettings
         )
         
-        // Discovery Overlay (Floating Cards) will be added here
+        // Top Layer: Search Bar
+        SearchBar(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 48.dp, start = 16.dp, end = 16.dp),
+            onMenuClick = { /* Open Drawer or Menu */ },
+            onSearchClick = { /* Open Search */ }
+        )
+
+        // Bottom Layer: Discovery Overlay
         DiscoveryOverlay(modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 100.dp, start = 16.dp)) 
     }
 }
+

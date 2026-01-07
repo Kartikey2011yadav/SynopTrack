@@ -26,18 +26,26 @@ This document outlines the strategic roadmap for SynopTrack. We have transitione
 - [x] **Permission Gate**: Educational flow for Location permissions.
 - [x] **State Preservation**: Ensure users return to the correct step if they exit.
 
-### 🚧 Phase 1: Map OS Core (In Progress)
+### ✅ Phase 1: Map OS Core (Completed)
 
 **Goal**: Make the map the permanent operating system.
 
-- [ ] **Permanent Map Host**: Activity/Scaffold restructuring.
-- [ ] **Floating UI Layer**: System for panels over the map.
-- [ ] **Places & Search Layer**: Floating Search Bar, Quick Chips (Restaurants, Gas).
-- [ ] **State-Based Navigation**: Removing BottomNav for a fluid state machine.
-- [ ] **Global UI State Store**: Central source of truth for UI visibility.
-- [ ] **Theming**: Dark/Light runtime toggle.
+- [x] **Permanent Map Host**: Activity/Scaffold restructuring.
+- [x] **Floating UI Layer**: System for panels over the map.
+- [x] **Places & Search Layer**: Floating Search Bar, Quick Chips (Restaurants, Gas).
+- [x] **State-Based Navigation**: Removing BottomNav for a fluid state machine.
+- [x] **Global UI State Store**: Central source of truth for UI visibility.
+- [x] **Theming**: Dark/Light runtime toggle.
 
-### 🔮 Phase 2: Realtime Presence & Social Graph
+### 🚧 Phase 2: Realtime Presence & Social Graph (In Progress)
+
+**Goal**: Make the app alive and connected.
+
+- [ ] **Social Graph Engine**: Group Management, Invite Logic (Links/QR).
+- [ ] RTDB Heartbeat Model
+- [ ] Location Streaming Service
+- [ ] Ghost Mode (Privacy controls)
+- [ ] Offline Caching Strategy
 
 **Goal**: Make the app alive and connected.
 

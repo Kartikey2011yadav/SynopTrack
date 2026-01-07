@@ -1,0 +1,64 @@
+PROJECT CONTEXT REPORT: SYNOPTRACK
+Generated on: 2025-01-07
+Format: Professional Summary
+
+1. EXECUTIVE SUMMARY
+SynopTrack is an Android application being developed with a "Map-First" philosophy (MapOS). The goal is to create a social platform where the map is the permanent background, and all interactions (chats, profiles, settings) float as overlays, mimicking a desktop OS experience on mobile. The project utilizes modern Android development standards.
+
+2. ARCHITECTURAL OVERVIEW
+- Pattern: MVVM (Model-View-ViewModel) with Clean Architecture principles.
+- Modularization: Feature-based packaging (`auth`, `mapos`, `profile`, `core`) instead of layer-based.
+- Navigation: Single-Activity utilizing Jetpack Navigation Compose.
+- Dependency Injection: Hilt is used throughout for ViewModels, Repositories, and System Services.
+
+3. CURRENT IMPLEMENTATION STATUS
+
+A. Authentication & Onboarding
+- Google Sign-In is fully integrated using Firebase Auth.
+- Intelligent Auth Logic: The app distinguishes between:
+  - New Users -> Redirects to Registration/Name Setup.
+  - Incomplete Profiles -> Redirects to Completion.
+  - Returning Users -> Redirects to MapOS.
+- "Project-Specific" `local.properties` handling allows flexible configuration of `WEB_CLIENT_ID`.
+
+B. User Profile System
+- Domain Model `UserProfile` extended to support Social/Premium features:
+  - `ghostMode` (Privacy)
+  - `batteryLevel` & `isCharging` (Live Status)
+  - `fcmToken` (Notifications)
+  - `lastActiveAt` (Presence)
+- Firestore Integration: `ProfileRepository` handles direct read/write to `users/{uid}` collection.
+
+C. Permissions System
+- Replaced standard intrusive permission dialogs with a staged "Educational Flow".
+- `PermissionScreen`: Explains the value of Location/Notifications before requesting system dialogs.
+- Logic handles:
+  - "Allow" (Proceed to Map)
+  - "Deny" (Rationale Snackbar)
+  - "Don't ask again" (Deep link to App Settings)
+
+D. MapOS (The Core Experience)
+- `MapOSScreen` is the central hub.
+- It features a full-screen `GoogleMap` (using maps-compose).
+- UI Layering:
+  - Base: Map
+  - Top: Floating Search Bar (Card style)
+  - Bottom: Discovery Overlay / Floating Action Buttons.
+- Theme Aware: Custom JSON map styles are applied based on system Dark/Light theme.
+
+4. RECENT TECHNICAL RESOLUTIONS
+- Fixed Version Catalog (`libs.versions.toml`) to correctly resolve `play-services-auth` and `coil`.
+- Restored `MapOSScreen.kt` from possible corruption (encoding/BOM issues).
+- Consolidated `AuthViewModel` logic to act as a proper "Gatekeeper" after login.
+- Validated `UserProfile` serialization structure to prevent runtime crashes with Firebase.
+
+5. PENDING / UPCOMING TASKS
+- Real-time Location Service (Foreground Service) implementation in `presence` module.
+- "Moments" (Stories) UI overlay implementation.
+- Chat Service (WebSockets or Firestore listener) integration.
+
+6. BUILD CONFIGURATION
+- Android SDK: Compile 36, Min 30.
+- Gradle: 8.13.2 with Version Catalogs.
+- Key Dependencies: Firebase BOM 33.1.2, Compose BOM 2024.09.00, Hilt 2.57.2.
+
