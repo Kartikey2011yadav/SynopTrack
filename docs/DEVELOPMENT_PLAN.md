@@ -18,13 +18,13 @@ This document outlines the strategic roadmap for SynopTrack. We have transitione
 - [x] Profile Foundation (`profile`)
 - [x] Basic Jetpack Compose Setup
 
-### 🚦 Phase 0.5: Onboarding & Gatekeeping (New)
+### ✅ Phase 0.5: Onboarding & Gatekeeping (Completed)
 
 **Goal**: Smart Onboarding & Permissions Flow.
 
-- [ ] **Smart Registration**: Display Name, Profile Picture setup.
-- [ ] **Permission Gate**: Educational flow for Location permissions.
-- [ ] **State Preservation**: Ensure users return to the correct step if they exit.
+- [x] **Smart Registration**: Display Name, Profile Picture setup.
+- [x] **Permission Gate**: Educational flow for Location permissions.
+- [x] **State Preservation**: Ensure users return to the correct step if they exit.
 
 ### 🚧 Phase 1: Map OS Core (In Progress)
 

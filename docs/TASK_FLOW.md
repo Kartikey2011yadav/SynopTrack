@@ -8,7 +8,7 @@
 ## 📋 To Do (Immediate - Phase 1)
 
 - [ ] **Refactor Navigation**: Remove existing BottomBar if present, implement `MapOS` navigation state.
-- [ ] **Onboarding Flow**: Implement Registration logic and Permission Gates (Phase 0.5).
+- [x] **Onboarding Flow**: Implement Registration logic and Permission Gates (Phase 0.5).
 - [ ] **Map Host Screen**: Create the `MapScreen` as the root composable.
 - [ ] **Search UI**: Implement Floating Search Bar and Chips (Phase 1).
 - [ ] **Floating Panels**: Create generic `OverlayPanel` composables for Chat, Profile, etc.

@@ -111,6 +111,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.analytics)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.location)
 
     // Google Maps
     implementation(libs.maps.compose)
