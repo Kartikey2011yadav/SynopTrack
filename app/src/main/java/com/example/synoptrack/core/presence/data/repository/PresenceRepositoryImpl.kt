@@ -13,17 +13,18 @@ class PresenceRepositoryImpl @Inject constructor(
     private val authRepository: AuthRepository
 ) : PresenceRepository {
 
-    override suspend fun updateLocation(location: Location): Result<Unit> {
+    override suspend fun updateLocation(location: Location, batteryLevel: Int?, isCharging: Boolean?): Result<Unit> {
         val uid = authRepository.currentUser?.uid ?: return Result.failure(Exception("No user logged in"))
         
         return try {
             val geoPoint = GeoPoint(location.latitude, location.longitude)
-            val updates = mapOf(
+            val updates = mutableMapOf<String, Any>(
                 "lastLocation" to geoPoint,
-                "lastActiveAt" to FieldValue.serverTimestamp(),
-                // "bearing" to location.bearing, // Optional: Add if needed for car rotation
-                // "speed" to location.speed
+                "lastActiveAt" to FieldValue.serverTimestamp()
             )
+            
+            if (batteryLevel != null) updates["batteryLevel"] = batteryLevel
+            if (isCharging != null) updates["isCharging"] = isCharging
             
             // Assuming 'users' is the collection
             firestore.collection("users").document(uid).update(updates)

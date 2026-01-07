@@ -56,11 +56,36 @@ fun SocialScreen(
         }
 
         // Active Convoy Section
-        Text(
-            "Active Convoy",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        val isGhostMode by viewModel.isGhostMode.collectAsState()
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Active Convoy",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    if (isGhostMode) "Ghost ON" else "Ghost OFF",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isGhostMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = isGhostMode,
+                    onCheckedChange = { viewModel.toggleGhostMode() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.error,
+                        checkedTrackColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         if (activeGroup != null) {

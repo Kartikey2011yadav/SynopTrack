@@ -78,6 +78,25 @@ fun MapOSScreen(
         }
     }
 
+    // Service Control Logic
+    val isGhostMode by viewModel.isGhostMode.collectAsState()
+    
+    LaunchedEffect(isGhostMode) {
+        val intent = android.content.Intent(context, com.example.synoptrack.core.presence.service.PresenceForegroundService::class.java)
+        if (isGhostMode) {
+            intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_STOP
+            context.startService(intent) // Triggers onStartCommand with STOP action
+        } else {
+            // Start Service if not in Ghost Mode (and permission granted - assumed for now or handled by service)
+            intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_START
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+    }
+
     // specific Map Properties that react to theme changes
     val mapProperties = remember(isDarkTheme) { 
         MapProperties(
@@ -112,10 +131,14 @@ fun MapOSScreen(
         ) {
             // Render Friend Markers
             groupMembers.forEach { member ->
+                val batteryInfo = if (member.batteryLevel >= 0) {
+                     "🔋 ${member.batteryLevel}%" + if (member.isCharging) " ⚡" else ""
+                } else "Unknown"
+                
                 com.google.maps.android.compose.Marker(
                     state = com.google.maps.android.compose.MarkerState(position = member.location),
                     title = member.displayName,
-                    snippet = "Last seen...", // Add timestamp later
+                    snippet = batteryInfo, 
                     icon = com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_AZURE)
                 )
             }

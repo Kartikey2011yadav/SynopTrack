@@ -80,7 +80,9 @@ class MapOSViewModel @Inject constructor(
                             uid = profile.uid,
                             displayName = profile.displayName,
                             avatarUrl = profile.avatarUrl,
-                            location = location
+                            location = location,
+                            batteryLevel = profile.batteryLevel,
+                            isCharging = profile.isCharging
                         )
                     } else {
                         null
@@ -116,11 +118,24 @@ class MapOSViewModel @Inject constructor(
             socialRepository.joinGroup(code, uid)
         }
     }
+    private val _isGhostMode = MutableStateFlow(false)
+    val isGhostMode: StateFlow<Boolean> = _isGhostMode.asStateFlow()
+
+    fun toggleGhostMode() {
+        _isGhostMode.value = !_isGhostMode.value
+        // TODO: Start/Stop Foreground Service based on this
+        viewModelScope.launch {
+            // Update Firestore so others know you are ghosting (optional, or just go offline)
+             presenceRepository.setOnlineStatus(!_isGhostMode.value) 
+        }
+    }
 }
 
 data class MemberUiModel(
     val uid: String,
     val displayName: String,
     val avatarUrl: String,
-    val location: LatLng
+    val location: LatLng,
+    val batteryLevel: Int = -1,
+    val isCharging: Boolean = false
 )
