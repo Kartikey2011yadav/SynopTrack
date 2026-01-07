@@ -1,0 +1,75 @@
+PHASE 1 — MAP OS CORE (THIS IS NEXT)
+
+Make the map become a permanent operating system.
+
+Deliverables:
+Feature
+Permanent MapOS host screen
+Floating UI layer system
+Pages (Chat and groups / Profile / Moments)
+State-based navigation (no bottom nav)
+Global UI state store
+Dark/Light theme runtime toggle
+
+This phase makes your app feel premium instantly.
+
+PHASE 2 — REALTIME PRESENCE ENGINE
+System
+RTDB heartbeat model
+Location streaming
+Ghost mode
+Offline caching
+Presence TTL expiration
+
+This makes your app alive.
+
+PHASE 3 — EPHEMERAL CHAT ENGINE
+System
+Vanish timers
+Media lifecycle
+Local Room persistence
+Server purge workers
+Snap-style UI
+
+This makes your app emotionally sticky.
+
+PHASE 4 — MOMENTS / STORIES
+Feature
+Story bar
+Media viewer
+24h lifecycle
+Save locally
+Reactions
+PHASE 5 — CONVOY INTELLIGENCE
+Feature
+Distance matrix
+ETA sync
+Lag detection
+Smart stops
+Convoy history
+PHASE 6 — TRUST & PRIVACY LAYER
+Feature
+Per-group privacy
+Emergency freeze
+Data wipe
+Safety audit UI
+PHASE 7 — POLISH & SCALE
+Task
+Animations
+Performance tuning
+Battery efficiency
+Preload caching
+Release hardening
+HOW WE WILL CODE FROM NOW ON
+
+We do not build screens anymore.
+We build systems:
+
+• UI State Host
+• Presence Engine
+• Ephemeral Engine
+• Convoy Engine
+• Trust Engine
+
+Every Compose screen becomes a window into an engine.
+
