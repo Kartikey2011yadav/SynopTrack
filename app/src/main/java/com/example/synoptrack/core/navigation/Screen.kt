@@ -1,8 +1,8 @@
 package com.example.synoptrack.core.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -19,7 +19,7 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
 
     // Main Tabs
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Discover : Screen("discover", "Discover", Icons.Default.Map)
+    object Social : Screen("social", "Connect", Icons.Default.Chat)
     object Search : Screen("search", "Search", Icons.Default.Search)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
     

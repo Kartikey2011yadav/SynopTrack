@@ -95,10 +95,8 @@ fun AppNavHost() {
             composable(Screen.Home.route) {
                 MapOSScreen()
             }
-            composable(Screen.Discover.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Discover / For You")
-                }
+            composable(Screen.Social.route) {
+                com.example.synoptrack.social.presentation.SocialScreen()
             }
             composable(Screen.Search.route) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

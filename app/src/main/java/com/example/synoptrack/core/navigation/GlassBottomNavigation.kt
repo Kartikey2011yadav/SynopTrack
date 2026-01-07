@@ -32,7 +32,7 @@ fun GlassBottomNavigation(
 ) {
     val items = listOf(
         Screen.Home,
-        Screen.Discover,
+        Screen.Social,
         Screen.Search,
         Screen.Profile
     )
@@ -56,7 +56,7 @@ fun GlassBottomNavigation(
             // Custom shape container
             Row(
                 modifier = Modifier
-                    .height(80.dp) // Taller to accommodate the curves
+                    .height(50.dp) // Taller to accommodate the curves
                     .shadow(16.dp, RoundedCornerShape(40.dp))
                     .clip(RoundedCornerShape(40.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant) // Adapts to Light/Dark
@@ -113,7 +113,7 @@ fun CustomBottomNavItem(
             // White circle background for active item
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(Color.White)
             )
@@ -124,7 +124,7 @@ fun CustomBottomNavItem(
             contentDescription = screen.title,
             tint = if (isSelected) com.example.synoptrack.core.theme.ElectricBluePrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             modifier = Modifier
-                .size(28.dp)
+                .size(20.dp)
                 .scale(scale)
         )
     }

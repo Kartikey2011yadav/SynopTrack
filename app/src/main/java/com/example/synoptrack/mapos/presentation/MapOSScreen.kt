@@ -2,28 +2,44 @@ package com.example.synoptrack.mapos.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.mapos.presentation.MapOSViewModel
+import com.example.synoptrack.mapos.presentation.components.SearchBar
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.example.synoptrack.mapos.presentation.components.SearchBar
 
 @Composable
 fun MapOSScreen(
@@ -70,25 +86,120 @@ fun MapOSScreen(
         )
     }
 
+    val groupMembers by viewModel.groupMembers.collectAsState()
+    val activeGroup by viewModel.activeGroup.collectAsState()
+    
+    var showSocialOptions by remember { mutableStateOf(false) }
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var showJoinDialog by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = mapProperties,
             uiSettings = uiSettings
-        )
+        ) {
+            // Render Friend Markers
+            groupMembers.forEach { member ->
+                com.google.maps.android.compose.Marker(
+                    state = com.google.maps.android.compose.MarkerState(position = member.location),
+                    title = member.displayName,
+                    snippet = "Last seen...", // Add timestamp later
+                    icon = com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_AZURE)
+                )
+            }
+        }
         
         // Top Layer: Search Bar
         SearchBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp, start = 16.dp, end = 16.dp),
-            onMenuClick = { /* Open Drawer or Menu */ },
+            onMenuClick = { showSocialOptions = true },
             onSearchClick = { /* Open Search */ }
         )
 
-        // Bottom Layer: Discovery Overlay
-        DiscoveryOverlay(modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 100.dp, start = 16.dp)) 
+        // Social FAB (above discovery overlay)
+        androidx.compose.material3.FloatingActionButton(
+            onClick = { showSocialOptions = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 120.dp, end = 16.dp),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = androidx.compose.material.icons.Icons.Default.Group,
+                contentDescription = "Social"
+            )
+        }
+
+// DiscoveryOverlay removed per request 
+        
+        // Dialogs
+        if (showSocialOptions) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showSocialOptions = false },
+                title = { androidx.compose.material3.Text("Convoy Options") },
+                text = {
+                    androidx.compose.foundation.layout.Column {
+                        if (activeGroup != null) {
+                            androidx.compose.material3.Text("Active Group: ${activeGroup?.name}")
+                            androidx.compose.material3.Text("Code: ${activeGroup?.inviteCode}")
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                            androidx.compose.material3.Button(onClick = { /* Leave Group TODO */ }) {
+                                androidx.compose.material3.Text("Leave Convoy")
+                            }
+                        } else {
+                            androidx.compose.material3.Button(
+                                onClick = { 
+                                    showSocialOptions = false
+                                    showCreateDialog = true 
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                androidx.compose.material3.Text("Create Convoy")
+                            }
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                            androidx.compose.material3.OutlinedButton(
+                                onClick = { 
+                                    showSocialOptions = false
+                                    showJoinDialog = true
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                androidx.compose.material3.Text("Join Convoy")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = { showSocialOptions = false }) {
+                        androidx.compose.material3.Text("Close")
+                    }
+                }
+            )
+        }
+
+        if (showCreateDialog) {
+            com.example.synoptrack.social.presentation.components.CreateGroupDialog(
+                onDismiss = { showCreateDialog = false },
+                onCreate = { name ->
+                    viewModel.createGroup(name)
+                    showCreateDialog = false
+                }
+            )
+        }
+
+        if (showJoinDialog) {
+            com.example.synoptrack.social.presentation.components.JoinGroupDialog(
+                onDismiss = { showJoinDialog = false },
+                onJoin = { code ->
+                    viewModel.joinGroup(code)
+                    showJoinDialog = false
+                }
+            )
+        }
     }
 }
 
