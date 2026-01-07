@@ -1,115 +1,134 @@
-1. Map OS Architecture (Level-Based UI)
-This diagram illustrates the "glassmorphic Sheet Stack" concept where the map remains the constant background while a few  other UI elements float on top like moments, status, current location, close friends etc.
+# 📖 Feature Definitions & System Logic
 
-2. Convoy Intelligence Logic
-This diagram visualizes how the app calculates relative distances and manages the "Lead Car" concept for group travel.
+Detailed explanations of core features, architectural concepts, and system behaviors in SynopTrack.
 
-🚦 Phase 0.5: Onboarding & Gatekeeping
-1. Smart Registration (The "Missing Data" Catcher)
-Definition: A logic layer that intercepts the login flow. It does not just check "Is Logged In"; it checks "Is Profile Complete."
+---
 
-Behavior:
+## 🏗️ Core Architecture (Map OS)
 
-New Users: If auth.currentUser exists but firestore.users[uid] is missing, force navigation to RegistrationScreen.
+### 1. Map OS Architecture (Level-Based UI)
 
-Incomplete Users: If firestore.users[uid].displayName is null/empty, force RegistrationScreen.
+**Phase 1**
+The Map serves as the **Home Screen**, but distinct features like Chat and Profile reside on **Dedicated Pages** (full-screen destinations).
 
-Auto-Fill: Pulls photoUrl and email from the Google Auth credential to pre-fill the form, reducing user friction.
+- **Concept**: "Map First, Feature Second".
+- **Behavior**:
+  - **Home (Map)**: Contains quick actions (FAB, Status/Moments rings) and essential overlays.
+  - **Navigation**: Transitioning to Chat or Profile moves away from the floating state into a dedicated screen experience.
 
-2. Permission Gate (The "Educational" Barrier)
-Definition: A dedicated UI that explains why permissions are needed before triggering the system dialog.
+### 2. Floating UI Layer (Map Overlays)
 
-Behavior:
+**Phase 1**
+The UI elements that specifically live _on top_ of the map.
 
-Soft Ask: Shows a beautiful "Map" illustration with text: "To see your friends, enabling location is required."
+- **Structure**: `Box` layout containing the Map and its immediate controls.
+- **Components**:
+  - **Quick Actions**: Current Location FAB, Compass.
+  - **Status Rings**: Tappable avatars for "Close Friends Moments" floating near the top or bottom.
+- **Interaction**: Click-through enabled for empty spaces so panning works naturally.
 
-System Trigger: Only when the user taps "I Understand" do we launch the OS permission dialog.
+### 3. Global UI State Store
 
-Recovery Loop: If a user denies permissions permanently (Settings > App > Deny), the app detects this on restart and changes the button to "Open Settings" instead of "Ask Permission."
+**Phase 1**
+A centralized `StateFlow` (Singleton) managing the visibility of all overlay elements.
 
-🚧 Phase 1: Map OS Core
-3. Floating UI Layer (The "Glass" Interface)
-Definition: A UI architecture where the GoogleMap composable is the root container (filling MaxSize). All other UI elements (Search Bar, Profile, Bottom Sheet) are siblings in a Box that sit above the map with transparency.
+- **Purpose**: Prevents "UI Clutter." (e.g., Opening Chat automatically hides the Search Bar).
+- **States**: `MapFocused`, `SheetExpanded`, `DialogOverlay`, `GhostModeActive`.
 
-Behavior:
+---
 
-Edge-to-Edge: The map draws under the status bar and navigation bar.
+## � Onboarding & Gatekeeping
 
-Click-Through: Tapping empty space on the UI layer passes the touch event to the map (allowing panning). Tapping a "Chip" or "Card" intercepts the touch.
+### 4. Smart Registration
 
-4. Global UI State Store
-Definition: A centralized StateFlow (Singleton) that controls the visibility of overlays.
+**Phase 0.5**
+A logic layer triggering _after_ authentication but _before_ granting access to the Map OS.
 
-Why: To prevent "UI Clutter." If the "Chat Sheet" is open, the "Search Bar" should automatically hide.
+- **Logic**: Checks if the user profile is complete (Display Name, Photo).
+- **Behavior**:
+  - **New Users**: Forces navigation to `RegistrationScreen`.
+  - **Auto-Fill**: Pulls data (photo/email) from Auth credentials to reduce friction.
 
-States: MapFocused, SheetExpanded, DialogOverlay, GhostModeActive.
+### 5. Permission Gate ("Educational Barrier")
 
-🔮 Phase 2: Realtime Presence & Social Graph
-5. Ghost Mode (Granular Privacy)
-Definition: A privacy system giving users control over how their location is broadcasted, adjustable per-group or globally.
+**Phase 0.5**
+A dedicated UI step explaining _why_ location is needed before triggering the system dialog.
 
-States:
+- **Flow**:
+  1.  **Soft Ask**: Show illustration + "To see friends, enabling location is required."
+  2.  **System Trigger**: User taps "I Understand" -> System Dialog opens.
+  3.  **Recovery**: If permanently denied, button changes to "Open Settings".
 
-👻 Ghost (Frozen): The user stops uploading GPS updates. The server retains the last known location and adds a "Frozen 2h ago" timestamp. The user appears on the map, but the pin never moves.
+---
 
-🌫️ Blurred (Precise-ish): The app adds random noise (jitter) to the GPS coordinates (e.g., +/- 500m radius) before uploading. Friends see a "General Area" circle instead of a precise pin.
+## 🤝 Social & Presence
 
-🟢 Live (Precise): Standard high-accuracy GPS uploading (every 10-30s depending on movement).
+### 6. Social Graph Engine
 
-6. Social Graph Engine (Invite Logic)
-Definition: The system connecting users.
+**Phase 2**
+The system responsible for connecting users and managing groups.
 
-Mechanic:
+- **Mechanics**:
+  - **Deep Links**: `synoptrack://join/xyz123` auto-adds users to groups.
+  - **QR Codes**: In-person group joining.
 
-Deep Links: Groups have a unique inviteCode. Sharing a link synoptrack://join/xyz123 opens the app and auto-adds the user to the group.
+### 7. Ghost Mode (Granular Privacy)
 
-QR Codes: Each group has a generated QR code for in-person joining.
+**Phase 2**
+A privacy control system allowing users to obfuscate their real-time location.
 
-🔮 Phase 3: Ephemeral Chat & Engagement
-7. Vanish Logic (TTL - Time To Live)
-Definition: The mechanism ensuring data is temporary (Snapchat style).
+- **States**:
+  - **👻 Ghost (Frozen)**: Stops uploading GPS. Server shows last known location with timestamp ("Frozen 2h ago").
+  - **🌫️ Blurred (Precise-ish)**: Adds random noise (+/- 500m) to coordinates. Friends see a general area circle.
+  - **🟢 Live**: Standard high-accuracy GPS (10-30s updates).
 
-Types:
+---
 
-Read-Based Vanish: "Delete 10 seconds after viewing" (For sensitive media).
+## 💬 Engagement & Stories
 
-Time-Based Vanish (Standard): "Delete 24 hours after posting."
+### 8. Vanish Logic (TTL)
 
-Implementation:
+**Phase 3**
+Data lifecycle management for ephemeral content (Snapchat-style).
 
-Client-Side: The app filters out messages where timestamp < (now - 24h).
+- **Types**:
+  - **Read-Based**: "Delete 10s after viewing" (for sensitive media).
+  - **Time-Based**: "Delete 24h after posting."
+- **Implementation**: Client filters old data; Server physically deletes via TTL policy/Cloud Function.
 
-Server-Side: A Firestore TTL Policy or Cloud Function physically deletes the documents daily to save storage costs.
+### 9. The "Story Bar"
 
-🔮 Phase 4: Moments / Stories
-8. The "Story Bar"
-Definition: When a user uploads a "Moment" (Video/Photo), their avatar on the map gains a colored ring (Gold/Purple).
+**Phase 4**
+Visual indicator for ephemeral "Moments" on the map.
 
-Behavior:
+- **UI**: User avatar gains a colored ring (Gold/Purple).
+- **Behavior**:
+  - Tap Avatar -> Opens Full-Screen Media Viewer.
+  - **Location-Pinned**: Moments stay where they were taken, not where the user is currently.
 
-Tapping the avatar on the map opens the Media Viewer (Full screen, immersive) instead of the Profile Sheet.
+---
 
-The location of the Moment is pinned to where it was taken, not where the user is now.
+## � Convoy Intelligence
 
-🔮 Phase 5: Convoy Intelligence
-9. Collaborative Driving (The "Lead Car" Logic)
-Definition: Specialized tracking for road trips involving multiple cars.
+### 10. Collaborative Driving ("Lead Car")
 
-Logic:
+**Phase 5**
+Specialized tracking for multi-car travel.
 
-The Delta: Instead of just showing "Distance to Destination," the app calculates "Distance to Leader."
+- **Logic**: Calculates "Distance to Leader" instead of just "Distance to Destination".
+- **Smart Stop**: If Lead Car speed is 0 for >2 mins (excluding traffic), followers get a "Lead Car has stopped" alert.
 
-Example: If Car A (Lead) is at Mile 50 and Car B is at Mile 40, Car B sees: "10 miles behind Leader."
+---
 
-Smart Stop: If the Lead Car's speed drops to 0 for > 2 minutes (and it's not traffic), the app sends a push notification to followers: "Lead Car has stopped."
+## �️ Trust & Safety
 
-🔮 Phase 6: Trust & Privacy
-10. Emergency Panic Button
-Definition: A safety trigger for solo travelers.
+### 11. Emergency Panic Button
 
-Behavior:
+**Phase 6**
+Safety trigger for immediate assistance.
 
-Trigger: Long-press a specific button or shake the phone (if configured).
-
-Action: Immediately forces "Live Mode" (bypassing Ghost Mode), sends an SMS to emergency contacts with the Google Maps link, and notifies all Group Members with a "High Priority" push notification.
-
+- **Trigger**: Long-press button or Shake (configurable).
+- **Action**:
+  - Forces **Live Mode** (bypasses Ghost).
+  - SMS to emergency contacts with Map Link.
+  - "High Priority" push to Group Members.
