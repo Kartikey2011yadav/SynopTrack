@@ -2,28 +2,31 @@ package com.example.synoptrack.core.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Brand Colors
-val YellowPrimary = Color(0xFFFFD700) // Gold/Yellow
-val YellowVariant = Color(0xFFFFC107) // Amber
+// Primary Brand Colors (Electric Blue / Indigo)
+val ElectricBluePrimary = Color(0xFF4C6EF5) // Active State
+val IndigoVariant = Color(0xFF364FC7)       // Deep Indigo
+val LiveTeal = Color(0xFF09D3AC)            // "Live" Status / Success
 
 // Dark Theme Surface Colors
-val DarkBackground = Color(0xFF121212)
-val DarkSurface = Color(0xFF1E1E1E)
-val DarkSurfaceVariant = Color(0xFF2D2D2D)
+val DarkBackground = Color(0xFF121212)      // Standard Dark Mode Bg
+val DarkSurface = Color(0xFF1E1E1E)         // Cards / Bottom Sheets
+val DarkSurfaceVariant = Color(0xFF2D2D2D)  // Input Fields / Chips
 
 // Light Theme Surface Colors
-val LightBackground = Color(0xFFF5F5F5)
+val CleanWhite = Color(0xFFFFFFFF)
+val LightBackground = Color(0xFFF8F9FA)     // Very soft grey for depth
 val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceVariant = Color(0xFFEEEEEE)
+val LightSurfaceVariant = Color(0xFFF1F3F5)
 
 // Functional Colors
-val ErrorRed = Color(0xFFCF6679)
-val SuccessGreen = Color(0xFF4CAF50)
+val ErrorRed = Color(0xFFFA5252)
+val SuccessGreen = Color(0xFF40C057)        // For non-brand success states
+val WarningAmber = Color(0xFFFFC107)
 
 // Text Colors
 val TextWhite = Color(0xFFFFFFFF)
-val TextGray = Color(0xFFAAAAAA)
-val TextBlack = Color(0xFF000000)
+val TextGray = Color(0xFF868E96)            // Subtitles
+val TextBlack = Color(0xFF212529)           // Primary Light Text
 
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)

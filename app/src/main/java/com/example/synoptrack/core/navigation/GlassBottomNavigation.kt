@@ -59,7 +59,7 @@ fun GlassBottomNavigation(
                     .height(80.dp) // Taller to accommodate the curves
                     .shadow(16.dp, RoundedCornerShape(40.dp))
                     .clip(RoundedCornerShape(40.dp))
-                    .background(Color(0xFF1C1C1E)) // Dark background like image
+                    .background(MaterialTheme.colorScheme.surfaceVariant) // Adapts to Light/Dark
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -122,7 +122,7 @@ fun CustomBottomNavItem(
         Icon(
             imageVector = screen.icon!!,
             contentDescription = screen.title,
-            tint = if (isSelected) Color.Black else Color.Gray,
+            tint = if (isSelected) com.example.synoptrack.core.theme.ElectricBluePrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             modifier = Modifier
                 .size(28.dp)
                 .scale(scale)

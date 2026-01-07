@@ -22,17 +22,17 @@ import com.google.maps.android.compose.rememberCameraPositionState
 @Composable
 fun MapOSScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme() // Observe theme
     val singapore = LatLng(1.35, 103.87)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(singapore, 11f)
     }
 
-    val mapProperties by remember {
-        mutableStateOf(
-            MapProperties(
-                isMyLocationEnabled = false,
-                mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, com.example.synoptrack.R.raw.map_style)
-            )
+    // specific Map Properties that react to theme changes
+    val mapProperties = remember(isDarkTheme) { 
+        MapProperties(
+            isMyLocationEnabled = false,
+            mapStyleOptions = com.example.synoptrack.core.utils.MapStyleManager.getMapStyle(context, isDarkTheme)
         )
     }
     

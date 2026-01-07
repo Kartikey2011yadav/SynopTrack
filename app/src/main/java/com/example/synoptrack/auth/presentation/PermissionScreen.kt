@@ -8,6 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -20,28 +21,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.synoptrack.R
+import com.example.synoptrack.core.theme.ElectricBluePrimary
+import com.example.synoptrack.core.theme.TextGray
 import kotlinx.coroutines.launch
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun PermissionScreen(
+    viewModel: PermissionViewModel = hiltViewModel(),
     onPermissionGranted: () -> Unit,
     onSkip: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var showSettingsButton by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+
+    // Navigation Effects
+    LaunchedEffect(uiState.isPermissionGranted) {
+        if (uiState.isPermissionGranted) onPermissionGranted()
+    }
+
+    LaunchedEffect(uiState.isSkipped) {
+        if (uiState.isSkipped) onSkip()
+    }
+
+    // Rationale SnackBar
+    LaunchedEffect(uiState.showRationale, uiState.errorMessage) {
+        if (uiState.showRationale && uiState.errorMessage != null) {
+            snackbarHostState.showSnackbar(
+                message = uiState.errorMessage!!,
+                actionLabel = "Retry",
+                duration = SnackbarDuration.Short
+            )
+            viewModel.resetRationale()
+        }
+    }
 
     val permissionsToRequest = remember {
         mutableListOf(
@@ -54,26 +79,6 @@ fun PermissionScreen(
         }.toTypedArray()
     }
 
-    // Check permission on resume
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                val fineLocationGranted = androidx.core.content.ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-                if (fineLocationGranted) {
-                    onPermissionGranted()
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -81,42 +86,22 @@ fun PermissionScreen(
                               permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
         if (locationGranted) {
-            onPermissionGranted()
+            viewModel.onPermissionGranted()
         } else {
             val shouldShowRationale = activity?.let {
                 ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_FINE_LOCATION)
             } ?: false
-
-            if (shouldShowRationale) {
-                // User denied (1st time or subsequent non-permanent)
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        message = "We can't show you on the map without location.",
-                        actionLabel = "Retry",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-            } else {
-                // User denied permanently (Don't ask again)
-                showSettingsButton = true
-            }
+            viewModel.onPermissionDenied(shouldShowRationale)
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF1A1A2E), // Dark Blue/Black
-                            Color(0xFF16213E)  // Slightly lighter
-                        )
-                    )
-                )
                 .padding(paddingValues)
                 .padding(24.dp)
         ) {
@@ -125,30 +110,30 @@ fun PermissionScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // 1. Friendly Illustration (Icon)
+                // 1. Illustration
                 Surface(
-                    modifier = Modifier.size(120.dp),
+                    modifier = Modifier.size(160.dp),
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                    color = ElectricBluePrimary.copy(alpha = 0.1f)
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Location",
+                        contentDescription = "Location Permission",
                         modifier = Modifier
-                            .padding(24.dp)
+                            .padding(40.dp)
                             .fillMaxSize(),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = ElectricBluePrimary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 // 2. Title
                 Text(
-                    text = "Enable Permissions",
+                    text = "Allow Maps Access",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -157,23 +142,24 @@ fun PermissionScreen(
 
                 // 3. Body
                 Text(
-                    text = "SynopTrack needs your location to show you on the map and notifications to keep you updated.",
+                    text = "SynopTrack uses your location to show friends nearby and create a live social map experience.",
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = TextGray
                     ),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
                 )
             }
 
-            // 4. Action Button (Bottom)
+            // 4. Action Buttons (Bottom)
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 32.dp)
+                    .padding(bottom = 16.dp)
             ) {
                 Button(
                     onClick = {
-                        if (showSettingsButton) {
+                        if (uiState.isPermanentlyDenied) {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                 data = Uri.fromParts("package", context.packageName, null)
                             }
@@ -185,27 +171,28 @@ fun PermissionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = ElectricBluePrimary
                     )
                 ) {
                     Text(
-                        text = if (showSettingsButton) "Open Settings" else "Allow Access",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text = if (uiState.isPermanentlyDenied) "Open Settings" else "Allow Access",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 TextButton(
-                    onClick = onSkip,
+                    onClick = { viewModel.onSkipForNow() },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "Skip for Now",
-                        color = Color.White.copy(alpha = 0.5f)
+                        color = TextGray,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }

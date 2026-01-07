@@ -17,11 +17,11 @@ import androidx.core.view.WindowCompat
 import com.example.synoptrack.core.datastore.AppTheme
 
 private val DarkColorScheme = darkColorScheme(
-    primary = YellowPrimary,
-    onPrimary = TextBlack,
-    primaryContainer = YellowVariant,
-    onPrimaryContainer = TextBlack,
-    secondary = YellowPrimary,
+    primary = ElectricBluePrimary,
+    onPrimary = TextWhite,
+    primaryContainer = IndigoVariant,
+    onPrimaryContainer = TextWhite,
+    secondary = LiveTeal,
     onSecondary = TextBlack,
     background = DarkBackground,
     onBackground = TextWhite,
@@ -29,23 +29,25 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = TextWhite,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = TextGray,
-    error = ErrorRed
+    error = ErrorRed,
+    onError = TextWhite
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = YellowPrimary,
-    onPrimary = TextBlack,
-    primaryContainer = YellowVariant,
-    onPrimaryContainer = TextBlack,
-    secondary = YellowPrimary,
-    onSecondary = TextBlack,
+    primary = ElectricBluePrimary,
+    onPrimary = TextWhite,
+    primaryContainer = IndigoVariant,
+    onPrimaryContainer = TextWhite,
+    secondary = LiveTeal,
+    onSecondary = TextWhite,
     background = LightBackground,
     onBackground = TextBlack,
     surface = LightSurface,
     onSurface = TextBlack,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = TextGray,
-    error = ErrorRed
+    error = ErrorRed,
+    onError = TextWhite
 )
 
 @Composable
