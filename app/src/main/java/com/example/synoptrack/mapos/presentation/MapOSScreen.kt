@@ -1,19 +1,23 @@
 package com.example.synoptrack.mapos.presentation
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,32 +26,36 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.synoptrack.mapos.presentation.MapOSViewModel
+import com.example.synoptrack.core.utils.MapStyleManager
 import com.example.synoptrack.mapos.presentation.components.SearchBar
+import com.example.synoptrack.social.presentation.components.CreateGroupDialog
+import com.example.synoptrack.social.presentation.components.JoinGroupDialog
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.launch
 
 @Composable
 fun MapOSScreen(
     viewModel: MapOSViewModel = hiltViewModel()
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
-    
+    val context = LocalContext.current
+    val isDarkTheme = isSystemInDarkTheme()
+
     val singapore = LatLng(1.35, 103.87)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(singapore, 11f)
@@ -55,6 +63,8 @@ fun MapOSScreen(
 
     val lastLocation by viewModel.lastKnownLocation.collectAsState()
     val hasSetInitialCamera = remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(lastLocation) {
         lastLocation?.let { loc ->
@@ -72,7 +82,7 @@ fun MapOSScreen(
     val mapProperties = remember(isDarkTheme) { 
         MapProperties(
             isMyLocationEnabled = true, // Enable Blue Dot
-            mapStyleOptions = com.example.synoptrack.core.utils.MapStyleManager.getMapStyle(context, isDarkTheme)
+            mapStyleOptions = MapStyleManager.getMapStyle(context, isDarkTheme)
         )
     }
     
@@ -134,8 +144,30 @@ fun MapOSScreen(
             )
         }
 
-// DiscoveryOverlay removed per request 
-        
+        // My Location FAB
+        androidx.compose.material3.SmallFloatingActionButton(
+            onClick = { 
+                val loc = lastLocation
+                if (loc != null) {
+                    scope.launch {
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLngZoom(loc, 15f),
+                            1000
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 180.dp, end = 24.dp), // Position above Social FAB
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Icon(
+                 imageVector = Icons.Default.MyLocation,
+                 contentDescription = "My Location"
+            )
+        }
+
         // Dialogs
         if (showSocialOptions) {
             androidx.compose.material3.AlertDialog(
@@ -202,4 +234,3 @@ fun MapOSScreen(
         }
     }
 }
-

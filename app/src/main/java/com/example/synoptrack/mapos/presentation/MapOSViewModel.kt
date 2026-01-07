@@ -20,7 +20,8 @@ import javax.inject.Inject
 class MapOSViewModel @Inject constructor(
     private val locationService: LocationService,
     private val socialRepository: SocialRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val presenceRepository: com.example.synoptrack.core.presence.domain.repository.PresenceRepository
 ) : ViewModel() {
 
     private val _lastKnownLocation = MutableStateFlow<LatLng?>(null)
@@ -43,7 +44,10 @@ class MapOSViewModel @Inject constructor(
         viewModelScope.launch {
             locationService.requestLocationUpdates().collect { location ->
                 _lastKnownLocation.value = LatLng(location.latitude, location.longitude)
-                // TODO: Upload this location to Firestore via PresenceService in next step
+                // Stream location to Presence System
+                launch {
+                     presenceRepository.updateLocation(location)
+                }
             }
         }
     }
