@@ -41,6 +41,9 @@ class PresenceForegroundService : Service() {
         return START_STICKY
     }
 
+    private var lastUpdateTimestamp = 0L
+    private var lastLocation: android.location.Location? = null
+
     private fun start() {
         val notification = createNotification()
         startForeground(1, notification)
@@ -48,8 +51,17 @@ class PresenceForegroundService : Service() {
         locationService.requestLocationUpdates()
             .catch { e -> e.printStackTrace() }
             .onEach { location ->
-                val (level, charging) = getBatteryStatus()
-                presenceRepository.updateLocation(location, level, charging)
+                val currentTime = System.currentTimeMillis()
+                val timeDiff = currentTime - lastUpdateTimestamp
+                val distanceDiff = lastLocation?.distanceTo(location) ?: Float.MAX_VALUE
+
+                // Throttle: Update only if >10s passed OR moved >15m
+                if (timeDiff > 10000L || distanceDiff > 15f) {
+                    val (level, charging) = getBatteryStatus()
+                    presenceRepository.updateLocation(location, level, charging)
+                    lastUpdateTimestamp = currentTime
+                    lastLocation = location
+                }
             }
             .launchIn(serviceScope)
     }

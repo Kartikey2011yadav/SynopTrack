@@ -32,8 +32,9 @@ class LocationServiceImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override fun requestLocationUpdates(): Flow<Location> = callbackFlow {
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L).apply {
-            setMinUpdateIntervalMillis(1000L)
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000L).apply {
+            setMinUpdateIntervalMillis(5000L)
+            setMinUpdateDistanceMeters(10f) // Only trigger if moved 10 meters
             setWaitForAccurateLocation(false)
         }.build()
 
