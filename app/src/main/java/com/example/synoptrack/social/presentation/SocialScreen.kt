@@ -23,10 +23,11 @@ import com.example.synoptrack.social.presentation.components.JoinGroupDialog
 
 @Composable
 fun SocialScreen(
-    viewModel: MapOSViewModel = hiltViewModel() // Sharing logic for now
+    viewModel: MapOSViewModel = hiltViewModel()
 ) {
     val activeGroup by viewModel.activeGroup.collectAsState()
     val groupMembers by viewModel.groupMembers.collectAsState()
+    val isGhostMode by viewModel.isGhostMode.collectAsState()
     
     var showCreateDialog by remember { mutableStateOf(false) }
     var showJoinDialog by remember { mutableStateOf(false) }
@@ -35,121 +36,141 @@ fun SocialScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
+            .padding(top = 48.dp) // Status bar spacing
     ) {
+        // Header
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 "Connect", 
-                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
-            
-            IconButton(onClick = { /* TODO: Notification Center */ }) {
-                // Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-            }
-        }
-
-        // Active Convoy Section
-        val isGhostMode by viewModel.isGhostMode.collectAsState()
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Active Convoy",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (isGhostMode) "Ghost ON" else "Ghost OFF",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isGhostMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(
-                    checked = isGhostMode,
-                    onCheckedChange = { viewModel.toggleGhostMode() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.error,
-                        checkedTrackColor = MaterialTheme.colorScheme.errorContainer
+            // Ghost Mode Toggle (Mini)
+            Surface(
+                onClick = { viewModel.toggleGhostMode() },
+                shape = CircleShape,
+                color = if (isGhostMode) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.clip(CircleShape)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (isGhostMode) "Ghost ON" else "Visible",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isGhostMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                )
+                }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
 
+        // Active Convoy Card (Gradient)
         if (activeGroup != null) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            activeGroup?.name ?: "Unknown Group",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column {
+                            Text(
+                                "Active Convoy",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                activeGroup?.name ?: "Unknown Group",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                         Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f)
                         ) {
                             Text(
-                                "CODE: ${activeGroup?.inviteCode}",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
+                                activeGroup?.inviteCode ?: "---",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("${groupMembers.size} Active Members", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "${groupMembers.size} Members active now",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
                 }
             }
         } else {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Empty State / Actions
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = { showCreateDialog = true },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Create Convoy")
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("New Convoy")
                 }
-                OutlinedButton(
+                FilledTonalButton(
                     onClick = { showJoinDialog = true },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 ) {
-                    Text("Join Convoy")
+                    Text("Join Code")
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Chats / Activity Placeholder
+        // Recent Activity / Chat Placeholder
         Text(
             "Recent Activity",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(16.dp))
         
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No recent chats", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        // Mock List
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(1) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("S", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("System", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                        Text("Welcome to SynopTrack 2.0!", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                    }
+                }
+            }
         }
     }
 
