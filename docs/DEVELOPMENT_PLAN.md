@@ -18,29 +18,40 @@ This document outlines the strategic roadmap for SynopTrack. We have transitione
 - [x] Profile Foundation (`profile`)
 - [x] Basic Jetpack Compose Setup
 
+### 🚦 Phase 0.5: Onboarding & Gatekeeping (New)
+
+**Goal**: Smart Onboarding & Permissions Flow.
+
+- [ ] **Smart Registration**: Display Name, Profile Picture setup.
+- [ ] **Permission Gate**: Educational flow for Location permissions.
+- [ ] **State Preservation**: Ensure users return to the correct step if they exit.
+
 ### 🚧 Phase 1: Map OS Core (In Progress)
 
 **Goal**: Make the map the permanent operating system.
 
 - [ ] **Permanent Map Host**: Activity/Scaffold restructuring.
 - [ ] **Floating UI Layer**: System for panels over the map.
+- [ ] **Places & Search Layer**: Floating Search Bar, Quick Chips (Restaurants, Gas).
 - [ ] **State-Based Navigation**: Removing BottomNav for a fluid state machine.
 - [ ] **Global UI State Store**: Central source of truth for UI visibility.
 - [ ] **Theming**: Dark/Light runtime toggle.
 
-### 🔮 Phase 2: Realtime Presence Engine
+### 🔮 Phase 2: Realtime Presence & Social Graph
 
-**Goal**: Make the app alive.
+**Goal**: Make the app alive and connected.
 
+- [ ] **Social Graph Engine**: Group Management, Invite Logic (Links/QR).
 - [ ] RTDB Heartbeat Model
 - [ ] Location Streaming Service
 - [ ] Ghost Mode (Privacy controls)
 - [ ] Offline Caching Strategy
 
-### 🔮 Phase 3: Ephemeral Chat Engine
+### 🔮 Phase 3: Ephemeral Chat & Engagement
 
 **Goal**: Make the app emotionally sticky.
 
+- [ ] **Notification Infrastructure**: FCM Integration (Background engagement).
 - [ ] Chat UI (Snap-style style)
 - [ ] Vanish Timers & TTL
 - [ ] Local Room Persistence

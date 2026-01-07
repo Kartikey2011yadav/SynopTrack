@@ -8,14 +8,18 @@
 ## 📋 To Do (Immediate - Phase 1)
 
 - [ ] **Refactor Navigation**: Remove existing BottomBar if present, implement `MapOS` navigation state.
+- [ ] **Onboarding Flow**: Implement Registration logic and Permission Gates (Phase 0.5).
 - [ ] **Map Host Screen**: Create the `MapScreen` as the root composable.
+- [ ] **Search UI**: Implement Floating Search Bar and Chips (Phase 1).
 - [ ] **Floating Panels**: Create generic `OverlayPanel` composables for Chat, Profile, etc.
 - [ ] **Theme Toggle**: Implement dynamic theme switching in `core`.
 
 ## 📌 Backlog (Future Phases)
 
 - [ ] Implement `PresenceRepository` (Phase 2)
+- [ ] Implement `GroupRepository` (Social Graph) (Phase 2)
 - [ ] Implement `ChatRepository` with Room (Phase 3)
+- [ ] Setup FCM Service (Phase 3)
 - [ ] Design "Ghost Mode" logic (Phase 2)
 
 ## ✅ Done
