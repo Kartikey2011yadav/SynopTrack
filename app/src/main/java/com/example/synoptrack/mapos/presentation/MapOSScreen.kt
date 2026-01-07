@@ -87,12 +87,19 @@ fun MapOSScreen(
             intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_STOP
             context.startService(intent) // Triggers onStartCommand with STOP action
         } else {
-            // Start Service if not in Ghost Mode (and permission granted - assumed for now or handled by service)
-            intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_START
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            // Check permissions before starting foreground service
+            val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+            if (hasPermission) {
+                intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_START
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
             }
         }
     }

@@ -24,5 +24,7 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
     
     // Internal
-
+    object Chat : Screen("chat/{groupId}") {
+        fun createRoute(groupId: String) = "chat/$groupId"
+    }
 }

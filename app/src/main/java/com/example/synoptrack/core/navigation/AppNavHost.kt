@@ -96,7 +96,11 @@ fun AppNavHost() {
                 MapOSScreen()
             }
             composable(Screen.Social.route) {
-                com.example.synoptrack.social.presentation.SocialScreen()
+                com.example.synoptrack.social.presentation.SocialScreen(
+                    onChatClick = { groupId ->
+                        navController.navigate(Screen.Chat.createRoute(groupId))
+                    }
+                )
             }
             composable(Screen.Search.route) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -105,6 +109,14 @@ fun AppNavHost() {
             }
             composable(Screen.Profile.route) {
                 ProfileScreen()
+            }
+            
+            // CHAT
+            composable(
+                route = Screen.Chat.route,
+                arguments = listOf(androidx.navigation.navArgument("groupId") { type = androidx.navigation.NavType.StringType })
+            ) {
+                com.example.synoptrack.social.presentation.chat.ChatScreen(navController)
             }
         }
 

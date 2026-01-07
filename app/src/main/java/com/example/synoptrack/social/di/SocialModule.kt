@@ -17,4 +17,10 @@ abstract class SocialModule {
     abstract fun bindSocialRepository(
         socialRepositoryImpl: SocialRepositoryImpl
     ): SocialRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChatRepository(
+        chatRepositoryImpl: com.example.synoptrack.social.data.repository.ChatRepositoryImpl
+    ): com.example.synoptrack.social.domain.repository.ChatRepository
 }

@@ -23,7 +23,8 @@ import com.example.synoptrack.social.presentation.components.JoinGroupDialog
 
 @Composable
 fun SocialScreen(
-    viewModel: MapOSViewModel = hiltViewModel()
+    viewModel: MapOSViewModel = hiltViewModel(),
+    onChatClick: (String) -> Unit = {}
 ) {
     val activeGroup by viewModel.activeGroup.collectAsState()
     val groupMembers by viewModel.groupMembers.collectAsState()
@@ -73,7 +74,9 @@ fun SocialScreen(
         // Active Convoy Card (Gradient)
         if (activeGroup != null) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onChatClick(activeGroup!!.id) },
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
