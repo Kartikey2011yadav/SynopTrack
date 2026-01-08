@@ -14,6 +14,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SmallFloatingActionButton
@@ -150,9 +154,9 @@ fun MapOSScreen(
         HomeTopBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 48.dp, start = 16.dp, end = 16.dp),
-            onAddClick = { showCreateDialog = true }, // Or Navigate to "New Post/Status"
-            onSocialClick = { showSocialOptions = true } // Eventually navigate to SocialScreen
+                .windowInsetsPadding(WindowInsets.statusBars), // Sit below status bar
+            onAddClick = { showCreateDialog = true }, 
+            onSocialClick = { showSocialOptions = true }
         )
 
         // My Location FAB

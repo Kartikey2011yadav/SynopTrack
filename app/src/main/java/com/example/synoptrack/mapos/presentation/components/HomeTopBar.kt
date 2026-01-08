@@ -1,8 +1,10 @@
 package com.example.synoptrack.mapos.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
@@ -24,7 +27,10 @@ fun HomeTopBar(
     onSocialClick: () -> Unit
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background) // Opaque background
+            .padding(vertical = 12.dp, horizontal = 16.dp), // Check padding logic in parent
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -33,7 +39,7 @@ fun HomeTopBar(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Add",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -42,10 +48,10 @@ fun HomeTopBar(
             text = "SynopTrack",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Cursive, // Placeholder for a custom script font
+                fontFamily = FontFamily.Cursive,
                 fontSize = 28.sp
             ),
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         // Right: Social / Notifications
@@ -53,7 +59,7 @@ fun HomeTopBar(
             Icon(
                 imageVector = Icons.Outlined.FavoriteBorder,
                 contentDescription = "Social",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
     }

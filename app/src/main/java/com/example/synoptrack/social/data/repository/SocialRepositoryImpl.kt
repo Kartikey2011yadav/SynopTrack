@@ -126,6 +126,78 @@ class SocialRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun addFriend(inviteCode: String, userId: String): Result<Unit> {
+        return try {
+            // 1. Find user by invite code
+            val query = firestore.collection("users")
+                .whereEqualTo("inviteCode", inviteCode)
+                .limit(1)
+                .get()
+                .await()
+
+            if (query.isEmpty) {
+                return Result.failure(Exception("Invalid invite code"))
+            }
+
+            val friendDoc = query.documents.first()
+            val friendId = friendDoc.id
+
+            if (friendId == userId) {
+                return Result.failure(Exception("You cannot add yourself"))
+            }
+
+            // 2. Add to mutual friends subcollection
+            val batch = firestore.batch()
+            
+            // Add Friend to My List
+            val myFriendRef = firestore.collection("users").document(userId)
+                .collection("friends").document(friendId)
+            batch.set(myFriendRef, mapOf("uid" to friendId, "addedAt" to FieldValue.serverTimestamp()))
+
+            // Add Me to Friend's List
+            val friendFriendRef = firestore.collection("users").document(friendId)
+                .collection("friends").document(userId)
+            batch.set(friendFriendRef, mapOf("uid" to userId, "addedAt" to FieldValue.serverTimestamp()))
+
+            batch.commit().await()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override fun getFriends(userId: String): Flow<List<UserProfile>> = callbackFlow {
+        val listener = firestore.collection("users").document(userId)
+            .collection("friends")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    val friendIds = snapshot.documents.mapNotNull { it.getString("uid") }
+                    if (friendIds.isNotEmpty()) {
+                        // Batch fetch profiles (limit 10 per 'in' query usually, need chunking for production)
+                        // Ideally strictly cap friends or use pagination. For now, simple 'whereIn'.
+                        firestore.collection("users")
+                            .whereIn("uid", friendIds.take(10)) 
+                            .get()
+                            .addOnSuccessListener { result ->
+                                val friends = result.toObjects(UserProfile::class.java)
+                                trySend(friends)
+                            }
+                    } else {
+                        trySend(emptyList())
+                    }
+                } else {
+                    trySend(emptyList())
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
     private fun generateInviteCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return (1..6)

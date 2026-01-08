@@ -19,6 +19,7 @@ data class UserProfile(
     val batteryLevel: Int = -1,
     val isCharging: Boolean = false,
     val phoneNumber: String? = null,
+    val inviteCode: String = "", // Unique 6-char code
     @ServerTimestamp
     val lastActiveAt: Date? = null
 )

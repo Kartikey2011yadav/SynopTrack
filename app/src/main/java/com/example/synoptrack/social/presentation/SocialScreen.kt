@@ -4,9 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.GroupAdd
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
@@ -21,19 +25,35 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.core.theme.LiveTeal
 import com.example.synoptrack.mapos.presentation.MapOSViewModel
+import com.example.synoptrack.social.presentation.components.AddFriendDialog
 import com.example.synoptrack.social.presentation.components.CreateGroupDialog
 import com.example.synoptrack.social.presentation.components.JoinGroupDialog
 
 @Composable
 fun SocialScreen(
-    viewModel: MapOSViewModel = hiltViewModel(),
+    mapViewModel: MapOSViewModel = hiltViewModel(),
+    socialViewModel: SocialViewModel = hiltViewModel(),
     onChatClick: (String) -> Unit = {}
 ) {
-    val activeGroup by viewModel.activeGroup.collectAsState()
-    val groupMembers by viewModel.groupMembers.collectAsState()
+    val activeGroup by mapViewModel.activeGroup.collectAsState()
+    val groupMembers by mapViewModel.groupMembers.collectAsState()
+    val isConvoyActive by mapViewModel.isConvoyActive.collectAsState()
+
+    val friends by socialViewModel.friends.collectAsState()
+    val groups by socialViewModel.groups.collectAsState()
+    val toastMessage by socialViewModel.toastMessage.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showJoinDialog by remember { mutableStateOf(false) }
+    var showAddFriendDialog by remember { mutableStateOf(false) }
+
+    // Toast Effect
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let {
+            // In a real app, use SnackbarHostState
+             socialViewModel.clearToast()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -44,169 +64,105 @@ fun SocialScreen(
     ) {
         // Header
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Connect", 
+                "Social", 
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
-        }
-
-        // Active Convoy Section
-        val isConvoyActive by viewModel.isConvoyActive.collectAsState()
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Active Convoy",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
             
-            // Status Indicator
-             Surface(
-                shape = CircleShape,
-                color = if (isConvoyActive) LiveTeal.copy(alpha = 0.1f) else Color.Gray.copy(alpha = 0.1f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(if (isConvoyActive) LiveTeal else Color.Gray)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        if (isConvoyActive) "LIVE Tracking" else "Passive Mode",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isConvoyActive) LiveTeal else Color.Gray
-                    )
+            // Header Actions
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(onClick = { showAddFriendDialog = true }) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = "Add Friend", tint = MaterialTheme.colorScheme.primary)
+                }
+                IconButton(onClick = { showJoinDialog = true }) {
+                    Icon(Icons.Default.GroupAdd, contentDescription = "Join Group", tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
 
-        if (activeGroup != null) {
+        // Active Convoy Card (If Active)
+        if (isConvoyActive && activeGroup != null) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(bottom = 24.dp)
                     .clickable { onChatClick(activeGroup!!.id) },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer) // Red for Active
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                activeGroup?.name ?: "Unknown Group",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                             Text(
-                                "${groupMembers.size} Members",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
-                        }
-                        Surface(
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f)
-                        ) {
-                            Text(
-                                activeGroup?.inviteCode ?: "---",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-                    
-                    // Convoy Control Button
-                    Button(
-                        onClick = { 
-                            if (isConvoyActive) viewModel.stopConvoy() else viewModel.startConvoy() 
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isConvoyActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                        ),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isConvoyActive) Icons.Default.Stop else Icons.Default.PlayArrow,
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (isConvoyActive) "End Trip" else "Start Convoy")
-                    }
-                }
-            }
-        } else {
-            // Empty State / Actions
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(
-                    onClick = { showCreateDialog = true },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                Row(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("New Convoy")
-                }
-                FilledTonalButton(
-                    onClick = { showJoinDialog = true },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                ) {
-                    Text("Join Code")
+                    Box(
+                         modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Red)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("LIVE Tracking Active", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
+                        Text(activeGroup!!.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { mapViewModel.stopConvoy() }) {
+                        Icon(Icons.Default.Stop, contentDescription = "Stop", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Recent Activity / Chat Placeholder
+        // Section: Chats (Friends & Groups Mixed)
         Text(
-            "Recent Activity",
+            "Chats",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
-        // Mock List
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            items(1) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("S", style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("System", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        Text("Welcome to SynopTrack 2.0!", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            // GROUPS
+            items(groups) { group ->
+                SocialListItem(
+                    name = group.name,
+                    subtitle = "${group.memberIds.size} members",
+                    initial = group.name.take(1).uppercase(),
+                    isOnline = (activeGroup?.id == group.id && isConvoyActive),
+                    onClick = { onChatClick(group.id) }
+                )
+            }
+            
+            // FRIENDS
+            items(friends) { friend ->
+                SocialListItem(
+                    name = friend.displayName.ifEmpty { "Unknown" },
+                    subtitle = if (friend.isCharging) "Charging..." else "Offline", // Placeholder status
+                    initial = friend.displayName.take(1).uppercase(),
+                    imageUrl = friend.avatarUrl,
+                    isOnline = false, // Todo: Real Presence
+                    onClick = { onChatClick(friend.uid) } // Using UID as Chat ID for now
+                )
+            }
+            
+            if (groups.isEmpty() && friends.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                             Text("No friends or groups yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                             Spacer(modifier = Modifier.height(8.dp))
+                             Button(onClick = { showCreateDialog = true }) {
+                                 Text("Create New Group")
+                             }
+                         }
                     }
                 }
             }
@@ -217,7 +173,7 @@ fun SocialScreen(
         CreateGroupDialog(
             onDismiss = { showCreateDialog = false },
             onCreate = { name ->
-                viewModel.createGroup(name)
+                socialViewModel.createGroup(name)
                 showCreateDialog = false
             }
         )
@@ -227,9 +183,64 @@ fun SocialScreen(
         JoinGroupDialog(
             onDismiss = { showJoinDialog = false },
             onJoin = { code ->
-                viewModel.joinGroup(code)
+                socialViewModel.joinGroup(code)
                 showJoinDialog = false
             }
         )
+    }
+    
+    if (showAddFriendDialog) {
+        AddFriendDialog(
+            onDismiss = { showAddFriendDialog = false },
+            onAdd = { code ->
+                socialViewModel.addFriend(code)
+                showAddFriendDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun SocialListItem(
+    name: String,
+    subtitle: String,
+    initial: String,
+    imageUrl: String = "",
+    isOnline: Boolean = false,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(56.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceVariant
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                if (imageUrl.isNotEmpty()) {
+                    // Start of Image Loading (Placeholder)
+                     Text(initial, style = MaterialTheme.typography.titleLarge)
+                } else {
+                    Text(initial, style = MaterialTheme.typography.titleLarge)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        }
+        if (isOnline) {
+             Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(LiveTeal)
+            )
+        }
     }
 }

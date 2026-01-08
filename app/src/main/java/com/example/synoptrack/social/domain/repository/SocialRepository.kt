@@ -9,4 +9,8 @@ interface SocialRepository {
     suspend fun leaveGroup(groupId: String, userId: String): Result<Unit>
     fun getGroupMembers(groupId: String): Flow<List<UserProfile>>
     fun getUserGroups(userId: String): Flow<List<com.example.synoptrack.social.domain.model.Group>>
+    
+    // Friends
+    suspend fun addFriend(inviteCode: String, userId: String): Result<Unit>
+    fun getFriends(userId: String): Flow<List<UserProfile>>
 }

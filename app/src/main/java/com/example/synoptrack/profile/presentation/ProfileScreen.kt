@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,12 +33,14 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val userProfile by viewModel.userProfile.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
-                        "darth_kartikey", // TODO: Get from ViewModel
+                        userProfile?.displayName ?: "Profile",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     ) 
                 },
@@ -57,7 +61,13 @@ fun ProfileScreen(
                 .padding(padding)
         ) {
             // 1. Profile Header
-            ProfileHeader()
+            if (userProfile != null) {
+                ProfileHeader(userProfile!!)
+            } else {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
 
             // 2. Action Buttons
             Row(
@@ -73,7 +83,6 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             // 3. Content Grid (Placeholder for Moments/Trips)
-            // Using a simple grid of squares for "Instagram" feel
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier.fillMaxWidth(),
@@ -97,7 +106,7 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileHeader() {
+fun ProfileHeader(user: com.example.synoptrack.profile.domain.model.UserProfile) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -116,12 +125,17 @@ fun ProfileHeader() {
                     .clip(CircleShape)
                     .border(2.dp, MaterialTheme.colorScheme.surfaceVariant, CircleShape)
             ) {
-                 Icon(
-                    imageVector = Icons.Default.Person, 
-                    contentDescription = null, 
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                 )
+                 if (user.avatarUrl.isNotEmpty()) {
+                     // Placeholder for image loading
+                     Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(40.dp))
+                 } else {
+                     Icon(
+                        imageVector = Icons.Default.Person, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                     )
+                 }
             }
             
             // Stats
@@ -130,9 +144,9 @@ fun ProfileHeader() {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ProfileStat(count = "5", label = "Posts")
-                ProfileStat(count = "2.4K", label = "Friends") // Followers
-                ProfileStat(count = "104", label = "Trips") // Following
+                ProfileStat(count = "0", label = "Posts")
+                ProfileStat(count = "0", label = "Friends") 
+                ProfileStat(count = "0", label = "Trips") 
             }
         }
         
@@ -140,19 +154,30 @@ fun ProfileHeader() {
         
         // Bio Section
         Text(
-            text = "Kartikey",
+            text = user.displayName,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Travel | Tech | Future",
+            text = user.email, // using email as bio placeholder for now
             style = MaterialTheme.typography.bodyMedium
         )
-        Text(
-            text = "synoptrack.com",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        // Invite Code Chip
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.clickable { /* Copy to clipboard */ }
+        ) {
+            Text(
+                text = "Invite Code: ${user.inviteCode}",
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                style = MaterialTheme.typography.labelMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
     }
 }
 

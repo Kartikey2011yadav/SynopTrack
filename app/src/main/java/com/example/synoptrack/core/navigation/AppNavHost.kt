@@ -127,8 +127,8 @@ fun AppNavHost() {
             }
         }
 
-        // Floating Bottom Navigation Over Content
-        GlassBottomNavigation(
+        // Standard Bottom Navigation
+        AppBottomNavigation(
             navController = navController,
             modifier = Modifier.align(Alignment.BottomCenter)
         )

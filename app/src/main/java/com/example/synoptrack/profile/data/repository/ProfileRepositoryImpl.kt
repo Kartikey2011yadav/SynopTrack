@@ -73,6 +73,7 @@ class ProfileRepositoryImpl @Inject constructor(
                 data["createdAt"] = FieldValue.serverTimestamp()
                 data["ghostMode"] = false
                 data["theme"] = "system"
+                data["inviteCode"] = generateInviteCode()
             }
 
             docRef.set(data, SetOptions.merge()).await()
@@ -106,5 +107,11 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+    private fun generateInviteCode(): String {
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return (1..6)
+            .map { chars.random() }
+            .joinToString("")
     }
 }
