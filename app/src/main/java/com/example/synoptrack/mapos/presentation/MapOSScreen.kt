@@ -79,13 +79,13 @@ fun MapOSScreen(
     }
 
     // Service Control Logic
-    val isGhostMode by viewModel.isGhostMode.collectAsState()
+    val isConvoyActive by viewModel.isConvoyActive.collectAsState()
     
-    LaunchedEffect(isGhostMode) {
+    LaunchedEffect(isConvoyActive) {
         val intent = android.content.Intent(context, com.example.synoptrack.core.presence.service.PresenceForegroundService::class.java)
-        if (isGhostMode) {
-            intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_STOP
-            context.startService(intent) // Triggers onStartCommand with STOP action
+        if (!isConvoyActive) {
+            intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_STOP_CONVOY
+            context.startService(intent)
         } else {
             // Check permissions before starting foreground service
             val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
@@ -94,7 +94,7 @@ fun MapOSScreen(
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
             if (hasPermission) {
-                intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_START
+                intent.action = com.example.synoptrack.core.presence.service.PresenceForegroundService.ACTION_START_CONVOY
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     context.startForegroundService(intent)
                 } else {

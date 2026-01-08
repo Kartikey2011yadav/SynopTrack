@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.synoptrack.core.theme.LiveTeal
 import com.example.synoptrack.mapos.presentation.MapOSViewModel
 import com.example.synoptrack.social.presentation.components.CreateGroupDialog
 import com.example.synoptrack.social.presentation.components.JoinGroupDialog
@@ -28,8 +31,7 @@ fun SocialScreen(
 ) {
     val activeGroup by viewModel.activeGroup.collectAsState()
     val groupMembers by viewModel.groupMembers.collectAsState()
-    val isGhostMode by viewModel.isGhostMode.collectAsState()
-    
+
     var showCreateDialog by remember { mutableStateOf(false) }
     var showJoinDialog by remember { mutableStateOf(false) }
 
@@ -51,27 +53,48 @@ fun SocialScreen(
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
-            // Ghost Mode Toggle (Mini)
-            Surface(
-                onClick = { viewModel.toggleGhostMode() },
+        }
+
+        // Active Convoy Section
+        val isConvoyActive by viewModel.isConvoyActive.collectAsState()
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Active Convoy",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            // Status Indicator
+             Surface(
                 shape = CircleShape,
-                color = if (isGhostMode) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.clip(CircleShape)
+                color = if (isConvoyActive) LiveTeal.copy(alpha = 0.1f) else Color.Gray.copy(alpha = 0.1f)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(if (isConvoyActive) LiveTeal else Color.Gray)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        if (isGhostMode) "Ghost ON" else "Visible",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (isGhostMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        if (isConvoyActive) "LIVE Tracking" else "Passive Mode",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isConvoyActive) LiveTeal else Color.Gray
                     )
                 }
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Active Convoy Card (Gradient)
         if (activeGroup != null) {
             Card(
                 modifier = Modifier
@@ -87,16 +110,15 @@ fun SocialScreen(
                     ) {
                         Column {
                             Text(
-                                "Active Convoy",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
                                 activeGroup?.name ?: "Unknown Group",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                             Text(
+                                "${groupMembers.size} Members",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                             )
                         }
                         Surface(
@@ -111,12 +133,26 @@ fun SocialScreen(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "${groupMembers.size} Members active now",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    
+                    // Convoy Control Button
+                    Button(
+                        onClick = { 
+                            if (isConvoyActive) viewModel.stopConvoy() else viewModel.startConvoy() 
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isConvoyActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        ),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isConvoyActive) Icons.Default.Stop else Icons.Default.PlayArrow,
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isConvoyActive) "End Trip" else "Start Convoy")
+                    }
                 }
             }
         } else {

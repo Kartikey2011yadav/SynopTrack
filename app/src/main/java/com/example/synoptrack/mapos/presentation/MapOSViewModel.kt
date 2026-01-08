@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.synoptrack.auth.domain.repository.AuthRepository
 import com.example.synoptrack.core.location.LocationService
 import com.example.synoptrack.profile.domain.model.UserProfile
+import com.example.synoptrack.profile.domain.repository.ProfileRepository
 import com.example.synoptrack.social.domain.model.Group
 import com.example.synoptrack.social.domain.repository.SocialRepository
 import com.google.android.gms.maps.model.LatLng
@@ -21,7 +22,9 @@ class MapOSViewModel @Inject constructor(
     private val locationService: LocationService,
     private val socialRepository: SocialRepository,
     private val authRepository: AuthRepository,
-    private val presenceRepository: com.example.synoptrack.core.presence.domain.repository.PresenceRepository
+    private val profileRepository: ProfileRepository,
+    private val presenceRepository: com.example.synoptrack.core.presence.domain.repository.PresenceRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _lastKnownLocation = MutableStateFlow<LatLng?>(null)
@@ -33,21 +36,55 @@ class MapOSViewModel @Inject constructor(
     private val _activeGroup = MutableStateFlow<Group?>(null)
     val activeGroup: StateFlow<Group?> = _activeGroup.asStateFlow()
 
+    private val _isConvoyActive = MutableStateFlow(false)
+    val isConvoyActive: StateFlow<Boolean> = _isConvoyActive.asStateFlow()
+
+    private val _isGhostMode = MutableStateFlow(false)
+    val isGhostMode: StateFlow<Boolean> = _isGhostMode.asStateFlow()
+
     val currentUser = authRepository.currentUser
 
     init {
         startLocationUpdates()
         startSocialUpdates()
+        observeUserProfile()
+        schedulePassiveUpdates()
+    }
+
+    private fun observeUserProfile() {
+        val uid = currentUser?.uid ?: return
+        viewModelScope.launch {
+            profileRepository.getUserProfile(uid).collect { profile ->
+                if (profile != null) {
+                    _isGhostMode.value = profile.ghostMode
+                }
+            }
+        }
+    }
+
+    private fun schedulePassiveUpdates() {
+        val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.example.synoptrack.core.location.PassiveLocationWorker>(
+             1, java.util.concurrent.TimeUnit.HOURS
+        ).build()
+        
+        androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "passive_location_updates",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
     }
 
     private fun startLocationUpdates() {
         viewModelScope.launch {
-            locationService.requestLocationUpdates().collect { location ->
-                _lastKnownLocation.value = LatLng(location.latitude, location.longitude)
-                // Stream location to Presence System
-                launch {
-                     presenceRepository.updateLocation(location)
+            // This is just for UI (showing Blue Dot), NOT for writing to Firestore
+            try {
+                locationService.requestLocationUpdates().collect { location ->
+                    _lastKnownLocation.value = LatLng(location.latitude, location.longitude)
                 }
+            } catch (e: Exception) {
+                // Likely SecurityException if permissions are missing
+                // Or other location service errors.
+                // Just swallow it prevents crash.
             }
         }
     }
@@ -75,7 +112,7 @@ class MapOSViewModel @Inject constructor(
             socialRepository.getGroupMembers(groupId).collect { profiles ->
                 _groupMembers.value = profiles.mapNotNull { profile ->
                     val location = parseLocation(profile.lastLocation)
-                    if (location != null && profile.uid != currentUser?.uid) { // Don't show self as friend marker
+                    if (location != null && profile.uid != currentUser?.uid) {
                         MemberUiModel(
                             uid = profile.uid,
                             displayName = profile.displayName,
@@ -93,7 +130,6 @@ class MapOSViewModel @Inject constructor(
     }
 
     private fun parseLocation(details: Any?): LatLng? {
-        // Handle GeoPoint (Firestore) or HashMap (if retrieved as Map)
         if (details is com.google.firebase.firestore.GeoPoint) {
             return LatLng(details.latitude, details.longitude)
         }
@@ -118,15 +154,19 @@ class MapOSViewModel @Inject constructor(
             socialRepository.joinGroup(code, uid)
         }
     }
-    private val _isGhostMode = MutableStateFlow(false)
-    val isGhostMode: StateFlow<Boolean> = _isGhostMode.asStateFlow()
 
-    fun toggleGhostMode() {
-        _isGhostMode.value = !_isGhostMode.value
-        // TODO: Start/Stop Foreground Service based on this
-        viewModelScope.launch {
-            // Update Firestore so others know you are ghosting (optional, or just go offline)
-             presenceRepository.setOnlineStatus(!_isGhostMode.value) 
+    fun startConvoy() {
+        _isConvoyActive.value = true
+        // Set status to online immediately for UX
+         viewModelScope.launch {
+             presenceRepository.setOnlineStatus(true)
+        }
+    }
+
+    fun stopConvoy() {
+        _isConvoyActive.value = false
+         viewModelScope.launch {
+             presenceRepository.setOnlineStatus(false)
         }
     }
 }

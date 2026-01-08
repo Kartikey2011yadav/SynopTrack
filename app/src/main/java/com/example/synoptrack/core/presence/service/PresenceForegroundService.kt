@@ -35,8 +35,8 @@ class PresenceForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> start()
-            ACTION_STOP -> stop()
+            ACTION_START_CONVOY -> start()
+            ACTION_STOP_CONVOY -> stop()
         }
         return START_STICKY
     }
@@ -93,7 +93,7 @@ class PresenceForegroundService : Service() {
 
     private fun createNotification(): Notification {
         val channelId = "presence_channel"
-        val channelName = "Location Sharing"
+        val channelName = "Convoy Active"
         val manager = getSystemService(NotificationManager::class.java)
         
         // Ensure channel exists (Oreo+)
@@ -103,15 +103,15 @@ class PresenceForegroundService : Service() {
         }
 
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("SynopTrack Active")
-            .setContentText("Sharing your location with convoy...")
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Use app icon or generic
+            .setContentTitle("Convoy Active")
+            .setContentText("Sharing real-time location with group...")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
             .build()
     }
 
     companion object {
-        const val ACTION_START = "ACTION_START"
-        const val ACTION_STOP = "ACTION_STOP"
+        const val ACTION_START_CONVOY = "ACTION_START_CONVOY"
+        const val ACTION_STOP_CONVOY = "ACTION_STOP_CONVOY"
     }
 }
