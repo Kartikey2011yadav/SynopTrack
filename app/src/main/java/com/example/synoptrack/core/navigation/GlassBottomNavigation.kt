@@ -40,15 +40,15 @@ fun AppBottomNavigation(
         modifier = modifier
     ) {
         Surface(
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 8.dp,
+            color = Color.Black, // Instagram Dark Mode Style
+            contentColor = Color.White,
+            tonalElevation = 0.dp, // Flat for Insta style
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp) // Thinner height (Instagram style)
+                    .height(56.dp) 
                     .padding(horizontal = 8.dp),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceAround,
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -68,18 +68,18 @@ fun AppBottomNavigation(
                             }
                         }
                     ) {
-                        // Instagram Logic: Filled when selected, Outlined when not.
-                        // Assuming Screen.icon allows us to distinguish or we pick icons here.
-                        // Since Screen.icon is generic ImageVector, we'll stick to tints for now, 
-                        // or mapping specific icons if possible. 
-                        // For now, using Primary color for selected, OnSurface for unselected.
-                        // TODO: Update Screen class to hold selected/unselected icons for true Insta feel.
-                        Icon(
-                            imageVector = screen.icon!!,
-                            contentDescription = screen.title,
-                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(26.dp)
-                        )
+                        val icon = if (isSelected) screen.selectedIcon else screen.unselectedIcon
+                        // Fallback to generic icon if specific ones aren't set (though we set them)
+                        val finalIcon = icon ?: screen.icon 
+                        
+                        if (finalIcon != null) {
+                            Icon(
+                                imageVector = finalIcon,
+                                contentDescription = screen.title,
+                                tint = if (isSelected) Color.White else Color.Gray, // White for selected, Gray for unselected
+                                modifier = Modifier.size(28.dp) // Standard size
+                            )
+                        }
                     }
                 }
             }
