@@ -1,339 +1,188 @@
 package com.example.synoptrack.profile.presentation
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Help
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.synoptrack.core.datastore.AppTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    onSettingsClick: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val currentTheme by viewModel.currentTheme.collectAsState()
-    val scrollState = rememberScrollState()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        "darth_kartikey", // TODO: Get from ViewModel
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    ) 
+                },
+                actions = {
+                    IconButton(onClick = { /* New Post */ }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // 1. Profile Header
+            ProfileHeader()
 
+            // 2. Action Buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ProfileActionButton(text = "Edit profile", modifier = Modifier.weight(1f))
+                ProfileActionButton(text = "Share profile", modifier = Modifier.weight(1f))
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 3. Content Grid (Placeholder for Moments/Trips)
+            // Using a simple grid of squares for "Instagram" feel
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(1.dp),
+                horizontalArrangement = Arrangement.spacedBy(1.dp),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                items(15) {
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Placeholder content
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProfileHeader() {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(scrollState)
-    ) {
-        // Premium Header
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(280.dp)
-        ) {
-            // Background Gradient
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.background
-                            )
-                        )
-                    )
-            )
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(top = 40.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Avatar
-                Box(contentAlignment = Alignment.BottomEnd) {
-                    Surface(
-                        modifier = Modifier.size(110.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surface,
-                        shadowElevation = 8.dp
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    // Edit Badge
-                    Surface(
-                        modifier = Modifier.size(32.dp).clickable { },
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        shadowElevation = 4.dp
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Edit,
-                                contentDescription = "Edit",
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "John Doe",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Premium Member",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-            // Invite Banner
-            InviteFriendBanner()
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                "Settings",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
-            )
-
-            // Settings Group
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Column {
-                    SettingsItem(icon = Icons.Default.AccountCircle, title = "Account")
-                    HorizontalDivider(color = MaterialTheme.colorScheme.background.copy(alpha = 0.5f), thickness = 0.5.dp)
-                    SettingsItem(icon = Icons.Default.Lock, title = "Security")
-                    HorizontalDivider(color = MaterialTheme.colorScheme.background.copy(alpha = 0.5f), thickness = 0.5.dp)
-                    SettingsItem(icon = Icons.Default.Payment, title = "Payment")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                "Preferences",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
-            )
-
-             // Preferences Group
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Column {
-                    SettingsItem(icon = Icons.Default.Language, title = "Language", value = "English")
-                    HorizontalDivider(color = MaterialTheme.colorScheme.background.copy(alpha = 0.5f), thickness = 0.5.dp)
-                    ThemeSettingsItem(currentTheme = currentTheme, onThemeSelected = viewModel::setTheme)
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-             // Support Group
-             Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                SettingsItem(icon = Icons.Default.Help, title = "Support")
-            }
-            
-            Spacer(modifier = Modifier.height(120.dp))
-        }
-    }
-}
-
-@Composable
-fun InviteFriendBanner() {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent), // Using gradient box
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(Color(0xFF4C6EF5), Color(0xFF364FC7))
-                    )
-                )
-                .clickable { }
-                .padding(20.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Invite Friends",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Get extended tracking history",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingsItem(
-    icon: ImageVector,
-    title: String,
-    value: String? = null,
-    onClick: () -> Unit = {}
-) {
-    Row(
-        modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        if (value != null) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.size(14.dp)
-        )
-    }
-}
-
-@Composable
-fun ThemeSettingsItem(
-    currentTheme: AppTheme,
-    onThemeSelected: (AppTheme) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.DarkMode,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = "Appearance",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-             ThemeOptionBadge("Light", currentTheme == AppTheme.LIGHT) { onThemeSelected(AppTheme.LIGHT) }
-             ThemeOptionBadge("Dark", currentTheme == AppTheme.DARK) { onThemeSelected(AppTheme.DARK) }
-             ThemeOptionBadge("Auto", currentTheme == AppTheme.SYSTEM) { onThemeSelected(AppTheme.SYSTEM) }
+            // Avatar
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+            ) {
+                 Icon(
+                    imageVector = Icons.Default.Person, 
+                    contentDescription = null, 
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                 )
+            }
+            
+            // Stats
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ProfileStat(count = "5", label = "Posts")
+                ProfileStat(count = "2.4K", label = "Friends") // Followers
+                ProfileStat(count = "104", label = "Trips") // Following
+            }
         }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Bio Section
+        Text(
+            text = "Kartikey",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Travel | Tech | Future",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = "synoptrack.com",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
 @Composable
-fun ThemeOptionBadge(text: String, selected: Boolean, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(50),
-        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background,
-        border = if (!selected) BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)) else null
-    ) {
+fun ProfileStat(count: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface
+            text = count,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+fun ProfileActionButton(text: String, modifier: Modifier = Modifier) {
+    Button(
+        onClick = {},
+        modifier = modifier.height(36.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }

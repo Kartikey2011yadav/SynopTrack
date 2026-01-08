@@ -33,7 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.core.utils.MapStyleManager
-import com.example.synoptrack.mapos.presentation.components.SearchBar
+import com.example.synoptrack.mapos.presentation.components.HomeTopBar
 import com.example.synoptrack.social.presentation.components.CreateGroupDialog
 import com.example.synoptrack.social.presentation.components.JoinGroupDialog
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -146,28 +146,14 @@ fun MapOSScreen(
             }
         }
         
-        // Top Layer: Search Bar
-        SearchBar(
+        // Top Layer: Instagram-style Header
+        HomeTopBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 48.dp, start = 16.dp, end = 16.dp),
-            onMenuClick = { showSocialOptions = true },
-            onSearchClick = { /* Open Search */ }
+            onAddClick = { showCreateDialog = true }, // Or Navigate to "New Post/Status"
+            onSocialClick = { showSocialOptions = true } // Eventually navigate to SocialScreen
         )
-
-        // Social FAB (above discovery overlay)
-        FloatingActionButton(
-            onClick = { showSocialOptions = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 120.dp, end = 16.dp),
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Icon(
-                imageVector = Icons.Default.Group,
-                contentDescription = "Social"
-            )
-        }
 
         // My Location FAB
         SmallFloatingActionButton(

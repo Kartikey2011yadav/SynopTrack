@@ -108,7 +108,14 @@ fun AppNavHost() {
                 }
             }
             composable(Screen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                )
+            }
+            composable(Screen.Settings.route) {
+                com.example.synoptrack.profile.presentation.SettingsScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
             
             // CHAT

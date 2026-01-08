@@ -63,14 +63,28 @@ A dedicated UI step explaining _why_ location is needed before triggering the sy
 
 ## 🤝 Social & Presence
 
-### 6. Social Graph Engine
+### 6. Social Graph Engine (Friends & Groups)
 
-**Phase 2**
-The system responsible for connecting users and managing groups.
+**Phase 2 & 3**
+The system responsible for connecting users.
 
-- **Mechanics**:
-  - **Deep Links**: `synoptrack://join/xyz123` auto-adds users to groups.
-  - **QR Codes**: In-person group joining.
+- **Friends (Mutual)**: Two-way connection. Uses unique Invite Codes to connect. Allows 1:1 Messaging.
+- **Groups (Convoy)**: Multi-user collection for travel. Allows Group Messaging and Location Sharing.
+- **Structure**:
+  - `users/{uid}/friends`: List of connected User IDs.
+  - `groups/{groupId}`: Shared context for Convoys.
+
+### 7. Instagram-Inspired UI Logic
+
+**Phase 3 (Polish)**
+Adopting familiar patterns for navigation and hierarchy.
+
+- **Home (MapOs)**:
+  - **Top Bar**: (+) Add, <App Title>, (Heart) Social/Notifications.
+- **Profile**:
+  - **Header**: Stats (Friends Count) + Bio.
+  - **Settings**: Moved to a dedicated screen, accessible via top-right menu.
+- **Social Screen**: List of active 1:1 chats and Groups.
 
 ### 7. Location Modes (Active vs Passive)
 

@@ -46,17 +46,20 @@ This document outlines the strategic roadmap for SynopTrack. We have transitione
 - [x] **Passive Location**: WorkManager for battery-efficient background updates.
 - [x] **UI Polish**: Glassmorphism/Premium aesthetics for Social & Profile screens.
 
-### 🚧 Phase 3: Ephemeral Chat & Engagement (In Progress)
+### 🚧 Phase 3: Social Overhaul & Chat (In Progress)
 
-**Goal**: Make the app emotionally sticky.
+**Goal**: Make the app emotionally sticky & aesthetically premium (Instagram-inspired).
 
 - [x] **Basic Chat UI**: Snapchat-style bubbles and layout.
-- [x] **Chat Repository**: Firestore integration for messaging.
-- [ ] **Notification Infrastructure**: FCM Integration (Background engagement).
-- [ ] **Vanish Timers & TTL**: Auto-delete old messages.
-- [ ] **Local Persistence**: Room database for offline chat history.
+- [x] **Local Persistence**: Room database for offline chat history.
+- [ ] **Friends System**: Mutual connections via Invite Codes.
+- [ ] **UI Re-Architecture**:
+  - [ ] **Home**: Top Bar ((+), Title, Social Icon).
+  - [ ] **Profile**: Instagram-style Header (Stats, Bio) + Separate Settings Page.
+  - [ ] **Social Screen**: Unified Chat List (Friends + Groups).
+- [ ] **Notification Infrastructure**: FCM Integration.
 
-### 🔮 Phase 3: Ephemeral Chat & Engagement
+### 🔮 Phase 4: Engagement & Stories
 
 **Goal**: Make the app emotionally sticky.
 
