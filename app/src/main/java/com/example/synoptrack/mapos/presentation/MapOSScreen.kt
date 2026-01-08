@@ -152,9 +152,7 @@ fun MapOSScreen(
         
         // Top Layer: Instagram-style Header
         HomeTopBar(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .windowInsetsPadding(WindowInsets.statusBars), // Sit below status bar
+            modifier = Modifier.align(Alignment.TopCenter),
             onAddClick = { showCreateDialog = true }, 
             onSocialClick = { showSocialOptions = true }
         )

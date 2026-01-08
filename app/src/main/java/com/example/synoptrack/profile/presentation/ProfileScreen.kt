@@ -121,27 +121,27 @@ fun ProfileHeader(user: com.example.synoptrack.profile.domain.model.UserProfile)
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(86.dp) // Slightly larger
                     .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                    .border(1.dp, Color.Gray.copy(alpha = 0.5f), CircleShape) // Thinner, subtle border
             ) {
                  if (user.avatarUrl.isNotEmpty()) {
-                     // Placeholder for image loading
-                     Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(40.dp))
+                     // Placeholder
+                     Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(48.dp))
                  } else {
                      Icon(
                         imageVector = Icons.Default.Person, 
                         contentDescription = null, 
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
                      )
                  }
             }
             
             // Stats
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.weight(1f).padding(start = 24.dp), // Add spacing from avatar
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ProfileStat(count = "0", label = "Posts")
@@ -150,32 +150,35 @@ fun ProfileHeader(user: com.example.synoptrack.profile.domain.model.UserProfile)
             }
         }
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // Bio Section
-        Text(
-            text = user.displayName,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = user.email, // using email as bio placeholder for now
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
-        Spacer(modifier = Modifier.height(4.dp))
-        
-        // Invite Code Chip
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.clickable { /* Copy to clipboard */ }
-        ) {
+        Column {
             Text(
-                text = "Invite Code: ${user.inviteCode}",
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                style = MaterialTheme.typography.labelMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                text = user.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            // Invite Code (Clickable)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Invite: ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                 Text(
+                    text = user.inviteCode,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { /* Copy */ }
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = user.email, 
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -186,12 +189,12 @@ fun ProfileStat(count: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = count,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium, // Larger size
             fontWeight = FontWeight.Bold
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
@@ -200,14 +203,18 @@ fun ProfileStat(count: String, label: String) {
 fun ProfileActionButton(text: String, modifier: Modifier = Modifier) {
     Button(
         onClick = {},
-        modifier = modifier.height(36.dp),
+        modifier = modifier.height(34.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant, // Grey background
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        contentPadding = PaddingValues(0.dp)
+        contentPadding = PaddingValues(0.dp),
+        elevation = ButtonDefaults.buttonElevation(0.dp)
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
+        Text(
+            text = text, 
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+        )
     }
 }
