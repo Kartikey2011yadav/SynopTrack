@@ -37,23 +37,24 @@ This document outlines the strategic roadmap for SynopTrack. We have transitione
 - [x] **Global UI State Store**: Central source of truth for UI visibility.
 - [x] **Theming**: Dark/Light runtime toggle.
 
-### 🚧 Phase 2: Realtime Presence & Social Graph (In Progress)
+### ✅ Phase 2: Realtime Presence & Social Graph (Completed)
 
 **Goal**: Make the app alive and connected.
 
-- [ ] **Social Graph Engine**: Group Management, Invite Logic (Links/QR).
-- [ ] RTDB Heartbeat Model
-- [ ] Location Streaming Service
-- [ ] Ghost Mode (Privacy controls)
-- [ ] Offline Caching Strategy
+- [x] **Social Graph Engine**: Group Management, Invite Logic (Links/Codes).
+- [x] **Convoy Service**: Active Foreground Service for real-time tracking.
+- [x] **Passive Location**: WorkManager for battery-efficient background updates.
+- [x] **UI Polish**: Glassmorphism/Premium aesthetics for Social & Profile screens.
 
-**Goal**: Make the app alive and connected.
+### 🚧 Phase 3: Ephemeral Chat & Engagement (In Progress)
 
-- [ ] **Social Graph Engine**: Group Management, Invite Logic (Links/QR).
-- [ ] RTDB Heartbeat Model
-- [ ] Location Streaming Service
-- [ ] Ghost Mode (Privacy controls)
-- [ ] Offline Caching Strategy
+**Goal**: Make the app emotionally sticky.
+
+- [x] **Basic Chat UI**: Snapchat-style bubbles and layout.
+- [x] **Chat Repository**: Firestore integration for messaging.
+- [ ] **Notification Infrastructure**: FCM Integration (Background engagement).
+- [ ] **Vanish Timers & TTL**: Auto-delete old messages.
+- [ ] **Local Persistence**: Room database for offline chat history.
 
 ### 🔮 Phase 3: Ephemeral Chat & Engagement
 

@@ -72,15 +72,24 @@ The system responsible for connecting users and managing groups.
   - **Deep Links**: `synoptrack://join/xyz123` auto-adds users to groups.
   - **QR Codes**: In-person group joining.
 
-### 7. Ghost Mode (Granular Privacy)
+### 7. Location Modes (Active vs Passive)
+
+**Phase 2 (Refactored)**
+A dual-mode location strategies to balance battery life and real-time utility.
+
+- **Modes**:
+  - **Passive (Default)**: Uses `WorkManager` to fetch location periodically (e.g., every 1 hour). Main purpose is to provide "Last Known Location".
+  - **Active Convoy**: Triggered by user ("Start Convoy"). Uses `ForegroundService` for high-frequency (10s) updates.
+  - **Ghost (Offline)**: User can stop sharing entirely (effectively "Offline").
+
+### 8. Convoy-as-a-Service
 
 **Phase 2**
-A privacy control system allowing users to obfuscate their real-time location.
+The "Convoy" is treated as an active session, similar to a navigation trip.
 
-- **States**:
-  - **👻 Ghost (Frozen)**: Stops uploading GPS. Server shows last known location with timestamp ("Frozen 2h ago").
-  - **🌫️ Blurred (Precise-ish)**: Adds random noise (+/- 500m) to coordinates. Friends see a general area circle.
-  - **🟢 Live**: Standard high-accuracy GPS (10-30s updates).
+- **Trigger**: Explicit "Start" and "Stop" actions.
+- **Notification**: Persistent notification ("Convoy Active") ensures the service is not killed.
+- **Privacy**: High-accuracy location is ONLY shared during an active Key.
 
 ---
 

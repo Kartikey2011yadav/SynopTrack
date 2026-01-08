@@ -1,17 +1,15 @@
 # Task Flow
 
-## 🏃 In Progress
+## 🏃 In Progress (Phase 3)
 
-- **Project Analysis**: Analyzing current codebase vs intended architecture.
-- **Documentation**: Setting up `docs/` and plans.
+- **Chat Features**: Implementing TTL and advanced message types.
+- **Notifications**: Setting up FCM for background alerts.
 
-## 📋 To Do (Immediate - Phase 2)
+## 📋 To Do (Immediate)
 
-- [ ] **Social Repository**: Implement logic for creating/joining groups (Social Graph).
-- [ ] **Presence Service**: Implement Heartbeat/Online mechanism.
-- [ ] **Location Streaming**: Realtime updates to DB.
-- [ ] **Group UI**: Screens for "Create Group" and "Invite Members".
-- [ ] **Ghost Mode**: Implement Privacy toggle logic.
+- [ ] **FCM Setup**: Firebase Cloud Messaging for push notifs.
+- [ ] **Chat Persistence**: Cache messages locally using Room.
+- [ ] **Message TTL**: Logic to auto-delete messages after 24h.
 
 ## 📌 Backlog (Future Phases)
 
@@ -28,4 +26,10 @@
 - [x] **Map Host Screen**: Create the `MapScreen` as the root composable.
 - [x] **Search UI**: Implement Floating Search Bar and Chips (Phase 1).
 - [x] **Floating Panels**: Create generic `OverlayPanel` composables for Chat, Profile, etc.
-- [x] **Theme Toggle**: Implement dynamic theme switching in `core`.
+- [x] **Social Repository**: Implement logic for creating/joining groups.
+- [x] **Presence Service**: `PresenceForegroundService` implementation.
+- [x] **Location Architecture**: Refacted to Active (Convoy) vs Passive (Worker).
+- [x] **Group UI**: Create/Join Dialogs and Social Screen.
+- [x] **Chat UI**: Built `ChatScreen` with premium bubble design.
+- [x] **Profile UI**: Premium redesign of `ProfileScreen`.
+- [x] **Ghost Mode**: Pivot to "Convoy-as-a-Service".
