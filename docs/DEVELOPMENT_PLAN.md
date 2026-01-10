@@ -1,98 +1,81 @@
 # Development Plan
 
-This document outlines the strategic roadmap for SynopTrack. We have transitioned from building "Screens" to building "Systems".
+This document outlines the strategic roadmap for SynopTrack. We have transitioned from building "Screens" to building a "Social Location Operating System".
 
 ## 📍 Current Status
 
-**Phase**: `PHASE 1 - MAP OS CORE`
-**Priority**: 🟥 HIGH (Immediate Focus)
+**Phase**: `PHASE 3 - SOCIAL CONNECTION & ENGAGEMENT`
+**Priority**: 🟥 HIGH (Chat & Notifications)
 
 ---
 
 ## 📅 Roadmap
 
-### ✅ Phase 0: Foundation (Completed)
+### ✅ Phase 1: Foundation & Core OS (Completed)
 
-- [x] Project Setup & Dependencies
-- [x] Authentication Module (`auth`)
-- [x] Profile Foundation (`profile`)
-- [x] Basic Jetpack Compose Setup
+**Goal**: Establish the "Map OS" architecture and secure foundations.
 
-### ✅ Phase 0.5: Onboarding & Gatekeeping (Completed)
+- [x] **Authentication**: Firebase Login/Registration with smart onboarding.
+- [x] **Map OS Core**:
+  - [x] Google Maps Integration with Custom Styles (Dark/Retro/Silver).
+  - [x] Persistent Map Host (Activity/Scaffold restructuring).
+  - [x] State-Based Navigation (replacing fragile fragment transactions).
+- [x] **Location Engine**:
+  - [x] **Active Convoy**: Foreground Service for high-frequency updates during trips.
+  - [x] **Passive Tracking**: WorkManager for battery-efficient hourly updates (Ghost Mode).
+  - [x] **Battery Awareness**: Streaming battery level and charging status.
 
-**Goal**: Smart Onboarding & Permissions Flow.
+### ✅ Phase 2: Social Graph & UI Overhaul (Completed)
 
-- [x] **Smart Registration**: Display Name, Profile Picture setup.
-- [x] **Permission Gate**: Educational flow for Location permissions.
-- [x] **State Preservation**: Ensure users return to the correct step if they exit.
+**Goal**: Create a premium, Instagram-inspired aesthetic and foundational social structures.
 
-### ✅ Phase 1: Map OS Core (Completed)
+- [x] **Social Graph**:
+  - [x] **Mutual Friends**: Invite Code logic (6-digit alphanumeric).
+  - [x] **Groups/Convoys**: Create and Join logic.
+  - [x] **Unified Data Layer**: `SocialRepository` handling both Friends and Groups.
+- [x] **UI/UX 2.0 (Instagram Aesthetic)**:
+  - [x] **Home**: Opaque Top Bar (Logo, Add, Social icons).
+  - [x] **Navigation**: Custom "Black" Bottom Navigation with Filled/Outlined icon states.
+  - [x] **Profile**: Premium header with Stats, clickable Invite Code, and clean typography.
+  - [x] **Theme**: Dark Mode optimized with `Color.Black` surfaces.
+- [x] **Local Persistence**: Room Database setup for caching social data and chat.
 
-**Goal**: Make the map the permanent operating system.
+### 🚧 Phase 3: Communication & Real-Time Engagement (Current Focus)
 
-- [x] **Permanent Map Host**: Activity/Scaffold restructuring.
-- [x] **Floating UI Layer**: System for panels over the map.
-- [x] **Places & Search Layer**: Floating Search Bar, Quick Chips (Restaurants, Gas).
-- [x] **State-Based Navigation**: Removing BottomNav for a fluid state machine.
-- [x] **Global UI State Store**: Central source of truth for UI visibility.
-- [x] **Theming**: Dark/Light runtime toggle.
+**Goal**: Make the app "sticky" with real-time conversations and notifications.
 
-### ✅ Phase 2: Realtime Presence & Social Graph (Completed)
+- [ ] **Chat System v1**:
+  - [x] **UI**: Gradient bubbles (Snapchat style).
+  - [ ] **Real-time Messaging**: Firestore subcollection (`messages`) listener.
+  - [ ] **Optimistic UI**: Local display before server confirmation.
+  - [ ] **Unified Social Screen**: List displaying both 1:1 DMs (Friends) and Group Chats.
+- [ ] **Notification Infrastructure**:
+  - [ ] **FCM Integration**: Setup Firebase Cloud Messaging.
+  - [ ] **Triggers**: Notify on "Friend Request", "New Message", "Convoy Started".
+- [ ] **Smart Convoy Features**:
+  - [x] **UI Controls**: "Start/Stop Convoy" directly from Home/Social.
+  - [ ] **Presence Indicators**: "Typing...", "Online".
 
-**Goal**: Make the app alive and connected.
+### 🔮 Phase 4: Discovery & Moments
 
-- [x] **Social Graph Engine**: Group Management, Invite Logic (Links/Codes).
-- [x] **Convoy Service**: Active Foreground Service for real-time tracking.
-- [x] **Passive Location**: WorkManager for battery-efficient background updates.
-- [x] **UI Polish**: Glassmorphism/Premium aesthetics for Social & Profile screens.
+**Goal**: Expand beyond tracking to "Living on the Map".
 
-### 🚧 Phase 3: Social Overhaul & Chat (In Progress)
+- [ ] **Moments/Stories**:
+  - [ ] 24h Geotagged Media.
+  - [ ] Map-based Story viewing.
+- [ ] **Places & Search**:
+  - [ ] Google Places API integration.
+  - [ ] "Meetup Point" selection.
 
-**Goal**: Make the app emotionally sticky & aesthetically premium (Instagram-inspired).
+### 🔮 Phase 5: Intelligence & Safety
 
-- [x] **Basic Chat UI**: Snapchat-style bubbles and layout.
-- [x] **Local Persistence**: Room database for offline chat history.
-- [ ] **Friends System**: Mutual connections via Invite Codes.
-- [ ] **UI Re-Architecture**:
-  - [ ] **Home**: Top Bar ((+), Title, Social Icon).
-  - [ ] **Profile**: Instagram-style Header (Stats, Bio) + Separate Settings Page.
-  - [ ] **Social Screen**: Unified Chat List (Friends + Groups).
-- [ ] **Notification Infrastructure**: FCM Integration.
-
-### 🔮 Phase 4: Engagement & Stories
-
-**Goal**: Make the app emotionally sticky.
-
-- [ ] **Notification Infrastructure**: FCM Integration (Background engagement).
-- [ ] Chat UI (Snap-style style)
-- [ ] Vanish Timers & TTL
-- [ ] Local Room Persistence
-- [ ] Server Purge Logic
-
-### 🔮 Phase 4: Moments / Stories
-
-- [ ] Story Bar UI
-- [ ] Media Viewer
-- [ ] 24h Lifecycle Logic
-
-### 🔮 Phase 5: Convoy Intelligence
-
-- [ ] Distance Matrix Integration
-- [ ] ETA Synchronization
-- [ ] Smart Stop Detection
-
-### 🔮 Phase 6: Trust & Privacy Layer
-
-- [ ] Per-group privacy settings
-- [ ] Emergency Freeze / Panic Button
-- [ ] Data Wipe features
-
-### 🔮 Phase 7: Polish & Scale
-
-- [ ] Advanced Animations
-- [ ] Battery Optimization
-- [ ] Release Hardening
+- [ ] **Safety Core**:
+  - [ ] Emergency Panic Button.
+  - [ ] "Freeze Location" privacy mode.
+- [ ] **Convoy Intelligence**:
+  - [ ] ETA Calculation (Distance Matrix).
+  - [ ] Automatic "Arrived" notifications.
 
 ---
 
-_Created by Antigravity - Senior Project Lead_
+_Maintained by Antigravity - Senior Project Lead_

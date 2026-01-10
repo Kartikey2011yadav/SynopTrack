@@ -1,35 +1,43 @@
-# Task Flow
+# Task Flow & Progress Tracker
 
-## 🏃 In Progress (Phase 3)
+## 🟢 Phase 3: Communication & Real-Time Engagement (Active)
 
-- **Chat Features**: Implementing TTL and advanced message types.
-- **Notifications**: Setting up FCM for background alerts.
+### Step 1: Real-Time Chat System
 
-## 📋 To Do (Immediate)
+- [ ] **Data Layer**: Implement `sendMessage()` and `observeMessages()` in `ChatRepository`.
+- [ ] **Domain Layer**: Create `SendMessageUseCase` and `GetMessagesUseCase`.
+- [ ] **UI Layer (SocialScreen)**: Finalize Unified List (Friends + Groups) with real data.
+- [ ] **UI Layer (ChatScreen)**: Connect UI to live Firestore stream. Add "Typing" indicators.
 
-- [ ] **FCM Setup**: Firebase Cloud Messaging for push notifs.
-- [ ] **Chat Persistence**: Cache messages locally using Room.
-- [ ] **Message TTL**: Logic to auto-delete messages after 24h.
+### Step 2: Notifications (FCM)
 
-## 📌 Backlog (Future Phases)
+- [ ] **Setup**: Configure FCM in Firebase Console and Android App.
+- [ ] **Service**: Create `MyFirebaseMessagingService` to handle incoming data payloads.
+- [ ] **Local Handling**: Show system notifications for background messages.
+- [ ] **Deep Linking**: Tap notification -> Open specific Chat/Map location.
 
-- [ ] Implement `ChatRepository` with Room (Phase 3)
-- [ ] Setup FCM Service (Phase 3)
+### Step 3: Social Refinements
 
-## ✅ Done
+- [ ] **Friend Requests**: (Optional) UI for "Accept/Decline" if we move away from simple Code Invite.
+- [ ] **Profile**: Show real "Post/Friend/Trip" counts (currently hardcoded to 0).
 
-- [x] Initial Project Analysis
-- [x] `docs/` folder creation
-- [x] `dump` file analysis
-- [x] **Refactor Navigation**: Remove existing BottomBar if present, implement `MapOS` navigation state.
-- [x] **Onboarding Flow**: Implement Registration logic and Permission Gates (Phase 0.5).
-- [x] **Map Host Screen**: Create the `MapScreen` as the root composable.
-- [x] **Search UI**: Implement Floating Search Bar and Chips (Phase 1).
-- [x] **Floating Panels**: Create generic `OverlayPanel` composables for Chat, Profile, etc.
-- [x] **Social Repository**: Implement logic for creating/joining groups.
-- [x] **Presence Service**: `PresenceForegroundService` implementation.
-- [x] **Location Architecture**: Refacted to Active (Convoy) vs Passive (Worker).
-- [x] **Group UI**: Create/Join Dialogs and Social Screen.
-- [x] **Chat UI**: Built `ChatScreen` with premium bubble design.
-- [x] **Profile UI**: Premium redesign of `ProfileScreen`.
-- [x] **Ghost Mode**: Pivot to "Convoy-as-a-Service".
+## 🟡 Phase 4: Discovery & Moments (Planned)
+
+### Step 1: Places API
+
+- [ ] Enable Places SDK.
+- [ ] Implement Search Bar with Autocomplete.
+
+### Step 2: Geotagged Stories
+
+- [ ] Camera integration.
+- [ ] Upload media to Firebase Storage with Location metadata.
+- [ ] Render Story Markers on Map.
+
+---
+
+### Archive (Completed)
+
+- [x] Phase 1: Map OS Core (Google Maps, Location Service).
+- [x] Phase 2: Social Graph (Friends, Groups, Invite Codes).
+- [x] UI Overhaul: Instagram-style Home, Profile, and Navigation.
