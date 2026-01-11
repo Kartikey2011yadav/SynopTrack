@@ -52,12 +52,22 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 
+import com.example.synoptrack.MainViewModel
+
 @Composable
 fun MapOSScreen(
-    viewModel: MapOSViewModel = hiltViewModel()
+    viewModel: MapOSViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val isDarkTheme = isSystemInDarkTheme()
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val appTheme by mainViewModel.theme.collectAsState(initial = com.example.synoptrack.core.datastore.AppTheme.SYSTEM)
+
+    val isDarkTheme = when (appTheme) {
+        com.example.synoptrack.core.datastore.AppTheme.LIGHT -> false
+        com.example.synoptrack.core.datastore.AppTheme.DARK -> true
+        com.example.synoptrack.core.datastore.AppTheme.SYSTEM -> systemInDarkTheme
+    }
 
     val singapore = LatLng(1.35, 103.87)
     val cameraPositionState = rememberCameraPositionState {

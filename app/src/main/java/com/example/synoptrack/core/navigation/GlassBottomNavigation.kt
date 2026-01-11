@@ -40,8 +40,8 @@ fun AppBottomNavigation(
         modifier = modifier
     ) {
         Surface(
-            color = Color.Black, // Instagram Dark Mode Style
-            contentColor = Color.White,
+            color = MaterialTheme.colorScheme.background, // Black (Dark) / White (Light)
+            contentColor = MaterialTheme.colorScheme.onBackground,
             tonalElevation = 0.dp, // Flat for Insta style
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -69,15 +69,14 @@ fun AppBottomNavigation(
                         }
                     ) {
                         val icon = if (isSelected) screen.selectedIcon else screen.unselectedIcon
-                        // Fallback to generic icon if specific ones aren't set (though we set them)
                         val finalIcon = icon ?: screen.icon 
                         
                         if (finalIcon != null) {
                             Icon(
                                 imageVector = finalIcon,
                                 contentDescription = screen.title,
-                                tint = if (isSelected) Color.White else Color.Gray, // White for selected, Gray for unselected
-                                modifier = Modifier.size(28.dp) // Standard size
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, 
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                     }
