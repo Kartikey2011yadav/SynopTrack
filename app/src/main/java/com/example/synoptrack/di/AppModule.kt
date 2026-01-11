@@ -43,6 +43,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideFirebaseStorage(): com.google.firebase.storage.FirebaseStorage {
+        return com.google.firebase.storage.FirebaseStorage.getInstance()
+    }
+
+    @Provides
+    @Singleton
     fun provideProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository {
         return impl
     }

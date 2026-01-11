@@ -38,7 +38,7 @@ fun HomeTopBar(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced vertical padding
+                .padding(horizontal = 16.dp, vertical = 4.dp), // Reduced vertical padding
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

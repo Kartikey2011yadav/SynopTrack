@@ -12,7 +12,8 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val storage: com.google.firebase.storage.FirebaseStorage
 ) : ProfileRepository {
 
     override fun getUserProfile(uid: String): Flow<UserProfile?> = callbackFlow {
@@ -74,6 +75,8 @@ class ProfileRepositoryImpl @Inject constructor(
                 data["ghostMode"] = false
                 data["theme"] = "system"
                 data["inviteCode"] = generateInviteCode()
+                data["isPrivate"] = false // Default
+                data["bio"] = ""
             }
 
             docRef.set(data, SetOptions.merge()).await()
@@ -108,6 +111,35 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun uploadProfilePicture(uid: String, imageBytes: ByteArray): Result<String> {
+        return try {
+            val ref = storage.reference.child("users/$uid/profile_pic.webp")
+            ref.putBytes(imageBytes).await()
+            val downloadUrl = ref.downloadUrl.await()
+            
+            // Update Firestore immediately
+            firestore.collection("users").document(uid)
+                .update("avatarUrl", downloadUrl.toString())
+                .await()
+                
+            Result.success(downloadUrl.toString())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePrivacy(uid: String, isPrivate: Boolean): Result<Unit> {
+        return try {
+            firestore.collection("users").document(uid)
+                .update("isPrivate", isPrivate)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun generateInviteCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return (1..6)

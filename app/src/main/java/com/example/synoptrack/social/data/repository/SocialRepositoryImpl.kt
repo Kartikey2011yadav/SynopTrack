@@ -11,9 +11,12 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
+import android.net.Uri
+import com.google.firebase.storage.FirebaseStorage
 
 class SocialRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val storage: FirebaseStorage
 ) : SocialRepository {
 
     override suspend fun createGroup(name: String, ownerId: String): Result<String> {
@@ -197,6 +200,7 @@ class SocialRepositoryImpl @Inject constructor(
             }
         awaitClose { listener.remove() }
     }
+
 
     private fun generateInviteCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

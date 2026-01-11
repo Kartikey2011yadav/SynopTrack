@@ -13,6 +13,10 @@ data class UserProfile(
     val ghostMode: Boolean = false,
     val theme: String = "system", // "system", "dark", "light"
     val lastLocation: Any? = null, // GeoPoint or Map
+    
+    // Privacy & Bio
+    val isPrivate: Boolean = false,
+    val bio: String = "",
 
     // New fields for Premium/Social features
     val fcmToken: String = "",
