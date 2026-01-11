@@ -48,8 +48,9 @@ fun AppBottomNavigation(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp) 
-                    .padding(horizontal = 8.dp),
+                    .height(70.dp) // Taller to allow spacing
+                    .padding(horizontal = 8.dp)
+                    .padding(bottom = 12.dp), // Explicit spacing below icons
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceAround,
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
