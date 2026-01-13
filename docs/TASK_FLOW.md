@@ -18,8 +18,9 @@
 
 ### Step 3: Social Refinements
 
-- [ ] **Friend Requests**: (Optional) UI for "Accept/Decline" if we move away from simple Code Invite.
-- [ ] **Profile**: Show real "Post/Friend/Trip" counts (currently hardcoded to 0).
+- [x] **Profile Refactor**: Dual-State UI (My Profile vs Other), Privacy Mode, and Image Uploads.
+- [ ] **Friend Requests**: UI for "Accept/Decline" (Logic partially implemented in ViewModel).
+- [x] **Profile Stats**: Connected to SocialRepository (Friends/Groups count).
 
 ## 🟡 Phase 4: Discovery & Moments (Planned)
 
