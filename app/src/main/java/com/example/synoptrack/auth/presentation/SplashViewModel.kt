@@ -31,15 +31,25 @@ class SplashViewModel @Inject constructor(
         viewModelScope.launch {
             val currentUser = authRepository.currentUser
             if (currentUser != null) {
-                // Check if profile exists
-                val profile = profileRepository.getUserProfile(currentUser.uid).first()
-                if (profile != null) {
-                    _destination.value = Screen.Home.route
-                } else {
-                    _destination.value = Screen.Registration.route
-                }
+                // Check if profile exists and is complete
+                authRepository.getUserStatus(currentUser.uid)
+                    .onSuccess { status ->
+                        when (status) {
+                            com.example.synoptrack.auth.domain.repository.UserStatus.COMPLETE -> {
+                                _destination.value = Screen.Home.route
+                            }
+                            else -> {
+                                // New or Incomplete
+                                _destination.value = Screen.ProfileSetup.route
+                            }
+                        }
+                    }
+                    .onFailure {
+                        // Fallback to Welcome on error
+                        _destination.value = Screen.Welcome.route
+                    }
             } else {
-                _destination.value = Screen.Login.route
+                _destination.value = Screen.Welcome.route
             }
         }
     }

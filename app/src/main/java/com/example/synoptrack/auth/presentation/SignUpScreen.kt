@@ -11,8 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.runtime.*
@@ -32,9 +30,8 @@ import com.example.synoptrack.core.theme.ElectricBluePrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
-    onNavigateToSignUp: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit,
+fun SignUpScreen(
+    onNavigateToLogin: () -> Unit,
     onNavigateToPhone: () -> Unit,
     onNavigateToGoogle: () -> Unit,
     onNavigateToProfileSetup: () -> Unit,
@@ -54,10 +51,11 @@ fun LoginScreen(
         }
     }
     
-    // UI State
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var isConfirmPasswordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -82,27 +80,22 @@ fun LoginScreen(
                 .verticalScroll(androidx.compose.foundation.rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
-            // Header Image (Optional, if fits design. User said "just in two pages" - Login could be one)
+            // Header Image
 //             Image(
-//                painter = painterResource(id = R.drawable.credentials),
+//                painter = painterResource(id = R.drawable.register),
 //                contentDescription = null,
 //                modifier = Modifier
 //                    .fillMaxWidth()
 //                    .height(200.dp),
 //                contentScale = ContentScale.Fit
 //            )
-//
+            
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "Login Now To Your Account.",
+                text = "Sign Up To Your Account.",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = Color.White
-            )
-            Text(
-                text = "Access your account to manage settings, explore features.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -158,42 +151,64 @@ fun LoginScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Remember Me & Forgot Password
-            Row(
+             // Confirm Password Input
+            Text("Confirm Password", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                placeholder = { Text("********") },
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = rememberMe,
-                        onClick = { rememberMe = !rememberMe },
-                        colors = RadioButtonDefaults.colors(selectedColor = ElectricBluePrimary, unselectedColor = Color.Gray)
-                    )
-                    Text("Remember me", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF1E1E1E),
+                    unfocusedContainerColor = Color(0xFF1E1E1E),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = ElectricBluePrimary,
+                    unfocusedBorderColor = Color.Transparent
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val image = if (isConfirmPasswordVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff
+                    IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
+                        Icon(imageVector = image, contentDescription = null, tint = Color.Gray)
+                    }
                 }
-                
-                Text(
-                    text = "Forgot password?",
-                    color = ElectricBluePrimary,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.clickable { onNavigateToForgotPassword() }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Remember Me
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(
+                    selected = rememberMe,
+                    onClick = { rememberMe = !rememberMe },
+                    colors = RadioButtonDefaults.colors(selectedColor = ElectricBluePrimary, unselectedColor = Color.Gray)
                 )
+                Text("Remember me", color = Color.White, style = MaterialTheme.typography.bodySmall)
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Login Button
+            // Sign Up Button
             Button(
-                onClick = { viewModel.signInWithEmail(email, password) },
+                onClick = { 
+                    if (password == confirmPassword) {
+                        viewModel.signUpWithEmail(email, password) 
+                    } else {
+                        // Ideally show error toast
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ElectricBluePrimary)
             ) {
                 if (signInState is SignInState.Loading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Login", color = Color.Black, fontWeight = FontWeight.Bold)
+                     Text("Sign UP", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
             
@@ -219,7 +234,7 @@ fun LoginScreen(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
             ) {
-                Text("Sign in with Google") // Add Google Icon if available
+                Text("Sign in with Google") 
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -231,7 +246,7 @@ fun LoginScreen(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
             ) {
-                Text("Continue with Phone") // Add Apple/Phone Icon
+                Text("Continue with Phone")
             }
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -243,10 +258,10 @@ fun LoginScreen(
             ) {
                 Text("Don't have an account? ", color = Color.Gray)
                 Text(
-                    text = "Sign Up",
+                    text = "Login",
                     color = ElectricBluePrimary,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onNavigateToSignUp() }
+                    modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))

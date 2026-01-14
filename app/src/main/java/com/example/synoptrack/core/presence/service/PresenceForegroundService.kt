@@ -105,7 +105,7 @@ class PresenceForegroundService : Service() {
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle("Convoy Active")
             .setContentText("Sharing real-time location with group...")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .build()
     }

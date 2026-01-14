@@ -16,8 +16,13 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
 
     // Auth & Onboarding
     object Splash : Screen("splash")
+    object Welcome : Screen("welcome")
     object Login : Screen("login")
-    object Registration : Screen("registration")
+    object SignUp : Screen("sign_up")
+    object ForgotPassword : Screen("forgot_password")
+    object PhoneLogin : Screen("phone_login")
+    object Registration : Screen("registration") // Deprecated
+    object ProfileSetup : Screen("profile_setup")
     object Permission : Screen("permission")
     object AddPlaces : Screen("add_places")
     object PermissionEducation : Screen("permission_education")

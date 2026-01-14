@@ -38,14 +38,85 @@ fun AppNavHost() {
                     }
                 )
             }
-            composable(Screen.Login.route) {
-                LoginScreen(navController)
+            
+            composable(Screen.Welcome.route) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                com.example.synoptrack.auth.presentation.WelcomeScreen(
+                    onLogin = { navController.navigate(Screen.Login.route) },
+                    onCreateAccount = { navController.navigate(Screen.SignUp.route) },
+                    onTermsClick = {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://synoptrack.com/terms"))
+                        context.startActivity(intent)
+                    }
+                )
             }
-            composable(Screen.Registration.route) {
-                RegistrationScreen(
-                    onRegistrationComplete = {
+            
+            composable(Screen.Login.route) {
+                com.example.synoptrack.auth.presentation.LoginScreen(
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                    onNavigateToPhone = { navController.navigate(Screen.PhoneLogin.route) },
+                    onNavigateToGoogle = { /* Google Login Logic */ },
+                    onNavigateToProfileSetup = {
+                        navController.navigate(Screen.ProfileSetup.route) {
+                             popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToPermission = {
                         navController.navigate(Screen.Permission.route) {
-                            popUpTo(Screen.Registration.route) { inclusive = true }
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(Screen.SignUp.route) {
+                com.example.synoptrack.auth.presentation.SignUpScreen(
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) },
+                    onNavigateToPhone = { navController.navigate(Screen.PhoneLogin.route) },
+                    onNavigateToGoogle = { /* Google Login Logic */ },
+                    onNavigateToProfileSetup = {
+                        navController.navigate(Screen.ProfileSetup.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToPermission = {
+                        navController.navigate(Screen.Permission.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(Screen.ForgotPassword.route) {
+                com.example.synoptrack.auth.presentation.ForgotPasswordScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(Screen.PhoneLogin.route) {
+                com.example.synoptrack.auth.presentation.PhoneLoginScreen(
+                    onNavigateToProfileSetup = {
+                        navController.navigate(Screen.ProfileSetup.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToPermission = {
+                        navController.navigate(Screen.Permission.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(Screen.ProfileSetup.route) {
+                com.example.synoptrack.auth.presentation.ProfileSetupScreen(
+                    onSetupComplete = {
+                        navController.navigate(Screen.Permission.route) {
+                            popUpTo(Screen.ProfileSetup.route) { inclusive = true }
                         }
                     }
                 )
@@ -55,37 +126,8 @@ fun AppNavHost() {
             composable(Screen.Permission.route) {
                 PermissionScreen(
                     onPermissionGranted = {
-                        navController.navigate(Screen.PermissionEducation.route)
-                    },
-                    onSkip = {
-                        navController.navigate(Screen.PermissionEducation.route)
-                    }
-                )
-            }
-            composable(Screen.PermissionEducation.route) {
-                PermissionEducationScreen(
-                    onContinue = {
-                        navController.navigate(Screen.AddPlaces.route)
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(Screen.AddPlaces.route) {
-                AddPlacesScreen(
-                    onNext = {
-                        navController.navigate(Screen.NameSetup.route)
-                    },
-                    onSkip = {
-                        navController.navigate(Screen.NameSetup.route)
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable(Screen.NameSetup.route) {
-                NameSetupScreen(
-                    onSetupComplete = {
                         navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Permission.route) { inclusive = true } // Clear onboarding
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     }
                 )
