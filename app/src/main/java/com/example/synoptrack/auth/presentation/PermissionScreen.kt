@@ -26,6 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import com.example.synoptrack.R
 import com.example.synoptrack.core.theme.ElectricBluePrimary
 import com.example.synoptrack.core.theme.TextGray
@@ -33,32 +36,47 @@ import com.example.synoptrack.core.theme.TextGray
 @Composable
 fun PermissionScreen(
     viewModel: PermissionViewModel = hiltViewModel(),
-    onPermissionGranted: () -> Unit // When all required are granted
+    onPermissionGranted: () -> Unit
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     
-    // Check if critical permissions are granted (Location)
-    // If we want to force location, we check it here. Or we let the user proceed if they skip.
-    // For this refactor, let's assume we want at least Location or explicitly skipped.
-    
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
+    val locationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { 
-            // Update ViewModel state 
-            viewModel.checkPermissions(context)
-        }
+        onResult = { viewModel.checkPermissions(context) }
+    )
+    val contactsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { viewModel.checkPermissions(context) }
+    )
+    
+    // Notification launcher checks version internally when used commonly, 
+    // but here we might need version check logic inside the onClick or helper.
+    // Simplifying for clarity:
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { viewModel.checkPermissions(context) }
     )
 
     LaunchedEffect(key1 = true) {
         viewModel.checkPermissions(context)
     }
+    
+    // Progress Calculation
+    val totalPermissions = 3
+    val grantedPermissions = listOf(
+        uiState.isLocationGranted, 
+        uiState.isContactsGranted, 
+        uiState.isNotificationGranted
+    ).count { it }
+    
+    val progress = grantedPermissions.toFloat() / totalPermissions
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Black,
         bottomBar = {
             Button(
-                onClick = onPermissionGranted, // Or skip/finish
+                onClick = onPermissionGranted,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
@@ -66,7 +84,7 @@ fun PermissionScreen(
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ElectricBluePrimary)
             ) {
-                Text("Start Exploring", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Start Exploring", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
             }
         }
     ) { padding ->
@@ -77,20 +95,22 @@ fun PermissionScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
-            // Header Image (Cloud/Lock/Check)
+            // Icon
             Icon(
-                imageVector = Icons.Default.LocationOn, // Placeholder
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
+                imageVector = Icons.Default.LocationOn, 
+                contentDescription = null, 
+                modifier = Modifier.size(80.dp),
                 tint = ElectricBluePrimary
             )
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             Text(
                 text = "You're almost ready!",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color.White
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -102,16 +122,34 @@ fun PermissionScreen(
                 color = TextGray
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Progress Bar
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                color = ElectricBluePrimary,
+                trackColor = Color(0xFF1E1E1E),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "$grantedPermissions of $totalPermissions unlocked",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextGray
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Permission Items
+            
+            // Location
             PermissionItem(
                 title = "Location Access",
                 description = "To see friends on the map and share your journey.",
                 icon = Icons.Default.LocationOn,
                 isGranted = uiState.isLocationGranted,
                 onClick = {
-                    locationPermissionLauncher.launch(
+                    locationLauncher.launch(
                         arrayOf(
                             Manifest.permission.ACCESS_FINE_LOCATION,
                             Manifest.permission.ACCESS_COARSE_LOCATION
@@ -120,24 +158,35 @@ fun PermissionScreen(
                 }
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            // Notification Item (Android 13+)
+            // Contacts
+            PermissionItem(
+                title = "Contacts Access",
+                description = "To find friends and connect with people you know.",
+                icon = Icons.Rounded.Person,
+                isGranted = uiState.isContactsGranted,
+                onClick = {
+                    contactsLauncher.launch(Manifest.permission.READ_CONTACTS)
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Notification
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val notifLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission(),
-                    onResult = { viewModel.checkPermissions(context) }
-                )
-                
                 PermissionItem(
                     title = "Notifications",
                     description = "Get alerts when friends start a convoy or message you.",
                     icon = Icons.Default.Notifications,
-                    isGranted = uiState.isNotificationGranted, // Need to add to State
+                    isGranted = uiState.isNotificationGranted,
                     onClick = {
-                        notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 )
+            } else {
+                 // Mock item if below Android 13 to keep UI consistent or hide
+                 // Ideally if assumed granted, logic sets it to true.
             }
         }
     }

@@ -17,6 +17,12 @@ data class UserProfile(
     // Privacy & Bio
     val isPrivate: Boolean = false,
     val bio: String = "",
+    val dob: String = "", // DD/MM/YYYY
+    
+    // Onboarding Status
+    val isComplete: Boolean = false,
+    val isEmailVerified: Boolean = false,
+    val isPhoneVerified: Boolean = false,
 
     // New fields for Premium/Social features
     val fcmToken: String = "",

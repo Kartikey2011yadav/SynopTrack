@@ -112,6 +112,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.play.services.auth)
     implementation(libs.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Google Maps
     implementation(libs.maps.compose)

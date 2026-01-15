@@ -82,11 +82,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (!snapshot.exists()) {
                 Result.success(com.example.synoptrack.auth.domain.repository.UserStatus.NEW)
             } else {
-                val data = snapshot.data
-                val hasName = !data?.get("displayName").toString().isNullOrBlank()
-                val hasDob = data?.containsKey("dob") == true 
-                
-                if (hasName && hasDob) {
+                val isComplete = snapshot.getBoolean("isComplete") ?: false
+                if (isComplete) {
                     Result.success(com.example.synoptrack.auth.domain.repository.UserStatus.COMPLETE)
                 } else {
                     Result.success(com.example.synoptrack.auth.domain.repository.UserStatus.INCOMPLETE)

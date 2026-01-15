@@ -23,6 +23,7 @@ play-services-auth = "21.0.0"
 play-services-location = "21.0.1"
 coil = "2.5.0"
 dataStore = "1.1.1"
+playServicesCoroutines = "1.8.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,6 +63,7 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "playServicesCoroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

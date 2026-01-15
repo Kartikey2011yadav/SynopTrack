@@ -33,10 +33,15 @@ class PermissionViewModel @Inject constructor(
             true // Not required below A13
         }
 
+        val hasContacts = androidx.core.content.ContextCompat.checkSelfPermission(
+            context, android.Manifest.permission.READ_CONTACTS
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
         _uiState.value = _uiState.value.copy(
             isLocationGranted = hasLocation,
             isNotificationGranted = hasNotification,
-            isPermissionGranted = hasLocation && hasNotification // or just hasLocation depending on strictness
+            isContactsGranted = hasContacts,
+            isPermissionGranted = hasLocation && hasNotification && hasContacts
         )
         
         if (hasLocation) {
@@ -63,6 +68,7 @@ class PermissionViewModel @Inject constructor(
 data class PermissionUiState(
     val isLocationGranted: Boolean = false,
     val isNotificationGranted: Boolean = false,
+    val isContactsGranted: Boolean = false,
     val isPermissionGranted: Boolean = false,
     val isPermanentlyDenied: Boolean = false,
     val isSkipped: Boolean = false,

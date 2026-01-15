@@ -212,27 +212,40 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Social Buttons
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val googleSignInClient = remember {
+                val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(context.getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+            }
+
+            val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+                contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                if (result.resultCode == android.app.Activity.RESULT_OK) {
+                    val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    viewModel.handleSignInResult(task)
+                } else {
+                    // Handle cancellation or error if needed
+                }
+            }
+
             OutlinedButton(
-                onClick = onNavigateToGoogle,
+                onClick = {
+                    launcher.launch(googleSignInClient.signInIntent)
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
             ) {
-                Text("Sign in with Google") // Add Google Icon if available
+                // Image(painter = painterResource(id = R.drawable.ic_google), ...) 
+                Text("Sign in with Google") 
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            OutlinedButton(
-                onClick = onNavigateToPhone,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-            ) {
-                Text("Continue with Phone") // Add Apple/Phone Icon
-            }
+            // Phone button removed as requested
             
             Spacer(modifier = Modifier.height(32.dp))
             

@@ -77,6 +77,9 @@ class ProfileRepositoryImpl @Inject constructor(
                 data["inviteCode"] = generateInviteCode()
                 data["isPrivate"] = false // Default
                 data["bio"] = ""
+                data["isComplete"] = false
+                data["isEmailVerified"] = false
+                data["isPhoneVerified"] = false
             }
 
             docRef.set(data, SetOptions.merge()).await()
