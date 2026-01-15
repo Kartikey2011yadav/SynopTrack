@@ -40,32 +40,30 @@ This document outlines the strategic roadmap for SynopTrack. We have transitione
   - [x] **Theme**: Dark Mode optimized with `Color.Black` surfaces.
 - [x] **Local Persistence**: Room Database setup for caching social data and chat.
 
-### 🚧 Phase 3: Communication & Real-Time Engagement (Current Focus)
+### 🚧 Phase 3: Identity & Friend Network (Current Focus)
 
-**Goal**: Make the app "sticky" with real-time conversations and notifications.
+**Goal**: Establish a robust Social Graph and User Identity system.
 
-- [ ] **Chat System v1**:
-  - [x] **UI**: Gradient bubbles (Snapchat style).
-  - [ ] **Real-time Messaging**: Firestore subcollection (`messages`) listener.
-  - [ ] **Optimistic UI**: Local display before server confirmation.
-  - [ ] **Unified Social Screen**: List displaying both 1:1 DMs (Friends) and Group Chats.
-- [ ] **Notification Infrastructure**:
-  - [ ] **FCM Integration**: Setup Firebase Cloud Messaging.
-  - [ ] **Triggers**: Notify on "Friend Request", "New Message", "Convoy Started".
-- [ ] **Smart Convoy Features**:
-  - [x] **UI Controls**: "Start/Stop Convoy" directly from Home/Social.
-  - [ ] **Presence Indicators**: "Typing...", "Online".
+- [ ] **User Identity 2.0**:
+  - [ ] **Unique ID System**: `Name#Hash` (e.g., Kartikey#9uwu) for unique identification.
+  - [ ] **Profile Enhancements**: Edit Bio, Profile Picture, and Name.
+- [ ] **Friend Network**:
+  - [ ] **Friend Requests**: Send/Receive methodology.
+  - [ ] **Activity Center**: "Heart" screen for pending requests and friend suggestions.
+  - [ ] **Discovery**: Search by Name or Invite Code; Contact Syncing.
 
-### 🔮 Phase 4: Discovery & Moments
+### 🔮 Phase 4: Secure Communication & Moments
 
-**Goal**: Expand beyond tracking to "Living on the Map".
+**Goal**: Real-time engagement with privacy and location context.
 
-- [ ] **Moments/Stories**:
-  - [ ] 24h Geotagged Media.
-  - [ ] Map-based Story viewing.
-- [ ] **Places & Search**:
-  - [ ] Google Places API integration.
-  - [ ] "Meetup Point" selection.
+- [ ] **Secure Chat**:
+  - [ ] **E2E Encryption**: Private/Public key exchange for secure messaging.
+  - [ ] **Vanishing Messages**: 48h Server TTL; Local persistence until manual deletion.
+  - [ ] **Rich Media**: Share Images, Videos, GIFs.
+- [ ] **Moments (Stories)**:
+  - [ ] **Map Integrated**: Stories appear at the location they were taken.
+  - [ ] **Format**: Images/Videos with 24h visibility.
+  - [ ] **Ghost Mode**: Privacy controls for location sharing.
 
 ### 🔮 Phase 5: Intelligence & Safety
 

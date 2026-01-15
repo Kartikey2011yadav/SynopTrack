@@ -2,38 +2,31 @@
 
 ## 🟢 Phase 3: Communication & Real-Time Engagement (Active)
 
-### Step 1: Real-Time Chat System
+### Step 1: Identity & User Profile
 
-- [ ] **Data Layer**: Implement `sendMessage()` and `observeMessages()` in `ChatRepository`.
-- [ ] **Domain Layer**: Create `SendMessageUseCase` and `GetMessagesUseCase`.
-- [ ] **UI Layer (SocialScreen)**: Finalize Unified List (Friends + Groups) with real data.
-- [ ] **UI Layer (ChatScreen)**: Connect UI to live Firestore stream. Add "Typing" indicators.
+- [ ] **Backend**: Update `UserProfile` to support `username` and `discriminator` (#Hash).
+- [ ] **Logic**: Implement "Collision Check" to ensure `Name#Hash` is unique.
+- [ ] **UI**: Create `EditProfileScreen` (Bio, Avatar, Name).
+- [ ] **UI**: Update `ProfileScreen` to display the new Identity format.
 
-### Step 2: Notifications (FCM)
+### Step 2: Friend Network & Discovery
 
-- [ ] **Setup**: Configure FCM in Firebase Console and Android App.
-- [ ] **Service**: Create `MyFirebaseMessagingService` to handle incoming data payloads.
-- [ ] **Local Handling**: Show system notifications for background messages.
-- [ ] **Deep Linking**: Tap notification -> Open specific Chat/Map location.
+- [ ] **Data**: Create `FriendRequest` collection and Repository.
+- [ ] **UI (Search)**: Search by "Invite Code" or "Name#Hash". Add Contact Sync tab.
+- [ ] **UI (Activity)**: Create new Screen for "Requests" (Accept/Decline) and "Suggestions".
 
-### Step 3: Social Refinements
+### Step 3: Secure Chat & Media
 
-- [x] **Profile Refactor**: Dual-State UI (My Profile vs Other), Privacy Mode, and Image Uploads.
-- [ ] **Friend Requests**: UI for "Accept/Decline" (Logic partially implemented in ViewModel).
-- [x] **Profile Stats**: Connected to SocialRepository (Friends/Groups count).
+- [ ] **Encryption**: Implement E2E key generation and message locking.
+- [ ] **Vanish Logic**: Implement 48h TTL Cloud Function trigger types.
+- [ ] **Media**: Add Image/Video/GIF picker and upload logic.
+- [ ] **Groups**: Apply encryption logic to Group contexts (Sender Key distribution).
 
-## 🟡 Phase 4: Discovery & Moments (Planned)
+### Step 4: Moments & Map Intelligence
 
-### Step 1: Places API
-
-- [ ] Enable Places SDK.
-- [ ] Implement Search Bar with Autocomplete.
-
-### Step 2: Geotagged Stories
-
-- [ ] Camera integration.
-- [ ] Upload media to Firebase Storage with Location metadata.
-- [ ] Render Story Markers on Map.
+- [ ] **Capture**: Camera/Gallery integration for Stories.
+- [ ] **Map**: Render distinct Markers for Friends' last location vs. their Stories.
+- [ ] **Ghost Mode**: Implement "Freeze" and "Off" states.
 
 ---
 

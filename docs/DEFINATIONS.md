@@ -155,3 +155,29 @@ Safety trigger for immediate assistance.
   - Forces **Live Mode** (bypasses Ghost).
   - SMS to emergency contacts with Map Link.
   - "High Priority" push to Group Members.
+
+---
+
+## 🔐 Identity & Security
+
+### 12. Identity System (Name#Hash)
+
+**Phase 3**
+A unique identification method ensuring no two users have the same display identity, while allowing duplicate display names.
+
+- **Structure**: `DisplayName` + `#` + `Discriminator` (4-char alphanumeric).
+- **Example**: `Kartikey#9uwu`
+- **Logic**:
+  - `Discriminator` is auto-generated or custom.
+  - **Constraint**: The pair `(Name, Discriminator)` MUST be unique globally.
+  - **Search**: Users can be found by entering the full ID.
+
+### 13. Secure Vanishing Chat
+
+**Phase 4**
+A privacy-first messaging protocol.
+
+- **Storage Policy**:
+  - **Server**: Messages are "Hard Deleted" 48 hours after timestamp.
+  - **Client**: Messages persist indefinitely unless manually deleted by user (or app cache cleared).
+- **Encryption**: End-to-End encryption ensures only the sender and recipient can read the content.
