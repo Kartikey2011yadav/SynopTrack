@@ -51,9 +51,7 @@ class AuthViewModel @Inject constructor(
         }
     }
     
-        }
-    }
-    
+
     // Phone Auth Methods Removed
     
     fun signInWithEmail(email: String, pass: String) {
@@ -112,7 +110,6 @@ class AuthViewModel @Inject constructor(
 
 sealed class SignInState {
     object Initial : SignInState()
-    object Loading : SignInState()
     object Loading : SignInState()
     // object OtpSent : SignInState()
     data class MessageSent(val message: String) : SignInState() // For forgot password

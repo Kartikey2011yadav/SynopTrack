@@ -7,6 +7,8 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -20,9 +22,7 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
     object Login : Screen("login")
     object SignUp : Screen("sign_up")
     object ForgotPassword : Screen("forgot_password")
-    object ForgotPassword : Screen("forgot_password")
     // PhoneLogin Removed
-    object Registration : Screen("registration") // Deprecated
     object Registration : Screen("registration") // Deprecated
     object ProfileSetup : Screen("profile_setup")
     object Permission : Screen("permission")
@@ -35,10 +35,12 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
     object Social : Screen("social", "Connect", Icons.Rounded.Forum, Icons.Outlined.Forum) 
     object Search : Screen("search", "Search", Icons.Rounded.Search, Icons.Outlined.Search)
     object Profile : Screen("profile", "Profile", Icons.Rounded.AccountCircle, Icons.Outlined.AccountCircle)
+    object Activity : Screen("activity", "Activity", Icons.Outlined.FavoriteBorder, Icons.Default.Favorite)
     
     // Internal
     object Chat : Screen("chat/{groupId}") {
         fun createRoute(groupId: String) = "chat/$groupId"
     }
     object Settings : Screen("settings")
+    object EditProfile : Screen("edit_profile")
 }

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -55,9 +57,7 @@ fun AppNavHost() {
                 com.example.synoptrack.auth.presentation.LoginScreen(
                     onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                     onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
-                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
                     // onNavigateToPhone Removed
-                    onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToProfileSetup = {
                         navController.navigate(Screen.ProfileSetup.route) {
@@ -76,9 +76,7 @@ fun AppNavHost() {
             composable(Screen.SignUp.route) {
                 com.example.synoptrack.auth.presentation.SignUpScreen(
                     onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                    onNavigateToLogin = { navController.navigate(Screen.Login.route) },
                     // onNavigateToPhone Removed
-                    onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToProfileSetup = {
                         navController.navigate(Screen.ProfileSetup.route) {
@@ -102,8 +100,7 @@ fun AppNavHost() {
             
             // PhoneLogin removed
             
-            composable(Screen.ProfileSetup.route) {
-            
+
             composable(Screen.ProfileSetup.route) {
                 com.example.synoptrack.auth.presentation.ProfileSetupScreen(
                     onSetupComplete = {
@@ -127,7 +124,9 @@ fun AppNavHost() {
 
             // MAIN BOTTOM NAV TABS
             composable(Screen.Home.route) {
-                MapOSScreen()
+                MapOSScreen(
+                    onActivityClick = { navController.navigate(Screen.Activity.route) }
+                )
             }
             composable(Screen.Social.route) {
                 com.example.synoptrack.social.presentation.SocialScreen(
@@ -141,15 +140,42 @@ fun AppNavHost() {
                     Text("Search")
                 }
             }
+
+            composable(Screen.Activity.route) {
+                com.example.synoptrack.social.presentation.ActivityScreen()
+            }
             composable(Screen.Profile.route) {
                 ProfileScreen(
-                    onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                    onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                    onEditProfile = { navController.navigate(Screen.EditProfile.route) }
                 )
             }
             composable(Screen.Settings.route) {
                 com.example.synoptrack.profile.presentation.SettingsScreen(
                     onBackClick = { navController.popBackStack() }
                 )
+            }
+            
+            composable(Screen.EditProfile.route) {
+                val viewModel: com.example.synoptrack.profile.presentation.ProfileViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                val uiState by viewModel.uiState.collectAsState()
+                
+                if (uiState.user != null) {
+                    com.example.synoptrack.profile.presentation.EditProfileScreen(
+                        currentName = uiState.user!!.displayName,
+                        currentDiscriminator = uiState.user!!.discriminator,
+                        currentBio = uiState.user!!.bio,
+                        onBackClick = { navController.popBackStack() },
+                        onSaveClick = { name, hash, bio ->
+                            viewModel.updateIdentity(name, hash, bio)
+                            navController.popBackStack()
+                        }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                         androidx.compose.material3.CircularProgressIndicator()
+                    }
+                }
             }
             
             // CHAT

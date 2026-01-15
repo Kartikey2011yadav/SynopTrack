@@ -57,7 +57,8 @@ import com.example.synoptrack.MainViewModel
 @Composable
 fun MapOSScreen(
     viewModel: MapOSViewModel = hiltViewModel(),
-    mainViewModel: MainViewModel = hiltViewModel()
+    mainViewModel: MainViewModel = hiltViewModel(),
+    onActivityClick: () -> Unit
 ) {
     val context = LocalContext.current
     val systemInDarkTheme = isSystemInDarkTheme()
@@ -163,8 +164,8 @@ fun MapOSScreen(
         // Top Layer: Instagram-style Header
         HomeTopBar(
             modifier = Modifier.align(Alignment.TopCenter),
-            onAddClick = { showCreateDialog = true }, 
-            onSocialClick = { showSocialOptions = true }
+            onAddClick = { showSocialOptions = true }, 
+            onSocialClick = onActivityClick
         )
 
         // My Location FAB

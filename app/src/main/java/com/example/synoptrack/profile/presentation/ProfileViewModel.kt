@@ -46,6 +46,19 @@ class ProfileViewModel @Inject constructor(
             
             // 1. Load Profile
             profileRepository.getUserProfile(uidToLoad).collect { profile ->
+                // Auto-generate Identity for current user if missing
+                if (isMe && profile != null && (profile.inviteCode.isEmpty() || profile.discriminator.isEmpty())) {
+                    val newDiscriminator = if (profile.discriminator.isEmpty()) com.example.synoptrack.core.utils.IdentityUtils.generateDiscriminator() else profile.discriminator
+                    val newInviteCode = if (profile.inviteCode.isEmpty()) com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(profile.displayName, newDiscriminator) else profile.inviteCode
+                    
+                    val updatedProfile = profile.copy(
+                        discriminator = newDiscriminator,
+                        inviteCode = newInviteCode,
+                        username = if (profile.username.isEmpty()) profile.displayName else profile.username
+                    )
+                    profileRepository.saveUserProfile(updatedProfile)
+                }
+
                 _uiState.update { 
                     it.copy(
                         user = profile,
@@ -61,6 +74,37 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { it.copy(friendshipStatus = FriendshipStatus.SELF) }
                 }
             }
+        }
+    }
+
+    fun updateIdentity(name: String, discriminator: String, bio: String) {
+        val currentUser = _uiState.value.user ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            // If name or discriminator changed, regenerate invite code
+            val newInviteCode = if (name != currentUser.username || discriminator != currentUser.discriminator) {
+                com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(name, discriminator)
+            } else {
+                currentUser.inviteCode
+            }
+
+            val updatedProfile = currentUser.copy(
+                username = name, // Keeping username same as display name for now as per plan
+                displayName = name,
+                discriminator = discriminator,
+                bio = bio,
+                inviteCode = newInviteCode
+            )
+            
+            profileRepository.saveUserProfile(updatedProfile)
+                .onSuccess {
+                    // UI will update via Flow
+                }
+                .onFailure {
+                    // Handle error (e.g. show Snackbar)
+                }
+             _uiState.update { it.copy(isLoading = false) }
         }
     }
 

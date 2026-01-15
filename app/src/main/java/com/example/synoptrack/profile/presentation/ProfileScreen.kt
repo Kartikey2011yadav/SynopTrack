@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,6 +59,7 @@ import coil.compose.AsyncImage
 @Composable
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
+    onEditProfile: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -120,7 +122,7 @@ fun ProfileScreen(
                             )
                         }
                     },
-                    onEditProfile = { /* TODO */ },
+                    onEditProfile = onEditProfile,
                     onShareProfile = { /* TODO */ },
                     onFriendAction = { /* TODO */ }
                 )
@@ -279,16 +281,36 @@ fun ProfileHeader(
         
         // Bio & Actions
         Column {
-            Text(user.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            // Identity Display
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (user.discriminator.isNotEmpty()) "${user.username}#${user.discriminator}" else user.displayName,
+                    style = MaterialTheme.typography.titleMedium, 
+                    fontWeight = FontWeight.Bold
+                )
+            }
             if (user.bio.isNotEmpty()) {
                 Text(user.bio, style = MaterialTheme.typography.bodyMedium)
             }
             if (user.inviteCode.isNotEmpty()) {
-                Text(
-                    text = "Invite: ${user.inviteCode}",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Invite: ${user.inviteCode}",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    IconButton(onClick = { /* TODO: Show QR Dialog */ }) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode, // Need to make sure QrCode icon exists or use another
+                            contentDescription = "Show QR Code",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))

@@ -35,9 +35,7 @@ import com.example.synoptrack.core.theme.ElectricBluePrimary
 fun LoginScreen(
     onNavigateToSignUp: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit,
     // onNavigateToPhone: () -> Unit, // Removed
-    onNavigateToGoogle: () -> Unit,
     onNavigateToGoogle: () -> Unit,
     onNavigateToProfileSetup: () -> Unit,
     onNavigateToPermission: () -> Unit,
