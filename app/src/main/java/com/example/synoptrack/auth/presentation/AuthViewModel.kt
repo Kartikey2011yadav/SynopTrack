@@ -33,10 +33,8 @@ class AuthViewModel @Inject constructor(
     private val _navigationEvent = Channel<AuthNavigationEvent>()
     val navigationEvent = _navigationEvent.receiveAsFlow()
     
-    // Phone Auth
-    private var verificationId: String? = null
-    var phoneNumber: String = ""
-
+    // Phone Auth Removed
+    
     fun handleSignInResult(task: Task<GoogleSignInAccount>) {
         viewModelScope.launch {
             _signInState.value = SignInState.Loading
@@ -53,42 +51,10 @@ class AuthViewModel @Inject constructor(
         }
     }
     
-    fun startPhoneAuth(activity: android.app.Activity, phone: String) {
-        phoneNumber = phone
-        _signInState.value = SignInState.Loading
-        
-        val callbacks = object : com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            override fun onVerificationCompleted(credential: com.google.firebase.auth.PhoneAuthCredential) {
-                viewModelScope.launch {
-                    authRepository.signInWithPhoneCredential(credential)
-                        .onSuccess { checkUserStatus() }
-                        .onFailure { _signInState.value = SignInState.Error(it.message ?: "Verification failed") }
-                }
-            }
-
-            override fun onVerificationFailed(e: com.google.firebase.FirebaseException) {
-                _signInState.value = SignInState.Error(e.message ?: "Verification failed")
-            }
-
-            override fun onCodeSent(id: String, token: com.google.firebase.auth.PhoneAuthProvider.ForceResendingToken) {
-                verificationId = id
-                _signInState.value = SignInState.OtpSent
-            }
         }
-        
-        authRepository.verifyPhoneNumber(activity, phone, callbacks)
     }
     
-    fun verifyOtp(code: String) {
-        val id = verificationId ?: return
-        _signInState.value = SignInState.Loading
-        val credential = com.google.firebase.auth.PhoneAuthProvider.getCredential(id, code)
-        viewModelScope.launch {
-            authRepository.signInWithPhoneCredential(credential)
-                .onSuccess { checkUserStatus() }
-                .onFailure { _signInState.value = SignInState.Error(it.message ?: "Invalid Code") }
-        }
-    }
+    // Phone Auth Methods Removed
     
     fun signInWithEmail(email: String, pass: String) {
         viewModelScope.launch {
@@ -147,7 +113,8 @@ class AuthViewModel @Inject constructor(
 sealed class SignInState {
     object Initial : SignInState()
     object Loading : SignInState()
-    object OtpSent : SignInState()
+    object Loading : SignInState()
+    // object OtpSent : SignInState()
     data class MessageSent(val message: String) : SignInState() // For forgot password
     data class Success(val message: String) : SignInState()
     data class Error(val message: String) : SignInState()

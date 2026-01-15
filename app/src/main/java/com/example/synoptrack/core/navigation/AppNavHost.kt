@@ -55,7 +55,9 @@ fun AppNavHost() {
                 com.example.synoptrack.auth.presentation.LoginScreen(
                     onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                     onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
-                    onNavigateToPhone = { navController.navigate(Screen.PhoneLogin.route) },
+                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                    // onNavigateToPhone Removed
+                    onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToProfileSetup = {
                         navController.navigate(Screen.ProfileSetup.route) {
@@ -74,7 +76,9 @@ fun AppNavHost() {
             composable(Screen.SignUp.route) {
                 com.example.synoptrack.auth.presentation.SignUpScreen(
                     onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                    onNavigateToPhone = { navController.navigate(Screen.PhoneLogin.route) },
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) },
+                    // onNavigateToPhone Removed
+                    onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToGoogle = { /* Google Login Logic */ },
                     onNavigateToProfileSetup = {
                         navController.navigate(Screen.ProfileSetup.route) {
@@ -96,21 +100,9 @@ fun AppNavHost() {
                 )
             }
             
-            composable(Screen.PhoneLogin.route) {
-                com.example.synoptrack.auth.presentation.PhoneLoginScreen(
-                    onNavigateToProfileSetup = {
-                        navController.navigate(Screen.ProfileSetup.route) {
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
-                        }
-                    },
-                    onNavigateToPermission = {
-                        navController.navigate(Screen.Permission.route) {
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
-                        }
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
+            // PhoneLogin removed
+            
+            composable(Screen.ProfileSetup.route) {
             
             composable(Screen.ProfileSetup.route) {
                 com.example.synoptrack.auth.presentation.ProfileSetupScreen(

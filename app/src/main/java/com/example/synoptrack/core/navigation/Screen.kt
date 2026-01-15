@@ -20,7 +20,9 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
     object Login : Screen("login")
     object SignUp : Screen("sign_up")
     object ForgotPassword : Screen("forgot_password")
-    object PhoneLogin : Screen("phone_login")
+    object ForgotPassword : Screen("forgot_password")
+    // PhoneLogin Removed
+    object Registration : Screen("registration") // Deprecated
     object Registration : Screen("registration") // Deprecated
     object ProfileSetup : Screen("profile_setup")
     object Permission : Screen("permission")

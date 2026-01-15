@@ -32,7 +32,9 @@ import com.example.synoptrack.core.theme.ElectricBluePrimary
 @Composable
 fun SignUpScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToPhone: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    // onNavigateToPhone: () -> Unit, // Removed
+    onNavigateToGoogle: () -> Unit,
     onNavigateToGoogle: () -> Unit,
     onNavigateToProfileSetup: () -> Unit,
     onNavigateToPermission: () -> Unit,
