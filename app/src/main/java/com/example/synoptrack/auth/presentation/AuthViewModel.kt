@@ -18,13 +18,15 @@ import javax.inject.Inject
 
 
 sealed class AuthNavigationEvent {
+    object NavigateToNameSetup : AuthNavigationEvent()
     object NavigateToCompleteProfile : AuthNavigationEvent()
     object NavigateToPermissionCheck : AuthNavigationEvent()
 }
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _signInState = MutableStateFlow<SignInState>(SignInState.Initial)
@@ -81,6 +83,35 @@ class AuthViewModel @Inject constructor(
         }
     }
     
+    fun saveIdentity(username: String, discriminator: String) {
+        viewModelScope.launch {
+            _signInState.value = SignInState.Loading
+            val currentUser = authRepository.currentUser
+            if (currentUser != null) {
+                // Ideally trigger a backend check for uniqueness here.
+                // For now, we update the profile locally/firestore.
+                val uid = currentUser.uid
+                // We need to fetch current profile or create a default one
+                profileRepository.getUserProfile(uid).collect { profile ->
+                    if (profile != null) {
+                         val newInviteCode = com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(username, discriminator)
+                         val updatedProfile = profile.copy(
+                             username = username,
+                             discriminator = discriminator,
+                             inviteCode = newInviteCode
+                         )
+                         profileRepository.saveUserProfile(updatedProfile)
+                             .onSuccess { 
+                                 _navigationEvent.send(AuthNavigationEvent.NavigateToCompleteProfile)
+                                 _signInState.value = SignInState.Success("Identity Saved")
+                             }
+                             .onFailure { _signInState.value = SignInState.Error("Failed to save identity") }
+                    }
+                }
+            }
+        }
+    }
+
     private suspend fun checkUserStatus() {
         val uid = authRepository.currentUser?.uid
         if (uid == null) {
@@ -88,23 +119,22 @@ class AuthViewModel @Inject constructor(
             return
         }
         
-        authRepository.getUserStatus(uid)
-            .onSuccess { status ->
-                 when (status) {
-                     com.example.synoptrack.auth.domain.repository.UserStatus.COMPLETE -> {
-                         _navigationEvent.send(AuthNavigationEvent.NavigateToPermissionCheck)
-                         _signInState.value = SignInState.Success("Welcome back!")
-                     }
-                     com.example.synoptrack.auth.domain.repository.UserStatus.INCOMPLETE,
-                     com.example.synoptrack.auth.domain.repository.UserStatus.NEW -> {
-                         _navigationEvent.send(AuthNavigationEvent.NavigateToCompleteProfile)
-                         _signInState.value = SignInState.Success("Please complete profile")
-                     }
+        // We use ProfileRepository to get detailed status (username existence)
+        profileRepository.getUserProfile(uid).collect { profile ->
+             if (profile == null) {
+                 // No profile data at all -> Start with Name Setup
+                  _navigationEvent.send(AuthNavigationEvent.NavigateToNameSetup)
+             } else {
+                 if (profile.username.isEmpty()) {
+                     _navigationEvent.send(AuthNavigationEvent.NavigateToNameSetup)
+                 } else if (profile.displayName.isEmpty()) {
+                     _navigationEvent.send(AuthNavigationEvent.NavigateToCompleteProfile)
+                 } else {
+                     _navigationEvent.send(AuthNavigationEvent.NavigateToPermissionCheck)
+                     _signInState.value = SignInState.Success("Welcome back!")
                  }
-            }
-            .onFailure {
-                _signInState.value = SignInState.Error("Failed to check status")
-            }
+             }
+        }
     }
 }
 

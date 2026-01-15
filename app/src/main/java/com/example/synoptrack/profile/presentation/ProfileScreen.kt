@@ -30,6 +30,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,22 +79,23 @@ fun ProfileScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        user?.displayName ?: "Profile",
+                        if (user?.discriminator?.isNotEmpty() ?: false) "${user.username} #${user.discriminator}" else user?.displayName
+                            ?: "Profile",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     ) 
                 },
                 actions = {
                     if (uiState.isCurrentUser) {
                         IconButton(onClick = { /* New Post */ }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add")
+                            Icon(Icons.Rounded.Add, contentDescription = "Add")
                         }
                         IconButton(onClick = onSettingsClick) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Rounded.Menu, contentDescription = "Menu")
                         }
                     } else {
                         // Other user actions (e.g. Report)
                         IconButton(onClick = { /* Report */ }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                            Icon(Icons.Rounded.MoreVert, contentDescription = "Options")
                         }
                     }
                 }
@@ -284,7 +288,7 @@ fun ProfileHeader(
             // Identity Display
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = if (user.discriminator.isNotEmpty()) "${user.username}#${user.discriminator}" else user.displayName,
+                    text = user.displayName,
                     style = MaterialTheme.typography.titleMedium, 
                     fontWeight = FontWeight.Bold
                 )
@@ -313,7 +317,7 @@ fun ProfileHeader(
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Action Buttons Logic
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {

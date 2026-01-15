@@ -17,6 +17,10 @@ import com.example.synoptrack.auth.presentation.PermissionEducationScreen
 import com.example.synoptrack.auth.presentation.PermissionScreen
 import com.example.synoptrack.auth.presentation.RegistrationScreen
 import com.example.synoptrack.auth.presentation.SplashScreen
+import com.example.synoptrack.profile.presentation.NameSetupScreen
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.content.pm.PackageManager
 import com.example.synoptrack.mapos.presentation.MapOSScreen
 import com.example.synoptrack.profile.presentation.NameSetupScreen
 import com.example.synoptrack.profile.presentation.ProfileScreen
@@ -54,19 +58,36 @@ fun AppNavHost() {
             }
             
             composable(Screen.Login.route) {
+                val context = androidx.compose.ui.platform.LocalContext.current
                 com.example.synoptrack.auth.presentation.LoginScreen(
                     onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                     onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
                     // onNavigateToPhone Removed
                     onNavigateToGoogle = { /* Google Login Logic */ },
+                    onNavigateToNameSetup = {
+                        navController.navigate(Screen.NameSetup.route) {
+                             popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
                     onNavigateToProfileSetup = {
                         navController.navigate(Screen.ProfileSetup.route) {
                              popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
                     onNavigateToPermission = {
-                        navController.navigate(Screen.Permission.route) {
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                        
+                        if (hasPermission) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Permission.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
                         }
                     },
                     onBack = { navController.popBackStack() }
@@ -74,18 +95,35 @@ fun AppNavHost() {
             }
             
             composable(Screen.SignUp.route) {
+                val context = androidx.compose.ui.platform.LocalContext.current
                 com.example.synoptrack.auth.presentation.SignUpScreen(
                     onNavigateToLogin = { navController.navigate(Screen.Login.route) },
                     // onNavigateToPhone Removed
                     onNavigateToGoogle = { /* Google Login Logic */ },
+                     onNavigateToNameSetup = {
+                        navController.navigate(Screen.NameSetup.route) {
+                             popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                    },
                     onNavigateToProfileSetup = {
                         navController.navigate(Screen.ProfileSetup.route) {
                             popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
                     onNavigateToPermission = {
-                        navController.navigate(Screen.Permission.route) {
-                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                         val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                        
+                        if (hasPermission) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Permission.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
                         }
                     },
                     onBack = { navController.popBackStack() }
@@ -101,11 +139,45 @@ fun AppNavHost() {
             // PhoneLogin removed
             
 
+            composable(Screen.NameSetup.route) {
+                val viewModel: com.example.synoptrack.auth.presentation.AuthViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                val signInState by viewModel.signInState.collectAsState()
+                
+                // Listen for navigation events from saveIdentity
+                androidx.compose.runtime.LaunchedEffect(key1 = true) {
+                    viewModel.navigationEvent.collect { event ->
+                       if (event is com.example.synoptrack.auth.presentation.AuthNavigationEvent.NavigateToCompleteProfile) {
+                           navController.navigate(Screen.ProfileSetup.route) {
+                               popUpTo(Screen.NameSetup.route) { inclusive = true }
+                           }
+                       }
+                    }
+                }
+
+                NameSetupScreen(
+                    onSetupComplete = { name, hash ->
+                        viewModel.saveIdentity(name, hash)
+                    }
+                )
+            }
+
             composable(Screen.ProfileSetup.route) {
+                val context = androidx.compose.ui.platform.LocalContext.current
                 com.example.synoptrack.auth.presentation.ProfileSetupScreen(
                     onSetupComplete = {
-                        navController.navigate(Screen.Permission.route) {
-                            popUpTo(Screen.ProfileSetup.route) { inclusive = true }
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                        
+                        if (hasPermission) {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.Permission.route) {
+                                popUpTo(Screen.ProfileSetup.route) { inclusive = true }
+                            }
                         }
                     }
                 )

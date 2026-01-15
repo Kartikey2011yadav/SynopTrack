@@ -34,6 +34,7 @@ fun SignUpScreen(
     onNavigateToLogin: () -> Unit,
     // onNavigateToPhone: () -> Unit, // Removed
     onNavigateToGoogle: () -> Unit,
+    onNavigateToNameSetup: () -> Unit,
     onNavigateToProfileSetup: () -> Unit,
     onNavigateToPermission: () -> Unit,
     onBack: () -> Unit,
@@ -45,6 +46,7 @@ fun SignUpScreen(
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvent.collect { event ->
             when (event) {
+                is AuthNavigationEvent.NavigateToNameSetup -> onNavigateToNameSetup()
                 is AuthNavigationEvent.NavigateToCompleteProfile -> onNavigateToProfileSetup()
                 is AuthNavigationEvent.NavigateToPermissionCheck -> onNavigateToPermission()
             }

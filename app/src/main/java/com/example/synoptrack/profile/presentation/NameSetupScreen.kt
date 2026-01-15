@@ -6,22 +6,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.synoptrack.core.utils.IdentityUtils
 
 @Composable
 fun NameSetupScreen(
-    onSetupComplete: () -> Unit,
-    viewModel: NameSetupViewModel = hiltViewModel()
+    onSetupComplete: (String, String) -> Unit
 ) {
-    var displayName by remember { mutableStateOf("") }
-    val isLoading by viewModel.isLoading.collectAsState()
-    val isComplete by viewModel.isComplete.collectAsState()
-
-    LaunchedEffect(isComplete) {
-        if (isComplete) {
-            onSetupComplete()
-        }
-    }
+    var username by remember { mutableStateOf("") }
+    var discriminator by remember { mutableStateOf(IdentityUtils.generateDiscriminator()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    val isValid = username.length >= 3 && discriminator.length == 4
 
     Column(
         modifier = Modifier
@@ -31,34 +26,55 @@ fun NameSetupScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "What's your name?",
+            text = "Create Your Identity",
             style = MaterialTheme.typography.headlineMedium
         )
+        
         Spacer(modifier = Modifier.height(32.dp))
-
-        // Avatar placeholder could be added here
-
+        
         OutlinedTextField(
-            value = displayName,
-            onValueChange = { displayName = it },
-            label = { Text("Display Name") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            value = username,
+            onValueChange = { 
+                username = it 
+                // Basic validation (alphanumeric, etc - simplistic for now)
+                if (it.any { char -> !char.isLetterOrDigit() && char != '_' }) {
+                    errorMessage = "Only letters, numbers and _ allowed"
+                } else {
+                    errorMessage = null
+                }
+            },
+            label = { Text("Username") },
+            isError = errorMessage != null,
+            modifier = Modifier.fillMaxWidth()
         )
-
+        if (errorMessage != null) {
+            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("#", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = discriminator,
+                onValueChange = { if (it.length <= 4) discriminator = it },
+                label = { Text("Discriminator") },
+                modifier = Modifier.width(120.dp)
+            )
+            IconButton(onClick = { discriminator = IdentityUtils.generateDiscriminator() }) {
+                Text("↻") // Randomize button
+            }
+        }
+        
         Spacer(modifier = Modifier.height(32.dp))
-
+        
         Button(
-            onClick = { viewModel.saveName(displayName) },
-            enabled = displayName.isNotBlank() && !isLoading,
+            onClick = { onSetupComplete(username, discriminator) },
+            enabled = isValid && errorMessage == null,
             modifier = Modifier.fillMaxWidth()
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            } else {
-                Text("Continue")
-            }
+            Text("Next")
         }
     }
 }
-

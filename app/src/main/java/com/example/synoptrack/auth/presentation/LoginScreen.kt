@@ -37,6 +37,7 @@ fun LoginScreen(
     onNavigateToForgotPassword: () -> Unit,
     // onNavigateToPhone: () -> Unit, // Removed
     onNavigateToGoogle: () -> Unit,
+    onNavigateToNameSetup: () -> Unit,
     onNavigateToProfileSetup: () -> Unit,
     onNavigateToPermission: () -> Unit,
     onBack: () -> Unit,
@@ -48,6 +49,7 @@ fun LoginScreen(
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvent.collect { event ->
             when (event) {
+                is AuthNavigationEvent.NavigateToNameSetup -> onNavigateToNameSetup()
                 is AuthNavigationEvent.NavigateToCompleteProfile -> onNavigateToProfileSetup()
                 is AuthNavigationEvent.NavigateToPermissionCheck -> onNavigateToPermission()
             }
