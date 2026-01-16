@@ -46,6 +46,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +74,8 @@ fun ProfileScreen(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> uri?.let { viewModel.uploadProfilePicture(it) } }
     )
+    
+    var showQrDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -128,11 +131,14 @@ fun ProfileScreen(
                     },
                     onEditProfile = onEditProfile,
                     onShareProfile = { /* TODO */ },
-                    onFriendAction = { /* TODO */ }
+                    onFriendAction = { /* TODO */ },
+                    onQrClick = { showQrDialog = true }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
+                
+                // ... (Rest of UI) ...
+                
                 // 2. Private Account Lock Logic
                 val isContentVisible = uiState.isCurrentUser || 
                                      !user.isPrivate || 
@@ -209,6 +215,30 @@ fun ProfileScreen(
                     }
                 }
             }
+            
+            if (showQrDialog) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showQrDialog = false },
+                    title = { Text(text = "Scan to Connect", style = MaterialTheme.typography.titleMedium) },
+                    text = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            AsyncImage(
+                                model = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=synoptrack://invite/${user.inviteCode}",
+                                contentDescription = "QR Code",
+                                modifier = Modifier.size(200.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("@${user.username}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            Text("#${user.discriminator}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                        }
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = { showQrDialog = false }) {
+                            Text("Close")
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -221,7 +251,8 @@ fun ProfileHeader(
     onAvatarClick: () -> Unit,
     onEditProfile: () -> Unit,
     onShareProfile: () -> Unit,
-    onFriendAction: () -> Unit
+    onFriendAction: () -> Unit,
+    onQrClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(
@@ -306,7 +337,7 @@ fun ProfileHeader(
                         ),
                         color = MaterialTheme.colorScheme.primary
                     )
-                    IconButton(onClick = { /* TODO: Show QR Dialog */ }) {
+                    IconButton(onClick = onQrClick) {
                         Icon(
                             imageVector = Icons.Default.QrCode, // Need to make sure QrCode icon exists or use another
                             contentDescription = "Show QR Code",

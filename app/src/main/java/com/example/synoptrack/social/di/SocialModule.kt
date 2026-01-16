@@ -11,11 +11,15 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SocialModule {
-
     @Binds
     @Singleton
     abstract fun bindSocialRepository(
         socialRepositoryImpl: SocialRepositoryImpl
     ): SocialRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindFriendRepository(
+        friendRepositoryImpl: com.example.synoptrack.social.data.repository.FriendRepositoryImpl
+    ): com.example.synoptrack.social.domain.repository.FriendRepository
 }

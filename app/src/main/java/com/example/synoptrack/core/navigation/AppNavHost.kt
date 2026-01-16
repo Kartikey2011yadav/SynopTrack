@@ -208,9 +208,14 @@ fun AppNavHost() {
                 )
             }
             composable(Screen.Search.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Search")
-                }
+                com.example.synoptrack.social.presentation.search.SocialSearchScreen(
+                    onBack = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } } 
+                    // Search is a main tab, but if we want back to go home or just stay? 
+                    // Main tabs usually don't have "Back". 
+                    // But SocialSearchScreen has a back button in TopBar. 
+                    // If it's a Top Level destination, the Back button should probably be valid or hidden.
+                    // Let's just make it go back to Home if pressed, or popBackStack if it's on top of something.
+                )
             }
 
             composable(Screen.Activity.route) {
@@ -256,6 +261,27 @@ fun AppNavHost() {
                 arguments = listOf(androidx.navigation.navArgument("groupId") { type = androidx.navigation.NavType.StringType })
             ) {
                 com.example.synoptrack.social.presentation.chat.ChatScreen(navController)
+            }
+
+            composable(
+                route = Screen.Invite.route,
+                deepLinks = listOf(androidx.navigation.navDeepLink { uriPattern = "synoptrack://invite/{code}" }),
+                arguments = listOf(androidx.navigation.navArgument("code") { type = androidx.navigation.NavType.StringType })
+            ) { backStackEntry ->
+                val code = backStackEntry.arguments?.getString("code")
+                com.example.synoptrack.social.presentation.invite.InviteHandlerScreen(
+                    code = code,
+                    onDismiss = {
+                        // Go home or back
+                        if (navController.previousBackStackEntry != null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
+                    }
+                )
             }
         }
 

@@ -43,4 +43,7 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
     }
     object Settings : Screen("settings")
     object EditProfile : Screen("edit_profile")
+    object Invite : Screen("invite/{code}") {
+        fun createRoute(code: String) = "invite/$code"
+    }
 }
