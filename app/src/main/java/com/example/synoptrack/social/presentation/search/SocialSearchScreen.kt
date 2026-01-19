@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import coil.compose.AsyncImage
 fun SocialSearchScreen(
     onBack: () -> Unit,
     onShowQr: () -> Unit,
+    onScanQr: () -> Unit,
     viewModel: SocialSearchViewModel = hiltViewModel()
 ) {
     val nameQuery by viewModel.nameQuery.collectAsState()
@@ -174,7 +176,12 @@ fun SocialSearchScreen(
                      label = { Text("Friend Code") },
                      modifier = Modifier.fillMaxWidth(),
                      singleLine = true,
-                     placeholder = { Text("e.g. User#1234@abcd") }
+                     placeholder = { Text("e.g. User#1234@abcd") },
+                     trailingIcon = {
+                         IconButton(onClick = onScanQr) {
+                             Icon(androidx.compose.material.icons.Icons.Default.QrCodeScanner, contentDescription = "Scan QR")
+                         }
+                     }
                  )
                  Spacer(modifier = Modifier.height(8.dp))
                  Button(

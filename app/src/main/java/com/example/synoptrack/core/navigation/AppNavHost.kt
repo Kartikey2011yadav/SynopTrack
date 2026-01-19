@@ -213,7 +213,8 @@ fun AppNavHost() {
             composable(Screen.Search.route) {
                 com.example.synoptrack.social.presentation.search.SocialSearchScreen(
                     onBack = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
-                    onShowQr = { navController.navigate(Screen.ShowQr.route) }
+                    onShowQr = { navController.navigate(Screen.ShowQr.route) },
+                    onScanQr = { navController.navigate(Screen.QrScan.route) }
                 )
             }
 
@@ -300,6 +301,23 @@ fun AppNavHost() {
                          androidx.compose.material3.CircularProgressIndicator()
                      }
                 }
+            }
+
+            composable(Screen.QrScan.route) {
+                com.example.synoptrack.social.presentation.qr.QrScannerScreen(
+                    onBack = { navController.popBackStack() },
+                    onCodeScanned = { rawCode ->
+                        // Handle Deep Link or Raw Code
+                        val code = if (rawCode.startsWith("synoptrack://invite/")) {
+                            rawCode.removePrefix("synoptrack://invite/")
+                        } else {
+                            rawCode
+                        }
+                        navController.navigate(Screen.Invite.createRoute(code)) {
+                            popUpTo(Screen.QrScan.route) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
 

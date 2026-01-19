@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
@@ -57,17 +58,22 @@ fun PermissionScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { viewModel.checkPermissions(context) }
     )
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { viewModel.checkPermissions(context) }
+    )
 
     LaunchedEffect(key1 = true) {
         viewModel.checkPermissions(context)
     }
     
     // Progress Calculation
-    val totalPermissions = 3
+    val totalPermissions = 4
     val grantedPermissions = listOf(
         uiState.isLocationGranted, 
         uiState.isContactsGranted, 
-        uiState.isNotificationGranted
+        uiState.isNotificationGranted,
+        uiState.isCameraGranted
     ).count { it }
     
     val progress = grantedPermissions.toFloat() / totalPermissions
@@ -168,6 +174,19 @@ fun PermissionScreen(
                 isGranted = uiState.isContactsGranted,
                 onClick = {
                     contactsLauncher.launch(Manifest.permission.READ_CONTACTS)
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Camera
+            PermissionItem(
+                title = "Camera Access",
+                description = "To scan QR codes and share moments.",
+                icon = androidx.compose.material.icons.Icons.Default.CameraAlt,
+                isGranted = uiState.isCameraGranted,
+                onClick = {
+                    cameraLauncher.launch(Manifest.permission.CAMERA)
                 }
             )
             
