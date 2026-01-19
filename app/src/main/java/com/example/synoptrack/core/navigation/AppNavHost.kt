@@ -157,6 +157,9 @@ fun AppNavHost() {
                 NameSetupScreen(
                     onSetupComplete = { name, hash ->
                         viewModel.saveIdentity(name, hash)
+                    },
+                    checkAvailability = { name, hash ->
+                         viewModel.checkIdentityAvailability(name, hash)
                     }
                 )
             }
@@ -209,12 +212,8 @@ fun AppNavHost() {
             }
             composable(Screen.Search.route) {
                 com.example.synoptrack.social.presentation.search.SocialSearchScreen(
-                    onBack = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } } 
-                    // Search is a main tab, but if we want back to go home or just stay? 
-                    // Main tabs usually don't have "Back". 
-                    // But SocialSearchScreen has a back button in TopBar. 
-                    // If it's a Top Level destination, the Back button should probably be valid or hidden.
-                    // Let's just make it go back to Home if pressed, or popBackStack if it's on top of something.
+                    onBack = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
+                    onShowQr = { navController.navigate(Screen.ShowQr.route) }
                 )
             }
 
@@ -246,6 +245,9 @@ fun AppNavHost() {
                         onSaveClick = { name, hash, bio ->
                             viewModel.updateIdentity(name, hash, bio)
                             navController.popBackStack()
+                        },
+                        checkAvailability = { name, hash ->
+                             viewModel.checkIdentityAvailability(name, hash)
                         }
                     )
                 } else {
@@ -282,6 +284,22 @@ fun AppNavHost() {
                         }
                     }
                 )
+            }
+
+            composable(Screen.ShowQr.route) {
+                val viewModel: com.example.synoptrack.profile.presentation.ProfileViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                val uiState by viewModel.uiState.collectAsState()
+                
+                if (uiState.user != null) {
+                    com.example.synoptrack.social.presentation.qr.UserQrScreen(
+                        user = uiState.user!!,
+                        onBack = { navController.popBackStack() }
+                    )
+                } else {
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                         androidx.compose.material3.CircularProgressIndicator()
+                     }
+                }
             }
         }
 

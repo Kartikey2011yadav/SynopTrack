@@ -13,6 +13,6 @@ interface FriendRepository {
     fun getFriends(userId: String): Flow<List<UserProfile>>
     
     // Search
-    suspend fun searchUsers(query: String): Result<List<UserProfile>>
+    suspend fun searchUsers(nameQuery: String, discriminatorQuery: String = ""): Result<List<UserProfile>>
     suspend fun getUserByInviteCode(code: String): Result<UserProfile?>
 }

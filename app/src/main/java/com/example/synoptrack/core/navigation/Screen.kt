@@ -46,4 +46,5 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
     object Invite : Screen("invite/{code}") {
         fun createRoute(code: String) = "invite/$code"
     }
+    object ShowQr : Screen("show_qr")
 }

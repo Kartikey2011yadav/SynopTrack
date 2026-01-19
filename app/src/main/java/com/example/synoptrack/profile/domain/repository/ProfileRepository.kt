@@ -13,4 +13,5 @@ interface ProfileRepository {
     suspend fun uploadProfilePicture(uid: String, imageBytes: ByteArray): Result<String>
     suspend fun updatePrivacy(uid: String, isPrivate: Boolean): Result<Unit>
     suspend fun logout(): Result<Unit>
+    suspend fun checkIdentityAvailability(username: String, discriminator: String): Result<Boolean>
 }

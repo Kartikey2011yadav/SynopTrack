@@ -82,6 +82,16 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
+            // Check uniqueness if identity changed
+            if (name != currentUser.username || discriminator != currentUser.discriminator) {
+                val isAvailable = checkIdentityAvailability(name, discriminator)
+                if (!isAvailable) {
+                     // TODO: Fix Error Handling in UI State
+                     _uiState.update { it.copy(isLoading = false) }
+                     return@launch
+                }
+            }
+            
             // If name or discriminator changed, regenerate invite code
             val newInviteCode = if (name != currentUser.username || discriminator != currentUser.discriminator) {
                 com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(name, discriminator)
@@ -90,7 +100,7 @@ class ProfileViewModel @Inject constructor(
             }
 
             val updatedProfile = currentUser.copy(
-                username = name, // Keeping username same as display name for now as per plan
+                username = name, 
                 displayName = name,
                 discriminator = discriminator,
                 bio = bio,
@@ -102,10 +112,20 @@ class ProfileViewModel @Inject constructor(
                     // UI will update via Flow
                 }
                 .onFailure {
-                    // Handle error (e.g. show Snackbar)
+                    // Handle error
                 }
              _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    suspend fun checkIdentityAvailability(username: String, discriminator: String): Boolean {
+         // If checking against self, it's valid if it hasn't changed.
+         // But here we are checking availability for a NEW combination or changed one.
+         val currentUser = _uiState.value.user
+         if (currentUser != null && currentUser.username == username && currentUser.discriminator == discriminator) {
+            return true
+         }
+         return profileRepository.checkIdentityAvailability(username, discriminator).getOrDefault(false)
     }
 
     private suspend fun checkFriendship(myUid: String, targetUid: String) {

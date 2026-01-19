@@ -143,6 +143,20 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun checkIdentityAvailability(username: String, discriminator: String): Result<Boolean> {
+        return try {
+            val query = firestore.collection("users")
+                .whereEqualTo("username", username)
+                .whereEqualTo("discriminator", discriminator)
+                .get()
+                .await()
+            // If query is empty, it means no one has this combination -> Available
+            Result.success(query.isEmpty)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun generateInviteCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return (1..6)

@@ -137,35 +137,30 @@ class FriendRepositoryImpl @Inject constructor(
          awaitClose { listener.remove() }
     }
 
-    override suspend fun searchUsers(query: String): Result<List<UserProfile>> {
+    override suspend fun searchUsers(nameQuery: String, discriminatorQuery: String): Result<List<UserProfile>> {
         return try {
-            // Search by username (exact match or simple prefix if infrastructure supports it)
-            // Or Search by Identity "user#1234"
-            // Or Invite Code
+            if (discriminatorQuery.isNotEmpty()) {
+                // Exact Match: Username + Discriminator
+                val snapshot = usersCollection
+                    .whereEqualTo("username", nameQuery)
+                    .whereEqualTo("discriminator", discriminatorQuery)
+                    .get().await()
+                 return Result.success(snapshot.toObjects(UserProfile::class.java))
+            } 
             
-            if (query.contains("#")) {
-                val parts = query.split("#")
-                if (parts.size == 2) {
-                    val name = parts[0]
-                    val discriminator = parts[1]
-                    val snapshot = usersCollection
-                        .whereEqualTo("username", name)
-                        .whereEqualTo("discriminator", discriminator)
-                        .get().await()
-                     return Result.success(snapshot.toObjects(UserProfile::class.java))
-                }
+            // Search by Invite Code (Check if query matches Invite Code format or just try finding it)
+            // New Format: name#tag@random (contains @)
+            if (nameQuery.contains("@")) {
+                 val codeSnapshot = usersCollection.whereEqualTo("inviteCode", nameQuery).get().await()
+                 if (!codeSnapshot.isEmpty) {
+                     return Result.success(codeSnapshot.toObjects(UserProfile::class.java))
+                 }
             }
-            
-            // Try Invite Code
-            val codeSnapshot = usersCollection.whereEqualTo("inviteCode", query).get().await()
-            if (!codeSnapshot.isEmpty) {
-                return Result.success(codeSnapshot.toObjects(UserProfile::class.java))
-            }
-            
-            // Try Username prefix (requires special indexing or 3rd party search usually, but simple start)
+
+            // Username Prefix Search
             val nameSnapshot = usersCollection
-                 .whereGreaterThanOrEqualTo("username", query)
-                 .whereLessThanOrEqualTo("username", query + "\uf8ff")
+                 .whereGreaterThanOrEqualTo("username", nameQuery)
+                 .whereLessThanOrEqualTo("username", nameQuery + "\uf8ff")
                  .limit(10)
                  .get().await()
                  

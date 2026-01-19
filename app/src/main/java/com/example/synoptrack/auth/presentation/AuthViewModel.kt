@@ -86,10 +86,16 @@ class AuthViewModel @Inject constructor(
     fun saveIdentity(username: String, discriminator: String) {
         viewModelScope.launch {
             _signInState.value = SignInState.Loading
+            
+            // Check availability one last time
+            val isAvailable = profileRepository.checkIdentityAvailability(username, discriminator).getOrDefault(false)
+            if (!isAvailable) {
+                 _signInState.value = SignInState.Error("This Username#Hash is already taken. Please choose another hash.")
+                 return@launch
+            }
+            
             val currentUser = authRepository.currentUser
             if (currentUser != null) {
-                // Ideally trigger a backend check for uniqueness here.
-                // For now, we update the profile locally/firestore.
                 val uid = currentUser.uid
                 // We need to fetch current profile or create a default one
                 profileRepository.getUserProfile(uid).collect { profile ->
@@ -110,6 +116,10 @@ class AuthViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    suspend fun checkIdentityAvailability(username: String, discriminator: String): Boolean {
+        return profileRepository.checkIdentityAvailability(username, discriminator).getOrDefault(false)
     }
 
     private suspend fun checkUserStatus() {

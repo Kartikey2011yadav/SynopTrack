@@ -18,20 +18,20 @@ fun AddFriendDialog(
         title = { Text("Add Friend") },
         text = {
             Column {
-                Text("Enter their 6-digit Invite Code:")
+                Text("Enter their Invite Code:")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = code,
-                    onValueChange = { code = it.uppercase().take(6) },
+                    onValueChange = { code = it },
                     singleLine = true,
-                    placeholder = { Text("e.g. A1B2C3") }
+                    placeholder = { Text("e.g. user#1234@abcd") }
                 )
             }
         },
         confirmButton = {
             Button(
-                onClick = { if (code.length == 6) onAdd(code) },
-                enabled = code.length == 6
+                onClick = { if (code.length > 5) onAdd(code) },
+                enabled = code.length > 5
             ) {
                 Text("Add Friend")
             }

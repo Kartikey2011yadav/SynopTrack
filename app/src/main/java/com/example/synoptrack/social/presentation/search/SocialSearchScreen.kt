@@ -25,55 +25,169 @@ import coil.compose.AsyncImage
 @Composable
 fun SocialSearchScreen(
     onBack: () -> Unit,
+    onShowQr: () -> Unit,
     viewModel: SocialSearchViewModel = hiltViewModel()
 ) {
-    val query by viewModel.query.collectAsState()
+    val nameQuery by viewModel.nameQuery.collectAsState()
+    val tagQuery by viewModel.tagQuery.collectAsState()
+    val inviteCodeQuery by viewModel.inviteCodeQuery.collectAsState()
+    val ownInviteCode by viewModel.ownInviteCode.collectAsState()
     val results by viewModel.searchResults.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val requestStatus by viewModel.requestStatus.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
-            SearchBar(
-                query = query,
-                onQueryChange = { viewModel.onQueryChange(it) },
-                onSearch = { /* Handled by debounce */ },
-                active = true,
-                onActiveChange = { },
-                placeholder = { Text("Search username#1234") },
-                leadingIcon = {
+            TopAppBar(
+                title = { Text("Add a Friend") },
+                navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-                },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onQueryChange("") }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear")
-                        }
-                    }
                 }
-            ) {
-                 if (isLoading) {
-                     Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                         CircularProgressIndicator()
-                     }
-                 } else {
-                     LazyColumn {
-                         items(results) { user ->
-                             UserSearchResultItem(
-                                 user = user,
-                                 isRequestSent = requestStatus[user.uid] == true,
-                                 onAddClick = { viewModel.sendFriendRequest(user.uid) }
+            )
+        }
+    ) { padding ->
+         LazyColumn(
+             modifier = Modifier
+                 .padding(padding)
+                 .fillMaxSize(),
+             contentPadding = java.util.Collections.nCopies(1, PaddingValues(16.dp))[0] // Simple padding
+         ) {
+             // 1. Your Code Section
+             item {
+                 Card(
+                     modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                 ) {
+                     Column(modifier = Modifier.padding(16.dp)) {
+                         Text(
+                             text = "Your Friend Code",
+                             style = MaterialTheme.typography.titleMedium,
+                             color = MaterialTheme.colorScheme.onSecondaryContainer
+                         )
+                         Spacer(modifier = Modifier.height(8.dp))
+                         Row(
+                             verticalAlignment = Alignment.CenterVertically,
+                             modifier = Modifier.fillMaxWidth()
+                         ) {
+                             Text(
+                                 text = ownInviteCode,
+                                 style = MaterialTheme.typography.displaySmall,
+                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                 modifier = Modifier.weight(1f)
                              )
+                             Button(onClick = {
+                                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                 val clip = android.content.ClipData.newPlainText("Friend Code", ownInviteCode)
+                                 clipboard.setPrimaryClip(clip)
+                             }) {
+                                 Text("COPY")
+                             }
+                         }
+                         Spacer(modifier = Modifier.height(8.dp))
+                         OutlinedButton(
+                             onClick = onShowQr,
+                             modifier = Modifier.fillMaxWidth()
+                         ) {
+                             Text("Show QR Code")
                          }
                      }
                  }
+             }
+
+             // 2. Search Section
+             item {
+                 Text(
+                     text = "Search by Riot ID",
+                     style = MaterialTheme.typography.titleMedium,
+                     modifier = Modifier.padding(bottom = 8.dp)
+                 )
+                 Row(modifier = Modifier.fillMaxWidth()) {
+                     OutlinedTextField(
+                         value = nameQuery,
+                         onValueChange = { viewModel.onNameChange(it) },
+                         label = { Text("User Name") },
+                         modifier = Modifier.weight(1f),
+                         singleLine = true
+                     )
+                     Spacer(modifier = Modifier.width(8.dp))
+                     OutlinedTextField(
+                         value = tagQuery,
+                         onValueChange = { viewModel.onTagChange(it) },
+                         label = { Text("Tag") },
+                         modifier = Modifier.width(100.dp),
+                         singleLine = true,
+                         prefix = { Text("#") }
+                     )
+                 }
+                 Spacer(modifier = Modifier.height(8.dp))
+                 Button(
+                     onClick = { viewModel.performRiotSearch() },
+                     modifier = Modifier.fillMaxWidth()
+                 ) {
+                     Icon(Icons.Default.Search, contentDescription = null)
+                     Spacer(modifier = Modifier.width(8.dp))
+                     Text("Search")
+                 }
+                 Spacer(modifier = Modifier.height(24.dp))
+             }
+
+            // 3. Results Section (conditionally visible)
+            if (results.isNotEmpty() || isLoading) {
+                item {
+                    Text(
+                        text = "Results",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                if (isLoading) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else {
+                    items(results) { user ->
+                        UserSearchResultItem(
+                            user = user,
+                            isRequestSent = requestStatus[user.uid] == true,
+                            onAddClick = { viewModel.sendFriendRequest(user.uid) }
+                        )
+                    }
+                }
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
-        }
-    ) { padding ->
-         // SearchBar handles content
-         Box(modifier = Modifier.padding(padding))
+
+             // 4. Invite Code Search Section
+             item {
+                 Text(
+                     text = "Or enter a Friend Code",
+                     style = MaterialTheme.typography.titleMedium,
+                     modifier = Modifier.padding(bottom = 8.dp)
+                 )
+                 OutlinedTextField(
+                     value = inviteCodeQuery,
+                     onValueChange = { viewModel.onInviteCodeChange(it) },
+                     label = { Text("Friend Code") },
+                     modifier = Modifier.fillMaxWidth(),
+                     singleLine = true,
+                     placeholder = { Text("e.g. User#1234@abcd") }
+                 )
+                 Spacer(modifier = Modifier.height(8.dp))
+                 Button(
+                     onClick = { viewModel.performInviteCodeSearch() },
+                     modifier = Modifier.fillMaxWidth(),
+                     enabled = inviteCodeQuery.length > 8 // Minimal length for new format
+                 ) {
+                     Text("Send Invite")
+                 }
+                 
+                 Spacer(modifier = Modifier.height(32.dp))
+             }
+         }
     }
 }
 
@@ -83,47 +197,53 @@ fun UserSearchResultItem(
     isRequestSent: Boolean,
     onAddClick: () -> Unit
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        AsyncImage(
-            model = user.avatarUrl.ifEmpty { "https://ui-avatars.com/api/?name=${user.username}" },
-            contentDescription = null,
+        Row(
             modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .fillMaxHeight()
-        )
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "${user.username}#${user.discriminator}",
-                style = MaterialTheme.typography.bodyLarge
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = user.avatarUrl.ifEmpty { "https://ui-avatars.com/api/?name=${user.username}" },
+                contentDescription = null,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
             )
-            if (user.bio.isNotEmpty()) {
-                 Text(
-                    text = user.bio,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    color = Color.Gray
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${user.username}#${user.discriminator}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (user.bio.isNotEmpty()) {
+                    Text(
+                        text = user.bio,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        color = Color.Gray
+                    )
+                }
+            }
+            
+            IconButton(
+                onClick = onAddClick,
+                enabled = !isRequestSent
+            ) {
+                Icon(
+                    imageVector = if (isRequestSent) Icons.Default.Check else Icons.Default.PersonAdd,
+                    contentDescription = "Add Friend",
+                    tint = if (isRequestSent) Color.Green else MaterialTheme.colorScheme.primary
                 )
             }
-        }
-        
-        IconButton(
-            onClick = onAddClick,
-            enabled = !isRequestSent
-        ) {
-            Icon(
-                imageVector = if (isRequestSent) Icons.Default.Check else Icons.Default.PersonAdd,
-                contentDescription = "Add Friend",
-                tint = if (isRequestSent) Color.Green else MaterialTheme.colorScheme.primary
-            )
         }
     }
 }
