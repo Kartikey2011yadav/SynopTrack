@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.synoptrack.R
 import com.example.synoptrack.core.theme.ElectricBluePrimary
 
@@ -137,4 +138,14 @@ fun AuthButton(
         }
         Text(text, fontWeight = FontWeight.SemiBold)
     }
+}
+
+@Preview
+@Composable
+fun WelcomeScreenPreview() {
+    WelcomeScreen(
+        onLogin = {},
+        onCreateAccount = {},
+        onTermsClick = {}
+    )
 }

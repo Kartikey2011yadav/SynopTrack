@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +28,10 @@ import com.example.synoptrack.mapos.presentation.MapOSViewModel
 import com.example.synoptrack.social.presentation.components.AddFriendDialog
 import com.example.synoptrack.social.presentation.components.CreateGroupDialog
 import com.example.synoptrack.social.presentation.components.JoinGroupDialog
+import com.example.synoptrack.social.domain.model.Group
+import com.example.synoptrack.social.domain.model.FriendshipStatus
+import com.example.synoptrack.profile.domain.model.UserProfile
+
 
 @Composable
 fun SocialScreen(
@@ -36,24 +40,46 @@ fun SocialScreen(
     onChatClick: (String) -> Unit = {}
 ) {
     val activeGroup by mapViewModel.activeGroup.collectAsState()
-    val groupMembers by mapViewModel.groupMembers.collectAsState()
     val isConvoyActive by mapViewModel.isConvoyActive.collectAsState()
-
     val friends by socialViewModel.friends.collectAsState()
     val groups by socialViewModel.groups.collectAsState()
     val toastMessage by socialViewModel.toastMessage.collectAsState()
 
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var showJoinDialog by remember { mutableStateOf(false) }
-    var showAddFriendDialog by remember { mutableStateOf(false) }
-
     // Toast Effect
     LaunchedEffect(toastMessage) {
         toastMessage?.let {
-            // In a real app, use SnackbarHostState
              socialViewModel.clearToast()
         }
     }
+
+    SocialScreenContent(
+        activeGroup = activeGroup,
+        isConvoyActive = isConvoyActive,
+        friends = friends,
+        groups = groups,
+        onChatClick = onChatClick,
+        onStopConvoy = { mapViewModel.stopConvoy() },
+        onCreateGroup = { name -> socialViewModel.createGroup(name) },
+        onJoinGroup = { code -> socialViewModel.joinGroup(code) },
+        onAddFriend = { code -> socialViewModel.addFriend(code) }
+    )
+}
+
+@Composable
+fun SocialScreenContent(
+    activeGroup: Group?,
+    isConvoyActive: Boolean,
+    friends: List<UserProfile>,
+    groups: List<Group>,
+    onChatClick: (String) -> Unit,
+    onStopConvoy: () -> Unit,
+    onCreateGroup: (String) -> Unit,
+    onJoinGroup: (String) -> Unit,
+    onAddFriend: (String) -> Unit
+) {
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var showJoinDialog by remember { mutableStateOf(false) }
+    var showAddFriendDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -91,7 +117,7 @@ fun SocialScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp)
-                    .clickable { onChatClick(activeGroup!!.id) },
+                    .clickable { onChatClick(activeGroup.id) },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer) // Red for Active
             ) {
@@ -108,10 +134,10 @@ fun SocialScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("LIVE Tracking Active", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
-                        Text(activeGroup!!.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(activeGroup.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.weight(1f))
-                    IconButton(onClick = { mapViewModel.stopConvoy() }) {
+                    IconButton(onClick = onStopConvoy) {
                         Icon(Icons.Default.Stop, contentDescription = "Stop", tint = MaterialTheme.colorScheme.error)
                     }
                 }
@@ -181,7 +207,7 @@ fun SocialScreen(
         CreateGroupDialog(
             onDismiss = { showCreateDialog = false },
             onCreate = { name ->
-                socialViewModel.createGroup(name)
+                onCreateGroup(name)
                 showCreateDialog = false
             }
         )
@@ -191,7 +217,7 @@ fun SocialScreen(
         JoinGroupDialog(
             onDismiss = { showJoinDialog = false },
             onJoin = { code ->
-                socialViewModel.joinGroup(code)
+                onJoinGroup(code)
                 showJoinDialog = false
             }
         )
@@ -201,7 +227,7 @@ fun SocialScreen(
         AddFriendDialog(
             onDismiss = { showAddFriendDialog = false },
             onAdd = { code ->
-                socialViewModel.addFriend(code)
+                onAddFriend(code)
                 showAddFriendDialog = false
             }
         )
@@ -251,4 +277,20 @@ fun SocialListItem(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun SocialScreenPreview() {
+    SocialScreenContent(
+        activeGroup = null,
+        isConvoyActive = false,
+        friends = emptyList(),
+        groups = emptyList(),
+        onChatClick = {},
+        onStopConvoy = {},
+        onCreateGroup = {},
+        onJoinGroup = {},
+        onAddFriend = {}
+    )
 }

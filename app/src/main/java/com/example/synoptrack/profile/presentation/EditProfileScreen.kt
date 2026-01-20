@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.synoptrack.core.utils.IdentityUtils
 
@@ -156,4 +157,17 @@ fun EditProfileScreen(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun EditProfileScreenPreview() {
+    EditProfileScreen(
+        currentName = "John Doe",
+        currentDiscriminator = "1234",
+        currentBio = "Hello world",
+        onBackClick = {},
+        onSaveClick = { _, _, _ -> },
+        checkAvailability = { _, _ -> true }
+    )
 }

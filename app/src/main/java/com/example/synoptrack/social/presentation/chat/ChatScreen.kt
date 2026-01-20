@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.synoptrack.social.domain.model.Message
@@ -38,6 +39,26 @@ fun ChatScreen(
     val messageText by viewModel.messageText.collectAsState()
     val currentUser = viewModel.currentUser
 
+    ChatScreenContent(
+        messages = messages,
+        messageText = messageText,
+        currentUserId = currentUser?.uid,
+        onBack = { navController.popBackStack() },
+        onMessageChange = { viewModel.onMessageChange(it) },
+        onSendMessage = { viewModel.sendMessage() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatScreenContent(
+    messages: List<Message>,
+    messageText: String,
+    currentUserId: String?,
+    onBack: () -> Unit,
+    onMessageChange: (String) -> Unit,
+    onSendMessage: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -47,7 +68,7 @@ fun ChatScreen(
         TopAppBar(
             title = { Text("Convoy Chat" )}, // Could pass group name via args too
             navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = onBack) {
                     Icon(Icons.Filled.ArrowBackIosNew, contentDescription = "Back")
                 }
             },
@@ -66,7 +87,7 @@ fun ChatScreen(
             reverseLayout = true // Start from bottom
         ) {
             items(messages) { message ->
-                val isMe = message.senderId == currentUser?.uid
+                val isMe = message.senderId == currentUserId
                 MessageBubble(message = message, isMe = isMe)
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -81,7 +102,7 @@ fun ChatScreen(
         ) {
             TextField(
                 value = messageText,
-                onValueChange = { viewModel.onMessageChange(it) },
+                onValueChange = onMessageChange,
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(24.dp)),
@@ -97,7 +118,7 @@ fun ChatScreen(
             
             val isSendEnabled = messageText.isNotBlank()
             IconButton(
-                onClick = { viewModel.sendMessage() },
+                onClick = onSendMessage,
                 enabled = isSendEnabled,
                 modifier = Modifier
                     .size(48.dp)
@@ -162,4 +183,21 @@ fun MessageBubble(message: Message, isMe: Boolean) {
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun ChatScreenPreview() {
+    val mockMessages = listOf(
+        Message(id = "1", senderId = "me", senderName = "Me", content = "Hello!"),
+        Message(id = "2", senderId = "other", senderName = "Alice", content = "Hi there!")
+    )
+    ChatScreenContent(
+        messages = mockMessages,
+        messageText = "",
+        currentUserId = "me",
+        onBack = {},
+        onMessageChange = {},
+        onSendMessage = {}
+    )
 }

@@ -1,7 +1,6 @@
 package com.example.synoptrack.auth.presentation
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,10 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.runtime.*
@@ -25,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.R
@@ -56,6 +53,45 @@ fun LoginScreen(
         }
     }
     
+    // Google Sign In Logic
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val googleSignInClient = remember {
+        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+    }
+
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            viewModel.handleSignInResult(task)
+        }
+    }
+
+    LoginScreenContent(
+        signInState = signInState,
+        onSignIn = { email, password -> viewModel.signInWithEmail(email, password) },
+        onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
+        onNavigateToSignUp = onNavigateToSignUp,
+        onNavigateToForgotPassword = onNavigateToForgotPassword,
+        onBack = onBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoginScreenContent(
+    signInState: SignInState,
+    onSignIn: (String, String) -> Unit,
+    onGoogleSignIn: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit,
+    onBack: () -> Unit
+) {
     // UI State
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -84,7 +120,6 @@ fun LoginScreen(
                 .verticalScroll(androidx.compose.foundation.rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
-            // Header Image (Optional, if fits design. User said "just in two pages" - Login could be one)
             // Header Image
              Image(
                 painter = painterResource(id = R.drawable.credentials),
@@ -94,7 +129,7 @@ fun LoginScreen(
                     .height(200.dp),
                 contentScale = ContentScale.Fit
             )
-//
+
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
@@ -188,7 +223,7 @@ fun LoginScreen(
             
             // Login Button
             Button(
-                onClick = { viewModel.signInWithEmail(email, password) },
+                onClick = { onSignIn(email, password) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ElectricBluePrimary)
@@ -215,30 +250,8 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Social Buttons
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val googleSignInClient = remember {
-                val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(context.getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build()
-                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
-            }
-
-            val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
-                contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-            ) { result ->
-                if (result.resultCode == android.app.Activity.RESULT_OK) {
-                    val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    viewModel.handleSignInResult(task)
-                } else {
-                    // Handle cancellation or error if needed
-                }
-            }
-
             OutlinedButton(
-                onClick = {
-                    launcher.launch(googleSignInClient.signInIntent)
-                },
+                onClick = onGoogleSignIn,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
@@ -247,8 +260,6 @@ fun LoginScreen(
                 // Image(painter = painterResource(id = R.drawable.ic_google), ...) 
                 Text("Sign in with Google") 
             }
-            
-            // Phone button removed as requested
             
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -268,4 +279,19 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+}
+
+@Preview
+@Composable
+fun LoginScreenPreview() {
+    // Mock theme probably needed if specific colors are used
+    // Assuming simple preview
+    LoginScreenContent(
+        signInState = SignInState.Success(""), // Or Idle
+        onSignIn = { _, _ -> },
+        onGoogleSignIn = {},
+        onNavigateToSignUp = {},
+        onNavigateToForgotPassword = {},
+        onBack = {}
+    )
 }

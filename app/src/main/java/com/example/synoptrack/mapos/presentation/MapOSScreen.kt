@@ -34,12 +34,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.core.utils.MapStyleManager
 import com.example.synoptrack.mapos.presentation.components.HomeTopBar
 import com.example.synoptrack.social.presentation.components.CreateGroupDialog
 import com.example.synoptrack.social.presentation.components.JoinGroupDialog
+import com.example.synoptrack.mapos.presentation.model.MemberUiModel
+import com.example.synoptrack.social.domain.model.Group as SocialGroup
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -63,38 +67,18 @@ fun MapOSScreen(
     val context = LocalContext.current
     val systemInDarkTheme = isSystemInDarkTheme()
     val appTheme by mainViewModel.theme.collectAsState(initial = com.example.synoptrack.core.datastore.AppTheme.SYSTEM)
+    val lastLocation by viewModel.lastKnownLocation.collectAsState()
+    val isConvoyActive by viewModel.isConvoyActive.collectAsState()
+    val groupMembers by viewModel.groupMembers.collectAsState()
+    val activeGroup by viewModel.activeGroup.collectAsState()
 
     val isDarkTheme = when (appTheme) {
         com.example.synoptrack.core.datastore.AppTheme.LIGHT -> false
         com.example.synoptrack.core.datastore.AppTheme.DARK -> true
         com.example.synoptrack.core.datastore.AppTheme.SYSTEM -> systemInDarkTheme
     }
-
-    val singapore = LatLng(1.35, 103.87)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(singapore, 11f)
-    }
-
-    val lastLocation by viewModel.lastKnownLocation.collectAsState()
-    val hasSetInitialCamera = remember { mutableStateOf(false) }
-
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(lastLocation) {
-        lastLocation?.let { loc ->
-            if (!hasSetInitialCamera.value) {
-                cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(loc, 15f),
-                    1000
-                )
-                hasSetInitialCamera.value = true
-            }
-        }
-    }
-
-    // Service Control Logic
-    val isConvoyActive by viewModel.isConvoyActive.collectAsState()
     
+    // Service Control Logic (Side Effects in Wrapper)
     LaunchedEffect(isConvoyActive) {
         val intent = android.content.Intent(context, com.example.synoptrack.core.presence.service.PresenceForegroundService::class.java)
         if (!isConvoyActive) {
@@ -114,11 +98,58 @@ fun MapOSScreen(
         }
     }
 
-    // specific Map Properties that react to theme changes
+    MapOSScreenContent(
+        isDarkTheme = isDarkTheme,
+        lastLocation = lastLocation,
+        groupMembers = groupMembers,
+        activeGroup = activeGroup,
+        onActivityClick = onActivityClick,
+        onCreateGroup = { name -> viewModel.createGroup(name) },
+        onJoinGroup = { code -> viewModel.joinGroup(code) },
+        onLeaveGroup = { /* TODO */ }
+    )
+}
+
+@Composable
+fun MapOSScreenContent(
+    isDarkTheme: Boolean,
+    lastLocation: LatLng?,
+    groupMembers: List<MemberUiModel>,
+    activeGroup: SocialGroup?,
+    onActivityClick: () -> Unit,
+    onCreateGroup: (String) -> Unit,
+    onJoinGroup: (String) -> Unit,
+    onLeaveGroup: () -> Unit
+) {
+    val context = LocalContext.current
+    val isPreview = LocalInspectionMode.current
+    
+    val singapore = LatLng(1.35, 103.87)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(singapore, 11f)
+    }
+    
+    val scope = rememberCoroutineScope()
+    val hasSetInitialCamera = remember { mutableStateOf(false) }
+
+    LaunchedEffect(lastLocation) {
+        lastLocation?.let { loc ->
+            if (!hasSetInitialCamera.value) {
+                if (!isPreview) {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(loc, 15f),
+                        1000
+                    )
+                }
+                hasSetInitialCamera.value = true
+            }
+        }
+    }
+    
     val mapProperties = remember(isDarkTheme) { 
         MapProperties(
             isMyLocationEnabled = true, // Enable Blue Dot
-            mapStyleOptions = MapStyleManager.getMapStyle(context, isDarkTheme)
+            mapStyleOptions = if (isPreview) null else MapStyleManager.getMapStyle(context, isDarkTheme)
         )
     }
     
@@ -131,33 +162,39 @@ fun MapOSScreen(
             )
         )
     }
-
-    val groupMembers by viewModel.groupMembers.collectAsState()
-    val activeGroup by viewModel.activeGroup.collectAsState()
     
     var showSocialOptions by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var showJoinDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = mapProperties,
-            uiSettings = uiSettings
-        ) {
-            // Render Friend Markers
-            groupMembers.forEach { member ->
-                val batteryInfo = if (member.batteryLevel >= 0) {
-                     "🔋 ${member.batteryLevel}%" + if (member.isCharging) " ⚡" else ""
-                } else "Unknown"
-                
-                Marker(
-                    state = MarkerState(position = member.location),
-                    title = member.displayName,
-                    snippet = batteryInfo, 
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-                )
+        if (isPreview) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Google Map Preview Placeholder")
+            }
+        } else {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                properties = mapProperties,
+                uiSettings = uiSettings
+            ) {
+                // Render Friend Markers
+                groupMembers.forEach { member ->
+                    val batteryInfo = if (member.batteryLevel >= 0) {
+                         "🔋 ${member.batteryLevel}%" + if (member.isCharging) " ⚡" else ""
+                    } else "Unknown"
+                    
+                    Marker(
+                        state = MarkerState(position = member.location),
+                        title = member.displayName,
+                        snippet = batteryInfo, 
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    )
+                }
             }
         }
         
@@ -172,7 +209,7 @@ fun MapOSScreen(
         SmallFloatingActionButton(
             onClick = {
                 val loc = lastLocation
-                if (loc != null) {
+                if (loc != null && !isPreview) {
                     scope.launch {
                         cameraPositionState.animate(
                             CameraUpdateFactory.newLatLngZoom(loc, 15f),
@@ -200,10 +237,10 @@ fun MapOSScreen(
                 text = {
                     androidx.compose.foundation.layout.Column {
                         if (activeGroup != null) {
-                            Text("Active Group: ${activeGroup?.name}")
-                            Text("Code: ${activeGroup?.inviteCode}")
+                            Text("Active Group: ${activeGroup.name}")
+                            Text("Code: ${activeGroup.inviteCode}")
                             Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = { /* Leave Group TODO */ }) {
+                            Button(onClick = { onLeaveGroup() }) {
                                 Text("Leave Convoy")
                             }
                         } else {
@@ -241,7 +278,7 @@ fun MapOSScreen(
             CreateGroupDialog(
                 onDismiss = { showCreateDialog = false },
                 onCreate = { name ->
-                    viewModel.createGroup(name)
+                    onCreateGroup(name)
                     showCreateDialog = false
                 }
             )
@@ -251,10 +288,25 @@ fun MapOSScreen(
             JoinGroupDialog(
                 onDismiss = { showJoinDialog = false },
                 onJoin = { code ->
-                    viewModel.joinGroup(code)
+                    onJoinGroup(code)
                     showJoinDialog = false
                 }
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun MapOSScreenPreview() {
+    MapOSScreenContent(
+        isDarkTheme = false,
+        lastLocation = LatLng(1.35, 103.87),
+        groupMembers = emptyList(),
+        activeGroup = null,
+        onActivityClick = {},
+        onCreateGroup = {},
+        onJoinGroup = {},
+        onLeaveGroup = {}
+    )
 }

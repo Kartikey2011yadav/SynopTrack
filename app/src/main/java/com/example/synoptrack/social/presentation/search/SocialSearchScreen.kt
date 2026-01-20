@@ -21,6 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.synoptrack.profile.domain.model.UserProfile
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +42,53 @@ fun SocialSearchScreen(
     val requestStatus by viewModel.requestStatus.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    Scaffold(
+    SocialSearchScreenContent(
+        nameQuery = nameQuery,
+        tagQuery = tagQuery,
+        inviteCodeQuery = inviteCodeQuery,
+        ownInviteCode = ownInviteCode,
+        results = results,
+        isLoading = isLoading,
+        requestStatus = requestStatus,
+        onBack = onBack,
+        onShowQr = onShowQr,
+        onScanQr = onScanQr,
+        onNameChange = { viewModel.onNameChange(it) },
+        onTagChange = { viewModel.onTagChange(it) },
+        onInviteCodeChange = { viewModel.onInviteCodeChange(it) },
+        onSearchRiot = { viewModel.performRiotSearch() },
+        onSearchInviteCode = { viewModel.performInviteCodeSearch() },
+        onAddFriend = { uid -> viewModel.sendFriendRequest(uid) },
+        onCopyInviteCode = { code ->
+            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Friend Code", code)
+            clipboard.setPrimaryClip(clip)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SocialSearchScreenContent(
+    nameQuery: String,
+    tagQuery: String,
+    inviteCodeQuery: String,
+    ownInviteCode: String,
+    results: List<UserProfile>,
+    isLoading: Boolean,
+    requestStatus: Map<String, Boolean>,
+    onBack: () -> Unit,
+    onShowQr: () -> Unit,
+    onScanQr: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onTagChange: (String) -> Unit,
+    onInviteCodeChange: (String) -> Unit,
+    onSearchRiot: () -> Unit,
+    onSearchInviteCode: () -> Unit,
+    onAddFriend: (String) -> Unit,
+    onCopyInviteCode: (String) -> Unit
+) {
+     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Add a Friend") },
@@ -80,11 +129,7 @@ fun SocialSearchScreen(
                                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                                  modifier = Modifier.weight(1f)
                              )
-                             Button(onClick = {
-                                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                 val clip = android.content.ClipData.newPlainText("Friend Code", ownInviteCode)
-                                 clipboard.setPrimaryClip(clip)
-                             }) {
+                             Button(onClick = { onCopyInviteCode(ownInviteCode) }) {
                                  Text("COPY")
                              }
                          }
@@ -109,7 +154,7 @@ fun SocialSearchScreen(
                  Row(modifier = Modifier.fillMaxWidth()) {
                      OutlinedTextField(
                          value = nameQuery,
-                         onValueChange = { viewModel.onNameChange(it) },
+                         onValueChange = onNameChange,
                          label = { Text("User Name") },
                          modifier = Modifier.weight(1f),
                          singleLine = true
@@ -117,7 +162,7 @@ fun SocialSearchScreen(
                      Spacer(modifier = Modifier.width(8.dp))
                      OutlinedTextField(
                          value = tagQuery,
-                         onValueChange = { viewModel.onTagChange(it) },
+                         onValueChange = onTagChange,
                          label = { Text("Tag") },
                          modifier = Modifier.width(100.dp),
                          singleLine = true,
@@ -126,7 +171,7 @@ fun SocialSearchScreen(
                  }
                  Spacer(modifier = Modifier.height(8.dp))
                  Button(
-                     onClick = { viewModel.performRiotSearch() },
+                     onClick = onSearchRiot,
                      modifier = Modifier.fillMaxWidth()
                  ) {
                      Icon(Icons.Default.Search, contentDescription = null)
@@ -156,7 +201,7 @@ fun SocialSearchScreen(
                         UserSearchResultItem(
                             user = user,
                             isRequestSent = requestStatus[user.uid] == true,
-                            onAddClick = { viewModel.sendFriendRequest(user.uid) }
+                            onAddClick = { onAddFriend(user.uid) }
                         )
                     }
                 }
@@ -172,7 +217,7 @@ fun SocialSearchScreen(
                  )
                  OutlinedTextField(
                      value = inviteCodeQuery,
-                     onValueChange = { viewModel.onInviteCodeChange(it) },
+                     onValueChange = onInviteCodeChange,
                      label = { Text("Friend Code") },
                      modifier = Modifier.fillMaxWidth(),
                      singleLine = true,
@@ -185,7 +230,7 @@ fun SocialSearchScreen(
                  )
                  Spacer(modifier = Modifier.height(8.dp))
                  Button(
-                     onClick = { viewModel.performInviteCodeSearch() },
+                     onClick = onSearchInviteCode,
                      modifier = Modifier.fillMaxWidth(),
                      enabled = inviteCodeQuery.length > 8 // Minimal length for new format
                  ) {
@@ -253,4 +298,28 @@ fun UserSearchResultItem(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun SocialSearchScreenPreview() {
+    SocialSearchScreenContent(
+        nameQuery = "Test",
+        tagQuery = "1234",
+        inviteCodeQuery = "",
+        ownInviteCode = "Test#1234@CODE",
+        results = emptyList(),
+        isLoading = false,
+        requestStatus = emptyMap(),
+        onBack = {},
+        onShowQr = {},
+        onScanQr = {},
+        onNameChange = {},
+        onTagChange = {},
+        onInviteCodeChange = {},
+        onSearchRiot = {},
+        onSearchInviteCode = {},
+        onAddFriend = {},
+        onCopyInviteCode = {}
+    )
 }

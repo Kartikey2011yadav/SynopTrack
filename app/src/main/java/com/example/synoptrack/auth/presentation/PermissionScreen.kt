@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.synoptrack.R
 import com.example.synoptrack.core.theme.ElectricBluePrimary
 import com.example.synoptrack.core.theme.TextGray
@@ -51,13 +52,11 @@ fun PermissionScreen(
         onResult = { viewModel.checkPermissions(context) }
     )
     
-    // Notification launcher checks version internally when used commonly, 
-    // but here we might need version check logic inside the onClick or helper.
-    // Simplifying for clarity:
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { viewModel.checkPermissions(context) }
     )
+    
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { viewModel.checkPermissions(context) }
@@ -66,7 +65,33 @@ fun PermissionScreen(
     LaunchedEffect(key1 = true) {
         viewModel.checkPermissions(context)
     }
-    
+
+    PermissionScreenContent(
+        uiState = uiState,
+        onRequestLocation = {
+            locationLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        },
+        onRequestContacts = { contactsLauncher.launch(Manifest.permission.READ_CONTACTS) },
+        onRequestCamera = { cameraLauncher.launch(Manifest.permission.CAMERA) },
+        onRequestNotification = { notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+        onContinue = onPermissionGranted
+    )
+}
+
+@Composable
+fun PermissionScreenContent(
+    uiState: PermissionUiState,
+    onRequestLocation: () -> Unit,
+    onRequestContacts: () -> Unit,
+    onRequestCamera: () -> Unit,
+    onRequestNotification: () -> Unit,
+    onContinue: () -> Unit
+) {
     // Progress Calculation
     val totalPermissions = 4
     val grantedPermissions = listOf(
@@ -76,13 +101,13 @@ fun PermissionScreen(
         uiState.isCameraGranted
     ).count { it }
     
-    val progress = grantedPermissions.toFloat() / totalPermissions
+    val progress = if (totalPermissions > 0) grantedPermissions.toFloat() / totalPermissions else 0f
 
     Scaffold(
         containerColor = Color.Black,
         bottomBar = {
             Button(
-                onClick = onPermissionGranted,
+                onClick = onContinue,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
@@ -153,14 +178,7 @@ fun PermissionScreen(
                 description = "To see friends on the map and share your journey.",
                 icon = Icons.Default.LocationOn,
                 isGranted = uiState.isLocationGranted,
-                onClick = {
-                    locationLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
-                    )
-                }
+                onClick = onRequestLocation
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -171,9 +189,7 @@ fun PermissionScreen(
                 description = "To find friends and connect with people you know.",
                 icon = Icons.Rounded.Person,
                 isGranted = uiState.isContactsGranted,
-                onClick = {
-                    contactsLauncher.launch(Manifest.permission.READ_CONTACTS)
-                }
+                onClick = onRequestContacts
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -184,9 +200,7 @@ fun PermissionScreen(
                 description = "To scan QR codes and share moments.",
                 icon = androidx.compose.material.icons.Icons.Default.CameraAlt,
                 isGranted = uiState.isCameraGranted,
-                onClick = {
-                    cameraLauncher.launch(Manifest.permission.CAMERA)
-                }
+                onClick = onRequestCamera
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -198,9 +212,7 @@ fun PermissionScreen(
                     description = "Get alerts when friends start a convoy or message you.",
                     icon = Icons.Default.Notifications,
                     isGranted = uiState.isNotificationGranted,
-                    onClick = {
-                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
+                    onClick = onRequestNotification
                 )
             } else {
                  // Mock item if below Android 13 to keep UI consistent or hide
@@ -251,4 +263,17 @@ fun PermissionItem(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun PermissionScreenPreview() {
+    PermissionScreenContent(
+        uiState = PermissionUiState(false, false, false, false),
+        onRequestLocation = {},
+        onRequestContacts = {},
+        onRequestCamera = {},
+        onRequestNotification = {},
+        onContinue = {}
+    )
 }

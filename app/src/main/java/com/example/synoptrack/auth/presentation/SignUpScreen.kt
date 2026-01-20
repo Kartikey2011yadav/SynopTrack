@@ -1,7 +1,6 @@
 package com.example.synoptrack.auth.presentation
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,7 +8,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -23,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.R
@@ -53,6 +52,43 @@ fun SignUpScreen(
         }
     }
     
+    // Google Client
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val googleSignInClient = remember {
+        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+    }
+
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            viewModel.handleSignInResult(task)
+        }
+    }
+
+    SignUpScreenContent(
+        signInState = signInState,
+        onSignUp = { email, pass -> viewModel.signUpWithEmail(email, pass) },
+        onGoogleSignIn = { launcher.launch(googleSignInClient.signInIntent) },
+        onNavigateToLogin = onNavigateToLogin,
+        onBack = onBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SignUpScreenContent(
+    signInState: SignInState,
+    onSignUp: (String, String) -> Unit,
+    onGoogleSignIn: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onBack: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -82,7 +118,6 @@ fun SignUpScreen(
                 .verticalScroll(androidx.compose.foundation.rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
-            // Header Image
             // Header Image
              Image(
                 painter = painterResource(id = R.drawable.register),
@@ -199,7 +234,7 @@ fun SignUpScreen(
             Button(
                 onClick = { 
                     if (password == confirmPassword) {
-                        viewModel.signUpWithEmail(email, password) 
+                        onSignUp(email, password) 
                     } else {
                         // Ideally show error toast
                     }
@@ -230,28 +265,8 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Social Buttons
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val googleSignInClient = remember {
-                val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(context.getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build()
-                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
-            }
-
-            val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
-                contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-            ) { result ->
-                if (result.resultCode == android.app.Activity.RESULT_OK) {
-                    val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    viewModel.handleSignInResult(task)
-                }
-            }
-
             OutlinedButton(
-                onClick = {
-                    launcher.launch(googleSignInClient.signInIntent)
-                },
+                onClick = onGoogleSignIn,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
@@ -259,8 +274,6 @@ fun SignUpScreen(
             ) {
                 Text("Sign in with Google") 
             }
-            
-            // Phone Button Removed
             
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -280,4 +293,16 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+}
+
+@Preview
+@Composable
+fun SignUpScreenPreview() {
+    SignUpScreenContent(
+        signInState = SignInState.Success(""), // Placeholder
+        onSignUp = { _, _ -> },
+        onGoogleSignIn = {},
+        onNavigateToLogin = {},
+        onBack = {}
+    )
 }

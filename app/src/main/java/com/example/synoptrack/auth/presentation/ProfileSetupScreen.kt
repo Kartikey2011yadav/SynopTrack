@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.synoptrack.auth.presentation.model.ProfileSetupState
 import com.example.synoptrack.core.theme.ElectricBluePrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +48,29 @@ fun ProfileSetupScreen(
         calendar.get(java.util.Calendar.MONTH),
         calendar.get(java.util.Calendar.DAY_OF_MONTH)
     )
+    
+    ProfileSetupScreenContent(
+        uiState = uiState,
+        onNameChanged = viewModel::onNameChanged,
+        onBioChanged = viewModel::onBioChanged,
+        onEmailChanged = viewModel::onEmailChanged,
+        onPhoneChanged = viewModel::onPhoneChanged,
+        onDobClick = { datePickerDialog.show() },
+        onSubmit = viewModel::submitProfile
+    )
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileSetupScreenContent(
+    uiState: ProfileSetupState,
+    onNameChanged: (String) -> Unit,
+    onBioChanged: (String) -> Unit,
+    onEmailChanged: (String) -> Unit,
+    onPhoneChanged: (String) -> Unit,
+    onDobClick: () -> Unit,
+    onSubmit: () -> Unit
+) {
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Black,
         topBar = {
@@ -80,7 +104,7 @@ fun ProfileSetupScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = uiState.displayName,
-                    onValueChange = viewModel::onNameChanged,
+                    onValueChange = onNameChanged,
                     placeholder = { Text("Enter your name") },
                     leadingIcon = { Icon(Icons.Rounded.Person, null, tint = androidx.compose.ui.graphics.Color.Gray) },
                     modifier = Modifier.fillMaxWidth(),
@@ -103,7 +127,7 @@ fun ProfileSetupScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = uiState.bio,
-                    onValueChange = viewModel::onBioChanged,
+                    onValueChange = onBioChanged,
                     placeholder = { Text("Tell us about yourself") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
@@ -125,7 +149,7 @@ fun ProfileSetupScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = uiState.email,
-                    onValueChange = viewModel::onEmailChanged,
+                    onValueChange = onEmailChanged,
                     placeholder = { Text("Enter your email") },
                     leadingIcon = { Icon(Icons.Rounded.Email, null, tint = androidx.compose.ui.graphics.Color.Gray) },
                     modifier = Modifier.fillMaxWidth(),
@@ -151,7 +175,7 @@ fun ProfileSetupScreen(
                  Spacer(modifier = Modifier.height(8.dp))
                  OutlinedTextField(
                      value = uiState.phoneNumber,
-                     onValueChange = viewModel::onPhoneChanged,
+                     onValueChange = onPhoneChanged,
                      placeholder = { Text("934 567 8900") },
                      leadingIcon = { Icon(Icons.Rounded.Phone, null, tint = androidx.compose.ui.graphics.Color.Gray) },
                      modifier = Modifier.fillMaxWidth(),
@@ -196,7 +220,7 @@ fun ProfileSetupScreen(
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .clickable { datePickerDialog.show() }
+                            .clickable { onDobClick() }
                     )
                 }
             }
@@ -204,7 +228,7 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Button(
-                onClick = viewModel::submitProfile,
+                onClick = onSubmit,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 enabled = uiState.isValid && !uiState.isLoading,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(25.dp),
@@ -221,4 +245,23 @@ fun ProfileSetupScreen(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun ProfileSetupScreenPreview() {
+    ProfileSetupScreenContent(
+        uiState = ProfileSetupState(
+            displayName = "John Doe",
+            bio = "Some bio here",
+            email = "john@example.com",
+            dob = "01/01/2000"
+        ),
+        onNameChanged = {},
+        onBioChanged = {},
+        onEmailChanged = {},
+        onPhoneChanged = {},
+        onDobClick = {},
+        onSubmit = {}
+    )
 }

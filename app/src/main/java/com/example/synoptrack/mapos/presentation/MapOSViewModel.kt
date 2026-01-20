@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.synoptrack.auth.domain.repository.AuthRepository
 import com.example.synoptrack.core.location.LocationService
+import com.example.synoptrack.mapos.presentation.model.MemberUiModel
 import com.example.synoptrack.profile.domain.model.UserProfile
 import com.example.synoptrack.profile.domain.repository.ProfileRepository
 import com.example.synoptrack.social.domain.model.Group
@@ -170,12 +171,3 @@ class MapOSViewModel @Inject constructor(
         }
     }
 }
-
-data class MemberUiModel(
-    val uid: String,
-    val displayName: String,
-    val avatarUrl: String,
-    val location: LatLng,
-    val batteryLevel: Int = -1,
-    val isCharging: Boolean = false
-)

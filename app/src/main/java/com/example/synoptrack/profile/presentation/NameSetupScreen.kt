@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.synoptrack.core.utils.IdentityUtils
 
@@ -39,7 +40,7 @@ fun NameSetupScreen(
         }
     }
     
-    val isValid = username.length >= 3 && discriminator.length == 4 && !isDiscriminatorTaken && !isChecking
+    val isValid = username.length >= 3 && discriminator.length == 4 && !isDiscriminatorTaken && !isChecking && errorMessage == null
 
     Column(
         modifier = Modifier
@@ -73,13 +74,18 @@ fun NameSetupScreen(
                 username = it 
                 if (it.any { char -> !char.isLetterOrDigit() && char != '_' }) {
                     errorMessage = "Only letters, numbers and _ allowed"
+                } else if (username.length < 3) {
+                     // Keep error null until logic checks len >= 3, or maybe show hints? 
+                     // Usually we don't show error while typing unless invalid char.
+                     errorMessage = null
+                } else {
+                    errorMessage = null
                 }
             },
             label = { Text("User Name") },
-            isError = errorMessage != null && !isDiscriminatorTaken, // Only show username error if not discriminator error
+            isError = errorMessage != null, 
             modifier = Modifier.fillMaxWidth()
         )
-        // ...
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -127,4 +133,13 @@ fun NameSetupScreen(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun NameSetupScreenPreview() {
+    NameSetupScreen(
+        onSetupComplete = { _, _ -> },
+        checkAvailability = { _, _ -> true }
+    )
 }

@@ -15,13 +15,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.synoptrack.profile.domain.model.UserProfile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserQrScreen(
-    user: com.example.synoptrack.profile.domain.model.UserProfile,
+    user: UserProfile,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -118,4 +120,19 @@ fun UserQrScreen(
              }
         }
     }
+}
+
+@Preview
+@Composable
+fun UserQrScreenPreview() {
+    UserQrScreen(
+        user = UserProfile(
+            uid = "1",
+            username = "PreviewUser",
+            discriminator = "1234",
+            displayName = "Preview User",
+            inviteCode = "INVITE-123"
+        ),
+        onBack = {}
+    )
 }

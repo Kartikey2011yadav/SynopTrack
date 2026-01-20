@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.synoptrack.social.domain.model.FriendRequest
 
@@ -24,6 +25,19 @@ fun ActivityScreen(
 ) {
     val pendingRequests by viewModel.pendingRequests.collectAsState()
 
+    ActivityScreenContent(
+        pendingRequests = pendingRequests,
+        onAccept = { requestId -> viewModel.acceptRequest(requestId) },
+        onReject = { requestId -> viewModel.rejectRequest(requestId) }
+    )
+}
+
+@Composable
+fun ActivityScreenContent(
+    pendingRequests: List<FriendRequest>,
+    onAccept: (String) -> Unit,
+    onReject: (String) -> Unit
+) {
     androidx.compose.foundation.layout.Column(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
@@ -47,8 +61,8 @@ fun ActivityScreen(
                  items(pendingRequests) { request ->
                      FriendRequestItem(
                          request = request,
-                         onAccept = { viewModel.acceptRequest(request.id) },
-                         onReject = { viewModel.rejectRequest(request.id) }
+                         onAccept = { onAccept(request.id) },
+                         onReject = { onReject(request.id) }
                      )
                  }
              }
@@ -96,4 +110,18 @@ fun FriendRequestItem(
              }
         }
     }
+}
+
+@Preview
+@Composable
+fun ActivityScreenPreview() {
+    val mockRequests = listOf(
+        FriendRequest(id = "1", senderDisplayName = "Alice"),
+        FriendRequest(id = "2", senderDisplayName = "Bob")
+    )
+    ActivityScreenContent(
+        pendingRequests = mockRequests,
+        onAccept = {},
+        onReject = {}
+    )
 }

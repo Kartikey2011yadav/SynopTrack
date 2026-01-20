@@ -54,9 +54,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.synoptrack.profile.domain.model.UserProfile
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +69,6 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val user = uiState.user
     
     // Image Picker
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -75,6 +76,33 @@ fun ProfileScreen(
         onResult = { uri -> uri?.let { viewModel.uploadProfilePicture(it) } }
     )
     
+    ProfileScreenContent(
+        uiState = uiState,
+        onSettingsClick = onSettingsClick,
+        onEditProfile = onEditProfile,
+        onAvatarClick = { 
+            if (uiState.isCurrentUser) {
+                photoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }
+        },
+        onShareProfile = { /* TODO */ },
+        onFriendAction = { /* TODO */ }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreenContent(
+    uiState: ProfileUiState,
+    onSettingsClick: () -> Unit,
+    onEditProfile: () -> Unit,
+    onAvatarClick: () -> Unit,
+    onShareProfile: () -> Unit,
+    onFriendAction: () -> Unit
+) {
+    val user = uiState.user
     var showQrDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     Scaffold(
@@ -82,7 +110,7 @@ fun ProfileScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        if (user?.discriminator?.isNotEmpty() ?: false) "${user.username} #${user.discriminator}" else user?.displayName
+                        if (user?.discriminator?.isNotEmpty() ?: false) "${user!!.username} #${user.discriminator}" else user?.displayName
                             ?: "Profile",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     ) 
@@ -120,18 +148,10 @@ fun ProfileScreen(
                     user = user,
                     isCurrentUser = uiState.isCurrentUser,
                     friendshipStatus = uiState.friendshipStatus,
-                    onAvatarClick = {
-                        if (uiState.isCurrentUser) {
-                            photoPickerLauncher.launch(
-                                PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
-                        }
-                    },
+                    onAvatarClick = onAvatarClick,
                     onEditProfile = onEditProfile,
-                    onShareProfile = { /* TODO */ },
-                    onFriendAction = { /* TODO */ },
+                    onShareProfile = onShareProfile,
+                    onFriendAction = onFriendAction,
                     onQrClick = { showQrDialog = true }
                 )
 
@@ -405,4 +425,28 @@ fun ProfileActionButton(text: String, onClick: () -> Unit, modifier: Modifier = 
     ) {
         Text(text, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
     }
+}
+
+@Preview
+@Composable
+fun ProfileScreenPreview() {
+    val mockUser = UserProfile(
+        uid = "1",
+        displayName = "John Doe",
+        email = "john@example.com",
+        username = "johndoe",
+        discriminator = "1234",
+        inviteCode = "John#1234@ABCD"
+    )
+    ProfileScreenContent(
+        uiState = ProfileUiState(
+            user = mockUser,
+            isCurrentUser = true
+        ),
+        onSettingsClick = {},
+        onEditProfile = {},
+        onAvatarClick = {},
+        onShareProfile = {},
+        onFriendAction = {}
+    )
 }

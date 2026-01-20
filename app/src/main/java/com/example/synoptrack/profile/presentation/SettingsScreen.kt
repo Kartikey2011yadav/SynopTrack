@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.core.datastore.AppTheme
@@ -36,6 +37,23 @@ fun SettingsScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val currentTheme by viewModel.currentTheme.collectAsState()
+    
+    SettingsScreenContent(
+        currentTheme = currentTheme,
+        onBackClick = onBackClick,
+        onThemeSelected = viewModel::setTheme,
+        onLogout = { /* TODO: Logout */ }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreenContent(
+    currentTheme: AppTheme,
+    onBackClick: () -> Unit,
+    onThemeSelected: (AppTheme) -> Unit,
+    onLogout: () -> Unit
+) {
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -76,7 +94,7 @@ fun SettingsScreen(
             SettingsGroup {
                  SettingsItem(icon = Icons.Default.Language, title = "Language", value = "English")
                  SettingsDivider()
-                 ThemeSettingsItem(currentTheme = currentTheme, onThemeSelected = viewModel::setTheme)
+                 ThemeSettingsItem(currentTheme = currentTheme, onThemeSelected = onThemeSelected)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -91,7 +109,7 @@ fun SettingsScreen(
              
              // Log Out
              OutlinedButton(
-                 onClick = { /* TODO: Logout */ },
+                 onClick = onLogout,
                  modifier = Modifier.fillMaxWidth(),
                  colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
              ) {
@@ -224,4 +242,15 @@ fun ThemeOptionBadge(text: String, selected: Boolean, onClick: () -> Unit) {
             color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface
         )
     }
+}
+
+@Preview
+@Composable
+fun SettingsScreenPreview() {
+    SettingsScreenContent(
+        currentTheme = AppTheme.SYSTEM,
+        onBackClick = {},
+        onThemeSelected = {},
+        onLogout = {}
+    )
 }
