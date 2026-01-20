@@ -11,18 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.synoptrack.auth.presentation.AddPlacesScreen
 import com.example.synoptrack.auth.presentation.LoginScreen
-import com.example.synoptrack.auth.presentation.PermissionEducationScreen
 import com.example.synoptrack.auth.presentation.PermissionScreen
-import com.example.synoptrack.auth.presentation.RegistrationScreen
 import com.example.synoptrack.auth.presentation.SplashScreen
 import com.example.synoptrack.profile.presentation.NameSetupScreen
 import androidx.core.content.ContextCompat
 import android.Manifest
 import android.content.pm.PackageManager
 import com.example.synoptrack.mapos.presentation.MapOSScreen
-import com.example.synoptrack.profile.presentation.NameSetupScreen
 import com.example.synoptrack.profile.presentation.ProfileScreen
 
 @Composable

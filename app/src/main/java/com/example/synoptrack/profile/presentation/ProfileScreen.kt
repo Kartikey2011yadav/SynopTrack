@@ -1,5 +1,6 @@
 package com.example.synoptrack.profile.presentation
 
+import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -121,7 +123,7 @@ fun ProfileScreenContent(
                             Icon(Icons.Rounded.Add, contentDescription = "Add")
                         }
                         IconButton(onClick = onSettingsClick) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Menu")
+                            Icon(Icons.Rounded.Settings, contentDescription = "Menu")
                         }
                     } else {
                         // Other user actions (e.g. Report)
@@ -427,7 +429,8 @@ fun ProfileActionButton(text: String, onClick: () -> Unit, modifier: Modifier = 
     }
 }
 
-@Preview
+// i need ui Preview in dark theme
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun ProfileScreenPreview() {
     val mockUser = UserProfile(
