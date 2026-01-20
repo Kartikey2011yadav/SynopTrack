@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +25,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _uiState = kotlinx.coroutines.flow.MutableStateFlow(ProfileUiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _logoutEvent = kotlinx.coroutines.channels.Channel<Unit>()
+    val logoutEvent = _logoutEvent.receiveAsFlow()
 
     val currentTheme: StateFlow<AppTheme> = themePreferences.theme
         .stateIn(
@@ -168,6 +172,13 @@ class ProfileViewModel @Inject constructor(
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
             themePreferences.setTheme(theme)
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            profileRepository.logout()
+            _logoutEvent.send(Unit)
         }
     }
 }

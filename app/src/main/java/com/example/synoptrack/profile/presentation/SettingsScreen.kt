@@ -33,10 +33,18 @@ import com.example.synoptrack.core.datastore.AppTheme
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
+    onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val currentTheme by viewModel.currentTheme.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Listen for logout event
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.logoutEvent.collect {
+            onLogout()
+        }
+    }
     
     SettingsScreenContent(
         currentTheme = currentTheme,
@@ -44,7 +52,7 @@ fun SettingsScreen(
         onBackClick = onBackClick,
         onThemeSelected = viewModel::setTheme,
         onPrivacyChange = viewModel::togglePrivacy,
-        onLogout = { /* TODO: Logout */ }
+        onLogout = viewModel::logout
     )
 }
 

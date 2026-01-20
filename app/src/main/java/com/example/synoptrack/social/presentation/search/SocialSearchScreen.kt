@@ -1,5 +1,7 @@
 package com.example.synoptrack.social.presentation.search
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +36,7 @@ fun SocialSearchScreen(
     onBack: () -> Unit,
     onShowQr: () -> Unit,
     onScanQr: () -> Unit,
+    onProfileClick: (String) -> Unit,
     viewModel: SocialSearchViewModel = hiltViewModel()
 ) {
     val nameQuery by viewModel.nameQuery.collectAsState()
@@ -56,6 +59,7 @@ fun SocialSearchScreen(
         onBack = onBack,
         onShowQr = onShowQr,
         onScanQr = onScanQr,
+        onProfileClick = onProfileClick,
         onNameChange = { viewModel.onNameChange(it) },
         onTagChange = { viewModel.onTagChange(it) },
         onInviteCodeChange = { viewModel.onInviteCodeChange(it) },
@@ -83,6 +87,7 @@ fun SocialSearchScreenContent(
     onBack: () -> Unit,
     onShowQr: () -> Unit,
     onScanQr: () -> Unit,
+    onProfileClick: (String) -> Unit,
     onNameChange: (String) -> Unit,
     onTagChange: (String) -> Unit,
     onInviteCodeChange: (String) -> Unit,
@@ -91,6 +96,16 @@ fun SocialSearchScreenContent(
     onAddFriend: (String) -> Unit,
     onCopyInviteCode: (String) -> Unit
 ) {
+    // State for Dialog
+    var showUserDialog by remember { mutableStateOf<UserProfile?>(null) }
+
+    // Effect to show dialog if single result found from Invite Code search (heuristic)
+    LaunchedEffect(results) {
+        if (results.size == 1 && inviteCodeQuery.isNotEmpty() && results[0].inviteCode == inviteCodeQuery) {
+            showUserDialog = results[0]
+        }
+    }
+
      Scaffold(
         topBar = {
             TopAppBar(
@@ -161,15 +176,15 @@ fun SocialSearchScreenContent(
                          value = nameQuery,
                          onValueChange = onNameChange,
                          label = "User Name",
-                         modifier = Modifier.weight(1f)
+                         modifier = Modifier.weight(0.65f) // Adjusted weight
                      )
                      Spacer(modifier = Modifier.width(8.dp))
                      SynopTrackTextField(
                          value = tagQuery,
                          onValueChange = onTagChange,
                          label = "Tag",
-                         modifier = Modifier.width(100.dp),
-                         leadingIcon = { Text("#", modifier = Modifier.padding(start = 12.dp)) }
+                         modifier = Modifier.weight(0.35f), // Adjusted weight
+                         leadingIcon = { Text("#", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) }
                      )
                  }
                  Spacer(modifier = Modifier.height(16.dp))
@@ -182,8 +197,8 @@ fun SocialSearchScreenContent(
                  Spacer(modifier = Modifier.height(24.dp))
              }
 
-            // 3. Results Section
-            if (results.isNotEmpty() || isLoading) {
+             // 3. Results Section (Standard List for Riot Search)
+             if (results.isNotEmpty() && inviteCodeQuery.isEmpty()) { // Only show list if NOT invite code search
                 item {
                     Text(
                         text = "Results",
@@ -191,29 +206,22 @@ fun SocialSearchScreenContent(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                if (isLoading) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                } else {
-                    items(results) { user ->
-                        val status = relationshipStatus[user.uid] ?: RelationshipStatus.NONE
-                        UserSearchResultItem(
-                            user = user,
-                            relationshipStatus = status,
-                            onAddClick = { onAddFriend(user.uid) }
-                        )
-                    }
+                items(results) { user ->
+                    val status = relationshipStatus[user.uid] ?: RelationshipStatus.NONE
+                    UserSearchResultItem(
+                        user = user,
+                        relationshipStatus = status,
+                        onAddClick = { onAddFriend(user.uid) },
+                        onClick = { onProfileClick(user.uid) } // Direct navigation for list items
+                    )
                 }
                 item { Spacer(modifier = Modifier.height(24.dp)) }
-            }
+             }
 
              // 4. Invite Code Search Section
              item {
                  Text(
-                     text = "Or enter a Friend Code",
+                     text = "Find by Friend Code",
                      style = MaterialTheme.typography.titleMedium,
                      modifier = Modifier.padding(bottom = 8.dp)
                  )
@@ -230,8 +238,9 @@ fun SocialSearchScreenContent(
                      }
                  )
                  Spacer(modifier = Modifier.height(16.dp))
+                 
                  SynopTrackButton(
-                     text = "Send Invite",
+                     text = "Find User",
                      onClick = onSearchInviteCode,
                      enabled = inviteCodeQuery.length > 8,
                      isLoading = isLoading
@@ -240,24 +249,135 @@ fun SocialSearchScreenContent(
                  Spacer(modifier = Modifier.height(32.dp))
              }
          }
+         
+         // User Profile Dialog
+         if (showUserDialog != null) {
+             UserProfileDialog(
+                 user = showUserDialog!!,
+                 relationshipStatus = relationshipStatus[showUserDialog!!.uid] ?: RelationshipStatus.NONE,
+                 onDismiss = { showUserDialog = null },
+                 onAddFriend = { 
+                     onAddFriend(showUserDialog!!.uid) 
+                 },
+                 onViewProfile = {
+                     onProfileClick(showUserDialog!!.uid)
+                     showUserDialog = null
+                 }
+             )
+         }
     }
+}
+
+@Composable
+fun UserProfileDialog(
+    user: UserProfile,
+    relationshipStatus: RelationshipStatus,
+    onDismiss: () -> Unit,
+    onAddFriend: () -> Unit,
+    onViewProfile: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = null,
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onViewProfile), // Make entire dialog content clickable to view profile
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AsyncImage(
+                    model = user.avatarUrl.ifEmpty { "https://ui-avatars.com/api/?name=${user.username}" },
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "${user.username}#${user.discriminator}",
+                    style = MaterialTheme.typography.headlineSmall,
+                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+                
+                // Privacy & Bio Logic
+                val isPrivate = user.isPrivate
+                val canSeeDetails = !isPrivate || relationshipStatus == RelationshipStatus.FRIEND || relationshipStatus == RelationshipStatus.SELF
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                if (canSeeDetails) {
+                    if (user.bio.isNotEmpty()) {
+                        Text(
+                            text = user.bio,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                     Row(verticalAlignment = Alignment.CenterVertically) {
+                         Icon(Icons.Default.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                         Spacer(modifier = Modifier.width(4.dp))
+                         Text("Private Account", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                     }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Highlights / Stories Placeholder (Public Only)
+                if (canSeeDetails) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        repeat(3) {
+                            Box(
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // Placeholder for stories
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // Action Button
+                 if (relationshipStatus != RelationshipStatus.SELF) {
+                    SynopTrackButton(
+                        text = when (relationshipStatus) {
+                            RelationshipStatus.FRIEND -> "Message"
+                            RelationshipStatus.SENT_REQUEST -> "Requested"
+                            RelationshipStatus.RECEIVED_REQUEST -> "Accept Request"
+                            else -> "Add Friend"
+                        },
+                        onClick = onAddFriend, // TODO: Handle Message/Accept logic
+                        enabled = relationshipStatus == RelationshipStatus.NONE || relationshipStatus == RelationshipStatus.RECEIVED_REQUEST,
+                        variant = if (relationshipStatus == RelationshipStatus.FRIEND) ButtonVariant.OUTLINED else ButtonVariant.PRIMARY
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @Composable
 fun UserSearchResultItem(
     user: UserProfile,
     relationshipStatus: RelationshipStatus,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    onClick: () -> Unit
 ) {
-    // Privacy Logic: Hide details if Private AND (Not Friend AND Not Self)
-    val isPrivate = user.isPrivate
-    val canSeeDetails = !isPrivate || relationshipStatus == RelationshipStatus.FRIEND || relationshipStatus == RelationshipStatus.SELF
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick // Make card clickable
     ) {
         Row(
             modifier = Modifier
@@ -280,32 +400,24 @@ fun UserSearchResultItem(
                     text = "${user.username}#${user.discriminator}",
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (canSeeDetails && user.bio.isNotEmpty()) {
-                    Text(
-                        text = user.bio,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        color = Color.Gray
-                    )
-                } else if (!canSeeDetails) {
-                    Text(
-                        text = "Private Account",
-                        style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
-                         color = Color.Gray
-                    )
+                // Privacy Logic for List Item (Simplified)
+                val isPrivate = user.isPrivate
+                val canSeeDetails = !isPrivate || relationshipStatus == RelationshipStatus.FRIEND || relationshipStatus == RelationshipStatus.SELF
+                 if (!canSeeDetails) {
+                    Text("Private Account", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             }
             
-            // Action Button
+            // Action Icon
             if (relationshipStatus != RelationshipStatus.SELF) {
                 IconButton(
                     onClick = onAddClick,
                     enabled = relationshipStatus == RelationshipStatus.NONE
                 ) {
                    when (relationshipStatus) {
-                       RelationshipStatus.FRIEND -> Icon(Icons.Default.Group, contentDescription = "Friend", tint = Color.Gray)
+                       RelationshipStatus.FRIEND -> Icon(Icons.Default.Group, contentDescription = "Friend", tint = MaterialTheme.colorScheme.primary)
                        RelationshipStatus.SENT_REQUEST -> Icon(Icons.Default.Timer, contentDescription = "Sent", tint = Color.Gray)
-                       RelationshipStatus.RECEIVED_REQUEST -> Icon(Icons.Default.Check, contentDescription = "Received", tint = Color.Gray) // Could allow accept here too
+                       RelationshipStatus.RECEIVED_REQUEST -> Icon(Icons.Default.Check, contentDescription = "Received", tint = Color.Green)
                        RelationshipStatus.NONE -> Icon(Icons.Default.PersonAdd, contentDescription = "Add Friend", tint = MaterialTheme.colorScheme.primary)
                        else -> {}
                    }

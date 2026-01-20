@@ -210,7 +210,17 @@ fun AppNavHost() {
                 com.example.synoptrack.social.presentation.search.SocialSearchScreen(
                     onBack = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
                     onShowQr = { navController.navigate(Screen.ShowQr.route) },
-                    onScanQr = { navController.navigate(Screen.QrScan.route) }
+                    onScanQr = { navController.navigate(Screen.QrScan.route) },
+                    onProfileClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) }
+                )
+            }
+            
+            composable(
+                route = Screen.PublicProfile.route,
+                arguments = listOf(androidx.navigation.navArgument("userId") { type = androidx.navigation.NavType.StringType })
+            ) {
+                com.example.synoptrack.profile.presentation.public_profile.PublicProfileScreen(
+                    onBack = { navController.popBackStack() }
                 )
             }
 
@@ -227,7 +237,12 @@ fun AppNavHost() {
             }
             composable(Screen.Settings.route) {
                 com.example.synoptrack.profile.presentation.SettingsScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onLogout = {
+                        navController.navigate(Screen.Welcome.route) {
+                             popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             
