@@ -108,7 +108,6 @@ fun ProfileScreenContent(
     var showQrDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     Scaffold(
-    Scaffold(
         topBar = {
             com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
                 title = if (user?.discriminator?.isNotEmpty() == true) "${user.username} #${user.discriminator}" else user?.displayName ?: "Profile",
