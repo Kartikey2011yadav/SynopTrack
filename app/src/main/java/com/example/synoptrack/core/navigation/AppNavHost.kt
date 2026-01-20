@@ -156,7 +156,8 @@ fun AppNavHost() {
                     },
                     checkAvailability = { name, hash ->
                          viewModel.checkIdentityAvailability(name, hash)
-                    }
+                    },
+                    isSubmitting = signInState is com.example.synoptrack.auth.presentation.SignInState.Loading
                 )
             }
 

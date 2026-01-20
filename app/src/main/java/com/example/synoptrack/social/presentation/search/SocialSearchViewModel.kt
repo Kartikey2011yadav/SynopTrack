@@ -151,13 +151,50 @@ class SocialSearchViewModel @Inject constructor(
 
         viewModelScope.launch {
             friendRepository.sendFriendRequest(currentUid, targetUserId)
-                .onSuccess {
-                    // Success
-                }
                 .onFailure {
                      // Revert on failure
                      val revertMap = _relationshipStatus.value.toMutableMap()
                      revertMap[targetUserId] = RelationshipStatus.NONE
+                     _relationshipStatus.value = revertMap
+                }
+        }
+    }
+
+    fun acceptFriendRequest(targetUserId: String) {
+        val currentUid = authRepository.currentUser?.uid ?: return
+
+        // Optimistic Update
+        val currentMap = _relationshipStatus.value.toMutableMap()
+        currentMap[targetUserId] = RelationshipStatus.FRIEND
+        _relationshipStatus.value = currentMap
+
+        viewModelScope.launch {
+            friendRepository.acceptFriendRequestByUserId(currentUid, targetUserId)
+                .onFailure {
+                     // Revert
+                     val revertMap = _relationshipStatus.value.toMutableMap()
+                     revertMap[targetUserId] = RelationshipStatus.RECEIVED_REQUEST
+                     _relationshipStatus.value = revertMap
+                }
+        }
+    }
+
+    fun cancelFriendRequest(targetUserId: String) {
+        val currentUid = authRepository.currentUser?.uid ?: return
+
+        // Optimistic Update
+        val currentMap = _relationshipStatus.value.toMutableMap()
+        currentMap[targetUserId] = RelationshipStatus.NONE
+        _relationshipStatus.value = currentMap
+
+        viewModelScope.launch {
+             // If we sent it, we cancel it. If we received it (Reject?), we use same/similar logic or reject.
+             // For "Requested" state (SENT_REQUEST), we use cancel.
+            friendRepository.cancelFriendRequestByUserId(currentUid, targetUserId)
+                .onFailure {
+                     // Revert
+                     val revertMap = _relationshipStatus.value.toMutableMap()
+                     revertMap[targetUserId] = RelationshipStatus.SENT_REQUEST
                      _relationshipStatus.value = revertMap
                 }
         }

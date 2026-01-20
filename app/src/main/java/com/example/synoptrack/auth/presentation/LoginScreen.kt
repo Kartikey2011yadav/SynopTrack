@@ -113,7 +113,7 @@ fun LoginScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 18.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
@@ -123,7 +123,7 @@ fun LoginScreenContent(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
+                    .height(180.dp),
                 contentScale = ContentScale.Fit
             )
 
@@ -165,7 +165,7 @@ fun LoginScreenContent(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             // Remember Me & Forgot Password
             Row(
@@ -190,7 +190,7 @@ fun LoginScreenContent(
                 )
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Login Button
             val isLoading = signInState is SignInState.Loading

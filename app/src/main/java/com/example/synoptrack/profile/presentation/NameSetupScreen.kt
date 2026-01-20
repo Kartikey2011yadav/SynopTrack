@@ -19,7 +19,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun NameSetupScreen(
     onSetupComplete: (String, String) -> Unit,
-    checkAvailability: suspend (String, String) -> Boolean
+    checkAvailability: suspend (String, String) -> Boolean,
+    isSubmitting: Boolean = false
 ) {
     var username by remember { mutableStateOf("") }
     var discriminator by remember { mutableStateOf(IdentityUtils.generateDiscriminator()) }
@@ -82,7 +83,7 @@ fun NameSetupScreen(
                 if (it.any { char -> !char.isLetterOrDigit() && char != '_' }) {
                     errorMessage = "Only letters, numbers and _ allowed"
                 } else if (username.length < 3) {
-                     errorMessage = null
+                    errorMessage = null
                 } else {
                     errorMessage = null
                 }
@@ -124,8 +125,8 @@ fun NameSetupScreen(
         SynopTrackButton(
             text = "Next",
             onClick = { onSetupComplete(username, discriminator) },
-            enabled = isValid,
-            isLoading = isChecking,
+            enabled = isValid && !isSubmitting,
+            isLoading = isChecking || isSubmitting,
             modifier = Modifier.fillMaxWidth()
         )
     }

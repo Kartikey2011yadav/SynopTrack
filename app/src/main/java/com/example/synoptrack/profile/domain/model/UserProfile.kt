@@ -15,19 +15,33 @@ data class UserProfile(
     val lastLocation: Any? = null, // GeoPoint or Map
     
     // Privacy & Bio
-    val isPrivate: Boolean = false,
+    @get:com.google.firebase.firestore.PropertyName("private")
+    @set:com.google.firebase.firestore.PropertyName("private")
+    var isPrivate: Boolean = false,
     val bio: String = "",
     val dob: String = "", // DD/MM/YYYY
     
     // Onboarding Status
-    val isComplete: Boolean = false,
-    val isEmailVerified: Boolean = false,
-    val isPhoneVerified: Boolean = false,
+    @get:com.google.firebase.firestore.PropertyName("complete")
+    @set:com.google.firebase.firestore.PropertyName("complete")
+    var isComplete: Boolean = false,
+
+    @get:com.google.firebase.firestore.PropertyName("emailVerified")
+    @set:com.google.firebase.firestore.PropertyName("emailVerified")
+    var isEmailVerified: Boolean = false,
+
+    @get:com.google.firebase.firestore.PropertyName("phoneVerified")
+    @set:com.google.firebase.firestore.PropertyName("phoneVerified")
+    var isPhoneVerified: Boolean = false,
 
     // New fields for Premium/Social features
     val fcmToken: String = "",
     val batteryLevel: Int = -1,
-    val isCharging: Boolean = false,
+
+    @get:com.google.firebase.firestore.PropertyName("charging")
+    @set:com.google.firebase.firestore.PropertyName("charging")
+    var isCharging: Boolean = false,
+
     val phoneNumber: String? = null,
     // Identity
     val username: String = "", 

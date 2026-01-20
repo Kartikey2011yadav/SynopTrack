@@ -126,26 +126,42 @@ class AuthViewModel @Inject constructor(
             val currentUser = authRepository.currentUser
             if (currentUser != null) {
                 val uid = currentUser.uid
-                profileRepository.getUserProfile(uid).collect { profile ->
-                    if (profile != null) {
-                         val newInviteCode = com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(username, discriminator)
-                         val updatedProfile = profile.copy(
+                profileRepository.getUserProfileOnce(uid).onSuccess { profile ->
+                     val newInviteCode = com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(username, discriminator)
+                     
+                     val updatedProfile = if (profile != null) {
+                         profile.copy(
                              username = username,
                              discriminator = discriminator,
                              inviteCode = newInviteCode
                          )
-                         profileRepository.saveUserProfile(updatedProfile)
-                             .onSuccess { 
-                                 toastService.showToast("Identity Saved!", ToastVariant.SUCCESS)
-                                 _navigationEvent.send(AuthNavigationEvent.NavigateToCompleteProfile)
-                                 _signInState.value = SignInState.Success("Identity Saved")
-                             }
-                             .onFailure {
-                                 val msg = "Failed to save identity"
-                                 _signInState.value = SignInState.Error(msg)
-                                 toastService.showToast(msg, ToastVariant.ERROR)
-                             }
-                    }
+                     } else {
+                         com.example.synoptrack.profile.domain.model.UserProfile(
+                             uid = uid,
+                             email = currentUser.email ?: "",
+                             displayName = username,
+                             username = username,
+                             discriminator = discriminator,
+                             inviteCode = newInviteCode,
+                             createdAt = java.util.Date()
+                         )
+                     }
+
+                     profileRepository.saveUserProfile(updatedProfile)
+                         .onSuccess { 
+                             toastService.showToast("Identity Saved!", ToastVariant.SUCCESS)
+                             _navigationEvent.send(AuthNavigationEvent.NavigateToCompleteProfile)
+                             _signInState.value = SignInState.Success("Identity Saved")
+                         }
+                         .onFailure {
+                             val msg = "Failed to save identity"
+                             _signInState.value = SignInState.Error(msg)
+                             toastService.showToast(msg, ToastVariant.ERROR)
+                         }
+                }.onFailure {
+                    val msg = "Failed to fetch profile"
+                    _signInState.value = SignInState.Error(msg)
+                    toastService.showToast(msg, ToastVariant.ERROR)
                 }
             }
         }

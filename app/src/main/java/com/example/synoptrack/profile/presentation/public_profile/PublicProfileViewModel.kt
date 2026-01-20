@@ -25,82 +25,97 @@ class PublicProfileViewModel @Inject constructor(
 
     private val userId: String? = savedStateHandle["userId"]
 
-    private val _uiState = MutableStateFlow(PublicProfileUiState())
+    private val _uiState = MutableStateFlow(PublicProfileUiState(isLoading = true))
     val uiState = _uiState.asStateFlow()
 
     init {
-        userId?.let { loadProfile(it) }
-    }
-
-    private fun loadProfile(uid: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            // Load User Profile
-            profileRepository.getUserProfile(uid).collect { profile ->
-                _uiState.update { it.copy(user = profile) }
-                
-                // Check Friendship
-                checkFriendshipStatus(uid)
-                
-                _uiState.update { it.copy(isLoading = false) }
-            }
+        userId?.let { uid ->
+             loadProfile(uid)
         }
     }
 
-    private suspend fun checkFriendshipStatus(targetUid: String) {
-        val currentUid = authRepository.currentUser?.uid ?: return
+    private fun loadProfile(uid: String) {
+        val currentUid = authRepository.currentUser?.uid
         
-        // We need to check:
-        // 1. Are they friends?
-        // 2. Did I send a request?
-        // 3. Did they send me a request?
-        
-        // Optimization: ProfileRepository/FriendRepository usually fetches lists.
-        // For now, let's use FriendRepository logic if available, or fetch my profile to check lists.
-        
-        profileRepository.getUserProfile(currentUid).collect { myProfile ->
-            val status = when {
-                myProfile == null -> FriendshipStatus.NOT_FRIENDS
-                myProfile.uid == targetUid -> FriendshipStatus.SELF
-                myProfile.friends.contains(targetUid) -> FriendshipStatus.FRIENDS
-                myProfile.sentRequests.contains(targetUid) -> FriendshipStatus.REQUESTED
-                myProfile.receivedRequests.contains(targetUid) -> FriendshipStatus.FRIENDS // Logic: effectively should just Accept. But for status enum, let's use RECEIVED_REQUEST logic if we had it.
-                // Wait, FriendshipStatus enum in ProfileViewModel missing RECEIVED_REQUEST.
-                // I should probably move FriendshipStatus to a domain model or shared location.
-                // For now, I will map it locally or use String.
-                else -> FriendshipStatus.NOT_FRIENDS
+        if (currentUid == null) {
+            _uiState.update { it.copy(isLoading = false) }
+            return
+        }
+
+        viewModelScope.launch {
+            // Combine target profile and my profile to determine state
+            val targetProfileFlow = profileRepository.getUserProfile(uid)
+            val myProfileFlow = profileRepository.getUserProfile(currentUid)
+
+            kotlinx.coroutines.flow.combine(targetProfileFlow, myProfileFlow) { targetProfile, myProfile ->
+                // Calculate Friendship Status
+                val status = when {
+                    myProfile == null || targetProfile == null -> FriendshipStatus.NOT_FRIENDS
+                    myProfile.uid == targetProfile.uid -> FriendshipStatus.SELF
+                    myProfile.friends.contains(targetProfile.uid) -> FriendshipStatus.FRIENDS
+                    myProfile.sentRequests.contains(targetProfile.uid) -> FriendshipStatus.REQUESTED
+                    // logic for received request check
+                    else -> FriendshipStatus.NOT_FRIENDS
+                }
+                
+                val isReceived = myProfile?.receivedRequests?.contains(targetProfile?.uid) == true
+
+                PublicProfileUiState(
+                    user = targetProfile,
+                    isLoading = false,
+                    friendshipStatus = if (status == FriendshipStatus.NOT_FRIENDS && isReceived) FriendshipStatus.NOT_FRIENDS else status,
+                    isReceivedRequest = isReceived
+                )
+            }.collect { newState ->
+                _uiState.value = newState
             }
-            
-            // To handle RECEIVED_REQUEST properly, we might need to expand FriendshipStatus or check arrays.
-            // If my receivedRequests contains targetUid -> It's a RECEIVED request.
-            
-            val finalStatus = if (status == FriendshipStatus.NOT_FRIENDS && myProfile?.receivedRequests?.contains(targetUid) == true) {
-                 // We don't have RECEIVED in FriendshipStatus enum from ProfileViewModel.
-                 // I will define a local/shared one or just assume NOT_FRIENDS but show "Accept" button in UI based on data.
-                 FriendshipStatus.NOT_FRIENDS 
-            } else {
-                status
-            }
-            
-            _uiState.update { it.copy(friendshipStatus = finalStatus, isReceivedRequest = myProfile?.receivedRequests?.contains(targetUid) == true) }
         }
     }
 
     fun sendFriendRequest() {
         val targetUid = userId ?: return
         val currentUid = authRepository.currentUser?.uid ?: return
+        
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             friendRepository.sendFriendRequest(currentUid, targetUid)
-                .onSuccess {
-                    // UI will update via Flow observation ideally, but for now verify manually
-                    _uiState.update { it.copy(friendshipStatus = FriendshipStatus.REQUESTED) }
-                }
                 .onFailure {
-                    // Handle error (Toast)
+                    // handle error
                 }
-            _uiState.update { it.copy(isLoading = false) }
+             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    fun acceptFriendRequest() {
+        val targetUid = userId ?: return
+        val currentUid = authRepository.currentUser?.uid ?: return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            friendRepository.acceptFriendRequestByUserId(currentUid, targetUid)
+             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    fun cancelFriendRequest() {
+        val targetUid = userId ?: return
+        val currentUid = authRepository.currentUser?.uid ?: return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            friendRepository.cancelFriendRequestByUserId(currentUid, targetUid)
+             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    fun removeFriend() {
+        val targetUid = userId ?: return
+        val currentUid = authRepository.currentUser?.uid ?: return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            friendRepository.removeFriend(currentUid, targetUid)
+             _uiState.update { it.copy(isLoading = false) }
         }
     }
 }

@@ -66,6 +66,8 @@ fun SocialSearchScreen(
         onSearchRiot = { viewModel.performRiotSearch() },
         onSearchInviteCode = { viewModel.performInviteCodeSearch() },
         onAddFriend = { uid -> viewModel.sendFriendRequest(uid) },
+        onAcceptRequest = { uid -> viewModel.acceptFriendRequest(uid) },
+        onCancelRequest = { uid -> viewModel.cancelFriendRequest(uid) },
         onCopyInviteCode = { code ->
             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Friend Code", code)
@@ -94,6 +96,8 @@ fun SocialSearchScreenContent(
     onSearchRiot: () -> Unit,
     onSearchInviteCode: () -> Unit,
     onAddFriend: (String) -> Unit,
+    onAcceptRequest: (String) -> Unit,
+    onCancelRequest: (String) -> Unit,
     onCopyInviteCode: (String) -> Unit
 ) {
     // State for Dialog
@@ -212,6 +216,8 @@ fun SocialSearchScreenContent(
                         user = user,
                         relationshipStatus = status,
                         onAddClick = { onAddFriend(user.uid) },
+                        onAcceptClick = { onAcceptRequest(user.uid) },
+                        onCancelClick = { onCancelRequest(user.uid) },
                         onClick = { onProfileClick(user.uid) } // Direct navigation for list items
                     )
                 }
@@ -256,9 +262,9 @@ fun SocialSearchScreenContent(
                  user = showUserDialog!!,
                  relationshipStatus = relationshipStatus[showUserDialog!!.uid] ?: RelationshipStatus.NONE,
                  onDismiss = { showUserDialog = null },
-                 onAddFriend = { 
-                     onAddFriend(showUserDialog!!.uid) 
-                 },
+                 onAddFriend = { onAddFriend(showUserDialog!!.uid) },
+                 onAcceptRequest = { onAcceptRequest(showUserDialog!!.uid) },
+                 onCancelRequest = { onCancelRequest(showUserDialog!!.uid) },
                  onViewProfile = {
                      onProfileClick(showUserDialog!!.uid)
                      showUserDialog = null
@@ -274,6 +280,8 @@ fun UserProfileDialog(
     relationshipStatus: RelationshipStatus,
     onDismiss: () -> Unit,
     onAddFriend: () -> Unit,
+    onAcceptRequest: () -> Unit,
+    onCancelRequest: () -> Unit,
     onViewProfile: () -> Unit
 ) {
     AlertDialog(
@@ -322,35 +330,26 @@ fun UserProfileDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Highlights / Stories Placeholder (Public Only)
-                if (canSeeDetails) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        repeat(3) {
-                            Box(
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // Placeholder for stories
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
+                // Highlights / Stories Placeholder Removed as per request
 
                 // Action Button
                  if (relationshipStatus != RelationshipStatus.SELF) {
                     SynopTrackButton(
                         text = when (relationshipStatus) {
                             RelationshipStatus.FRIEND -> "Message"
-                            RelationshipStatus.SENT_REQUEST -> "Requested"
+                            RelationshipStatus.SENT_REQUEST -> "Cancel Request"
                             RelationshipStatus.RECEIVED_REQUEST -> "Accept Request"
                             else -> "Add Friend"
                         },
-                        onClick = onAddFriend, // TODO: Handle Message/Accept logic
-                        enabled = relationshipStatus == RelationshipStatus.NONE || relationshipStatus == RelationshipStatus.RECEIVED_REQUEST,
+                        onClick = {
+                             when (relationshipStatus) {
+                                RelationshipStatus.NONE -> onAddFriend()
+                                RelationshipStatus.RECEIVED_REQUEST -> onAcceptRequest()
+                                RelationshipStatus.SENT_REQUEST -> onCancelRequest()
+                                else -> {} // Message not impl
+                            }
+                        },
+                        enabled = relationshipStatus != RelationshipStatus.FRIEND, // Disable msg for now
                         variant = if (relationshipStatus == RelationshipStatus.FRIEND) ButtonVariant.OUTLINED else ButtonVariant.PRIMARY
                     )
                 }
@@ -370,6 +369,8 @@ fun UserSearchResultItem(
     user: UserProfile,
     relationshipStatus: RelationshipStatus,
     onAddClick: () -> Unit,
+    onAcceptClick: () -> Unit,
+    onCancelClick: () -> Unit,
     onClick: () -> Unit
 ) {
     Card(
@@ -411,13 +412,20 @@ fun UserSearchResultItem(
             // Action Icon
             if (relationshipStatus != RelationshipStatus.SELF) {
                 IconButton(
-                    onClick = onAddClick,
-                    enabled = relationshipStatus == RelationshipStatus.NONE
+                    onClick = {
+                        when (relationshipStatus) {
+                            RelationshipStatus.NONE -> onAddClick()
+                            RelationshipStatus.RECEIVED_REQUEST -> onAcceptClick()
+                            RelationshipStatus.SENT_REQUEST -> onCancelClick()
+                            else -> {}
+                        }
+                    },
+                    enabled = relationshipStatus != RelationshipStatus.FRIEND
                 ) {
                    when (relationshipStatus) {
                        RelationshipStatus.FRIEND -> Icon(Icons.Default.Group, contentDescription = "Friend", tint = MaterialTheme.colorScheme.primary)
                        RelationshipStatus.SENT_REQUEST -> Icon(Icons.Default.Timer, contentDescription = "Sent", tint = Color.Gray)
-                       RelationshipStatus.RECEIVED_REQUEST -> Icon(Icons.Default.Check, contentDescription = "Received", tint = Color.Green)
+                       RelationshipStatus.RECEIVED_REQUEST -> Icon(Icons.Default.PersonAdd, contentDescription = "Accept", tint = Color.Green) // Changed icon
                        RelationshipStatus.NONE -> Icon(Icons.Default.PersonAdd, contentDescription = "Add Friend", tint = MaterialTheme.colorScheme.primary)
                        else -> {}
                    }

@@ -120,7 +120,7 @@ fun SignUpScreenContent(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
+                    .height(180.dp),
                 contentScale = ContentScale.Fit
             )
             
@@ -132,7 +132,7 @@ fun SignUpScreenContent(
                 color = Color.White
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Email Input
             SynopTrackTextField(
@@ -175,7 +175,7 @@ fun SignUpScreenContent(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             // Remember Me
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -187,7 +187,7 @@ fun SignUpScreenContent(
                 Text("Remember me", color = Color.White, style = MaterialTheme.typography.bodySmall)
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Sign Up Button
             val isLoading = signInState is SignInState.Loading

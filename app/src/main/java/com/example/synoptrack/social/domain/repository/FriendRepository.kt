@@ -10,6 +10,11 @@ interface FriendRepository {
     suspend fun acceptFriendRequest(requestId: String): Result<Boolean>
     suspend fun rejectFriendRequest(requestId: String): Result<Boolean>
     
+    // Helper methods for UI where we only have User IDs
+    suspend fun acceptFriendRequestByUserId(currentUserId: String, senderUserId: String): Result<Boolean>
+    suspend fun cancelFriendRequestByUserId(currentUserId: String, receiverUserId: String): Result<Boolean>
+    suspend fun removeFriend(currentUserId: String, targetUserId: String): Result<Boolean>
+    
     fun getPendingRequests(userId: String): Flow<List<FriendRequest>>
     fun getFriends(userId: String): Flow<List<UserProfile>>
     fun getNotifications(userId: String): Flow<List<NotificationEntity>>

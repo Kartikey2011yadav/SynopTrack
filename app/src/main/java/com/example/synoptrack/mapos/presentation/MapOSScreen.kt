@@ -48,6 +48,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -57,6 +58,8 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 
 import com.example.synoptrack.MainViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MapOSScreen(
@@ -77,7 +80,7 @@ fun MapOSScreen(
         com.example.synoptrack.core.datastore.AppTheme.DARK -> true
         com.example.synoptrack.core.datastore.AppTheme.SYSTEM -> systemInDarkTheme
     }
-    
+
     // Service Control Logic (Side Effects in Wrapper)
     LaunchedEffect(isConvoyActive) {
         val intent = android.content.Intent(context, com.example.synoptrack.core.presence.service.PresenceForegroundService::class.java)
@@ -123,12 +126,12 @@ fun MapOSScreenContent(
 ) {
     val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
-    
+
     val singapore = LatLng(1.35, 103.87)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(singapore, 11f)
     }
-    
+
     val scope = rememberCoroutineScope()
     val hasSetInitialCamera = remember { mutableStateOf(false) }
 
@@ -145,14 +148,21 @@ fun MapOSScreenContent(
             }
         }
     }
-    
-    val mapProperties = remember(isDarkTheme) { 
+
+    val mapStyleOptions = remember(isDarkTheme) { mutableStateOf<MapStyleOptions?>(null) }
+    LaunchedEffect(isDarkTheme) {
+        withContext(Dispatchers.IO) {
+            mapStyleOptions.value = if (isPreview) null else MapStyleManager.getMapStyle(context, isDarkTheme)
+        }
+    }
+
+    val mapProperties = remember(mapStyleOptions.value) {
         MapProperties(
             isMyLocationEnabled = true, // Enable Blue Dot
-            mapStyleOptions = if (isPreview) null else MapStyleManager.getMapStyle(context, isDarkTheme)
+            mapStyleOptions = mapStyleOptions.value
         )
     }
-    
+
     val uiSettings by remember {
         mutableStateOf(
             MapUiSettings(
@@ -162,7 +172,7 @@ fun MapOSScreenContent(
             )
         )
     }
-    
+
     var showSocialOptions by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var showJoinDialog by remember { mutableStateOf(false) }
@@ -187,21 +197,21 @@ fun MapOSScreenContent(
                     val batteryInfo = if (member.batteryLevel >= 0) {
                          "🔋 ${member.batteryLevel}%" + if (member.isCharging) " ⚡" else ""
                     } else "Unknown"
-                    
+
                     Marker(
                         state = MarkerState(position = member.location),
                         title = member.displayName,
-                        snippet = batteryInfo, 
+                        snippet = batteryInfo,
                         icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
                     )
                 }
             }
         }
-        
+
         // Top Layer: Instagram-style Header
         HomeTopBar(
             modifier = Modifier.align(Alignment.TopCenter),
-            onAddClick = { showSocialOptions = true }, 
+            onAddClick = { showSocialOptions = true },
             onSocialClick = onActivityClick
         )
 
@@ -247,7 +257,7 @@ fun MapOSScreenContent(
                             Button(
                                 onClick = {
                                     showSocialOptions = false
-                                    showCreateDialog = true 
+                                    showCreateDialog = true
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {

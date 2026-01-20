@@ -145,6 +145,56 @@ class FriendRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun acceptFriendRequestByUserId(currentUserId: String, senderUserId: String): Result<Boolean> {
+        return try {
+            val query = requestsCollection
+                .whereEqualTo("senderId", senderUserId)
+                .whereEqualTo("receiverId", currentUserId)
+                .whereEqualTo("status", FriendRequestStatus.PENDING.name)
+                .get()
+                .await()
+            
+            if (query.isEmpty) return Result.failure(Exception("No pending request found"))
+            
+            val requestId = query.documents[0].id
+            acceptFriendRequest(requestId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun cancelFriendRequestByUserId(currentUserId: String, receiverUserId: String): Result<Boolean> {
+        return try {
+            val query = requestsCollection
+                .whereEqualTo("senderId", currentUserId)
+                .whereEqualTo("receiverId", receiverUserId)
+                .whereEqualTo("status", FriendRequestStatus.PENDING.name)
+                .get()
+                .await()
+            
+            if (query.isEmpty) return Result.failure(Exception("No pending request found"))
+            
+             val requestId = query.documents[0].id
+             rejectFriendRequest(requestId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun removeFriend(currentUserId: String, targetUserId: String): Result<Boolean> {
+        return try {
+            firestore.runTransaction { transaction ->
+                // Remove from Current User
+                transaction.update(usersCollection.document(currentUserId), "friends", FieldValue.arrayRemove(targetUserId))
+                // Remove from Target User
+                transaction.update(usersCollection.document(targetUserId), "friends", FieldValue.arrayRemove(currentUserId))
+            }.await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override fun getPendingRequests(userId: String): Flow<List<FriendRequest>> = callbackFlow {
         val listener = requestsCollection
             .whereEqualTo("receiverId", userId)
