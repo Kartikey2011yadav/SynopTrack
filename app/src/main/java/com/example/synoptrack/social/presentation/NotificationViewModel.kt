@@ -22,8 +22,12 @@ class NotificationViewModel @Inject constructor(
     private val _notifications = MutableStateFlow<List<NotificationEntity>>(emptyList())
     val notifications: StateFlow<List<NotificationEntity>> = _notifications.asStateFlow()
 
+    private val _pendingRequestCount = MutableStateFlow(0)
+    val pendingRequestCount: StateFlow<Int> = _pendingRequestCount.asStateFlow()
+
     init {
         loadNotifications()
+        loadPendingRequestsOrCount()
     }
 
     private fun loadNotifications() {
@@ -32,6 +36,15 @@ class NotificationViewModel @Inject constructor(
             friendRepository.getNotifications(uid).collect { list ->
                 _notifications.value = list
             }
+        }
+    }
+    
+    private fun loadPendingRequestsOrCount() {
+        val uid = authRepository.currentUser?.uid ?: return
+        viewModelScope.launch {
+             friendRepository.getPendingRequests(uid).collect { list ->
+                 _pendingRequestCount.value = list.size
+             }
         }
     }
 

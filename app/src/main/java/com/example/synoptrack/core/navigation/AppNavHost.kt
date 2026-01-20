@@ -227,7 +227,14 @@ fun AppNavHost() {
 
             composable(Screen.Activity.route) {
                 com.example.synoptrack.social.presentation.NotificationScreen(
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onRequestClick = { navController.navigate(Screen.FriendRequests.route) }
+                )
+            }
+            composable(Screen.FriendRequests.route) {
+                com.example.synoptrack.social.presentation.requests.FriendRequestsScreen(
+                    onBack = { navController.popBackStack() },
+                    onProfileClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) }
                 )
             }
             composable(Screen.Profile.route) {

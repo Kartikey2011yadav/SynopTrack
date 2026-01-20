@@ -143,6 +143,18 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateFcmToken(token: String): Result<Unit> {
+         return try {
+             val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return Result.failure(Exception("No user logged in"))
+             firestore.collection("users").document(uid)
+                 .update("fcmToken", token)
+                 .await()
+             Result.success(Unit)
+         } catch (e: Exception) {
+             Result.failure(e)
+         }
+    }
+
     override suspend fun checkIdentityAvailability(username: String, discriminator: String): Result<Boolean> {
         return try {
             val query = firestore.collection("users")

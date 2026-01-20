@@ -108,15 +108,15 @@ fun ProfileScreenContent(
     var showQrDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     Scaffold(
+    Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        if (user?.discriminator?.isNotEmpty() ?: false) "${user!!.username} #${user.discriminator}" else user?.displayName
-                            ?: "Profile",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    ) 
-                },
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = if (user?.discriminator?.isNotEmpty() == true) "${user.username} #${user.discriminator}" else user?.displayName ?: "Profile",
+                onBack = if (!uiState.isCurrentUser) { { /* Determine back logic if needed? ProfileScreen is usually a tab root, so onBack might be null */ } } else null, // Wait, ProfileScreen is a main tab, no back button usually?
+                // Actually ProfileScreen IS a main tab if accessed via BottomNav.
+                // But if we access it via navigation, it might be.
+                // The current implementation didn't have a navigationIcon for back, it had actions.
+                // It seems ProfileScreen is a root screen in this context.
                 actions = {
                     if (uiState.isCurrentUser) {
                         IconButton(onClick = { /* New Post */ }) {
@@ -202,7 +202,7 @@ fun ProfileScreenContent(
                             modifier = Modifier.size(250.dp),
                             contentScale = ContentScale.Fit
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+//                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                            text = "No posts to see here yet.",
                            style = MaterialTheme.typography.bodyLarge,

@@ -35,9 +35,11 @@ import kotlin.collections.filter
 @Composable
 fun NotificationScreen(
     onBack: () -> Unit,
+    onRequestClick: () -> Unit,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val notifications by viewModel.notifications.collectAsState()
+    val requestCount by viewModel.pendingRequestCount.collectAsState()
     
     // Group Notifications
     val (today, yesterday, last7Days, older) = remember(notifications) {
@@ -46,13 +48,9 @@ fun NotificationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Notifications", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Notifications",
+                onBack = onBack
             )
         }
     ) { padding ->
@@ -61,20 +59,28 @@ fun NotificationScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header for Follow Requests (Mocked logic for now as requested design)
+            // Header for Follow Requests
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onRequestClick() }
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                          contentAlignment = Alignment.Center
                     ) {
-                        Text("3+", color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = if (requestCount > 99) "99+" else requestCount.toString(), 
+                            color = MaterialTheme.colorScheme.onPrimaryContainer, 
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -167,14 +173,16 @@ fun NotificationItem(
                      SynopTrackButton(
                          text = "Confirm",
                          onClick = { viewModel.acceptRequest(notification) },
-                         modifier = Modifier.height(32.dp),
+                         size = com.example.synoptrack.core.presentation.components.ButtonSize.SMALL,
+                         modifier = Modifier.weight(1f),
                          fullWidth = false
                      )
                      SynopTrackButton(
                          text = "Delete",
                          onClick = { viewModel.rejectRequest(notification) },
                          variant = ButtonVariant.OUTLINED,
-                         modifier = Modifier.height(32.dp),
+                         size = com.example.synoptrack.core.presentation.components.ButtonSize.SMALL,
+                         modifier = Modifier.weight(1f),
                          fullWidth = false
                      )
                  }

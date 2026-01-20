@@ -111,6 +111,7 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.messaging)
     implementation(libs.play.services.auth)
     implementation(libs.play.services.location)
     implementation(libs.kotlinx.coroutines.play.services)

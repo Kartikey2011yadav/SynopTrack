@@ -180,6 +180,13 @@ class AuthViewModel @Inject constructor(
             return
         }
         
+        // Update FCM Token on successful login
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            viewModelScope.launch {
+                profileRepository.updateFcmToken(token)
+            }
+        }
+        
         profileRepository.getUserProfile(uid).collect { profile ->
              if (profile == null) {
                   _navigationEvent.send(AuthNavigationEvent.NavigateToNameSetup)

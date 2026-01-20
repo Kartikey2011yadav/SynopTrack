@@ -22,11 +22,14 @@ import javax.inject.Inject
 class MapOSViewModel @Inject constructor(
     private val locationService: LocationService,
     private val socialRepository: SocialRepository,
+    private val friendRepository: com.example.synoptrack.social.domain.repository.FriendRepository,
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
     private val presenceRepository: com.example.synoptrack.core.presence.domain.repository.PresenceRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
+
+    private val currentUser = authRepository.currentUser
 
     private val _lastKnownLocation = MutableStateFlow<LatLng?>(null)
     val lastKnownLocation: StateFlow<LatLng?> = _lastKnownLocation.asStateFlow()
@@ -43,13 +46,24 @@ class MapOSViewModel @Inject constructor(
     private val _isGhostMode = MutableStateFlow(false)
     val isGhostMode: StateFlow<Boolean> = _isGhostMode.asStateFlow()
 
-    val currentUser = authRepository.currentUser
+    private val _unseenNotificationCount = MutableStateFlow(0)
+    val unseenNotificationCount: StateFlow<Int> = _unseenNotificationCount.asStateFlow()
 
     init {
         startLocationUpdates()
         startSocialUpdates()
         observeUserProfile()
+        observeNotifications()
         schedulePassiveUpdates()
+    }
+
+    private fun observeNotifications() {
+        val uid = currentUser?.uid ?: return
+        viewModelScope.launch {
+             friendRepository.getNotifications(uid).collect { list ->
+                 _unseenNotificationCount.value = list.count { !it.isRead }
+             }
+        }
     }
 
     private fun observeUserProfile() {

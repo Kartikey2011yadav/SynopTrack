@@ -74,6 +74,7 @@ fun MapOSScreen(
     val isConvoyActive by viewModel.isConvoyActive.collectAsState()
     val groupMembers by viewModel.groupMembers.collectAsState()
     val activeGroup by viewModel.activeGroup.collectAsState()
+    val unseenCount by viewModel.unseenNotificationCount.collectAsState()
 
     val isDarkTheme = when (appTheme) {
         com.example.synoptrack.core.datastore.AppTheme.LIGHT -> false
@@ -106,6 +107,7 @@ fun MapOSScreen(
         lastLocation = lastLocation,
         groupMembers = groupMembers,
         activeGroup = activeGroup,
+        unseenCount = unseenCount,
         onActivityClick = onActivityClick,
         onCreateGroup = { name -> viewModel.createGroup(name) },
         onJoinGroup = { code -> viewModel.joinGroup(code) },
@@ -119,6 +121,7 @@ fun MapOSScreenContent(
     lastLocation: LatLng?,
     groupMembers: List<MemberUiModel>,
     activeGroup: SocialGroup?,
+    unseenCount: Int,
     onActivityClick: () -> Unit,
     onCreateGroup: (String) -> Unit,
     onJoinGroup: (String) -> Unit,
@@ -211,6 +214,7 @@ fun MapOSScreenContent(
         // Top Layer: Instagram-style Header
         HomeTopBar(
             modifier = Modifier.align(Alignment.TopCenter),
+            hasUnseenNotifications = unseenCount > 0,
             onAddClick = { showSocialOptions = true },
             onSocialClick = onActivityClick
         )
@@ -314,6 +318,7 @@ fun MapOSScreenPreview() {
         lastLocation = LatLng(1.35, 103.87),
         groupMembers = emptyList(),
         activeGroup = null,
+        unseenCount = 0,
         onActivityClick = {},
         onCreateGroup = {},
         onJoinGroup = {},
