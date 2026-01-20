@@ -7,9 +7,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +42,7 @@ fun SocialSearchScreen(
     val ownInviteCode by viewModel.ownInviteCode.collectAsState()
     val results by viewModel.searchResults.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val requestStatus by viewModel.requestStatus.collectAsState()
+    val relationshipStatus by viewModel.relationshipStatus.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
 
     SocialSearchScreenContent(
@@ -50,7 +52,7 @@ fun SocialSearchScreen(
         ownInviteCode = ownInviteCode,
         results = results,
         isLoading = isLoading,
-        requestStatus = requestStatus,
+        relationshipStatus = relationshipStatus,
         onBack = onBack,
         onShowQr = onShowQr,
         onScanQr = onScanQr,
@@ -77,7 +79,7 @@ fun SocialSearchScreenContent(
     ownInviteCode: String,
     results: List<UserProfile>,
     isLoading: Boolean,
-    requestStatus: Map<String, Boolean>,
+    relationshipStatus: Map<String, RelationshipStatus>,
     onBack: () -> Unit,
     onShowQr: () -> Unit,
     onScanQr: () -> Unit,
@@ -105,7 +107,7 @@ fun SocialSearchScreenContent(
              modifier = Modifier
                  .padding(padding)
                  .fillMaxSize(),
-             contentPadding = Collections.nCopies(1, PaddingValues(16.dp))[0] // Simple padding
+             contentPadding = Collections.nCopies(1, PaddingValues(16.dp))[0]
          ) {
              // 1. Your Code Section
              item {
@@ -180,7 +182,7 @@ fun SocialSearchScreenContent(
                  Spacer(modifier = Modifier.height(24.dp))
              }
 
-            // 3. Results Section (conditionally visible)
+            // 3. Results Section
             if (results.isNotEmpty() || isLoading) {
                 item {
                     Text(
@@ -197,9 +199,10 @@ fun SocialSearchScreenContent(
                     }
                 } else {
                     items(results) { user ->
+                        val status = relationshipStatus[user.uid] ?: RelationshipStatus.NONE
                         UserSearchResultItem(
                             user = user,
-                            isRequestSent = requestStatus[user.uid] == true,
+                            relationshipStatus = status,
                             onAddClick = { onAddFriend(user.uid) }
                         )
                     }
@@ -243,9 +246,13 @@ fun SocialSearchScreenContent(
 @Composable
 fun UserSearchResultItem(
     user: UserProfile,
-    isRequestSent: Boolean,
+    relationshipStatus: RelationshipStatus,
     onAddClick: () -> Unit
 ) {
+    // Privacy Logic: Hide details if Private AND (Not Friend AND Not Self)
+    val isPrivate = user.isPrivate
+    val canSeeDetails = !isPrivate || relationshipStatus == RelationshipStatus.FRIEND || relationshipStatus == RelationshipStatus.SELF
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -273,50 +280,37 @@ fun UserSearchResultItem(
                     text = "${user.username}#${user.discriminator}",
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (user.bio.isNotEmpty()) {
+                if (canSeeDetails && user.bio.isNotEmpty()) {
                     Text(
                         text = user.bio,
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         color = Color.Gray
                     )
+                } else if (!canSeeDetails) {
+                    Text(
+                        text = "Private Account",
+                        style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                         color = Color.Gray
+                    )
                 }
             }
             
-            IconButton(
-                onClick = onAddClick,
-                enabled = !isRequestSent
-            ) {
-                Icon(
-                    imageVector = if (isRequestSent) Icons.Default.Check else Icons.Default.PersonAdd,
-                    contentDescription = "Add Friend",
-                    tint = if (isRequestSent) Color.Green else MaterialTheme.colorScheme.primary
-                )
+            // Action Button
+            if (relationshipStatus != RelationshipStatus.SELF) {
+                IconButton(
+                    onClick = onAddClick,
+                    enabled = relationshipStatus == RelationshipStatus.NONE
+                ) {
+                   when (relationshipStatus) {
+                       RelationshipStatus.FRIEND -> Icon(Icons.Default.Group, contentDescription = "Friend", tint = Color.Gray)
+                       RelationshipStatus.SENT_REQUEST -> Icon(Icons.Default.Timer, contentDescription = "Sent", tint = Color.Gray)
+                       RelationshipStatus.RECEIVED_REQUEST -> Icon(Icons.Default.Check, contentDescription = "Received", tint = Color.Gray) // Could allow accept here too
+                       RelationshipStatus.NONE -> Icon(Icons.Default.PersonAdd, contentDescription = "Add Friend", tint = MaterialTheme.colorScheme.primary)
+                       else -> {}
+                   }
+                }
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun SocialSearchScreenPreview() {
-    SocialSearchScreenContent(
-        nameQuery = "Test",
-        tagQuery = "1234",
-        inviteCodeQuery = "",
-        ownInviteCode = "Test#1234@CODE",
-        results = emptyList(),
-        isLoading = false,
-        requestStatus = emptyMap(),
-        onBack = {},
-        onShowQr = {},
-        onScanQr = {},
-        onNameChange = {},
-        onTagChange = {},
-        onInviteCodeChange = {},
-        onSearchRiot = {},
-        onSearchInviteCode = {},
-        onAddFriend = {},
-        onCopyInviteCode = {}
-    )
 }

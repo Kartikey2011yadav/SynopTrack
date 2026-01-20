@@ -1,7 +1,6 @@
 package com.example.synoptrack.profile.presentation
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -37,11 +36,14 @@ fun SettingsScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val currentTheme by viewModel.currentTheme.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     
     SettingsScreenContent(
         currentTheme = currentTheme,
+        isPrivate = uiState.user?.isPrivate ?: false,
         onBackClick = onBackClick,
         onThemeSelected = viewModel::setTheme,
+        onPrivacyChange = viewModel::togglePrivacy,
         onLogout = { /* TODO: Logout */ }
     )
 }
@@ -50,8 +52,10 @@ fun SettingsScreen(
 @Composable
 fun SettingsScreenContent(
     currentTheme: AppTheme,
+    isPrivate: Boolean,
     onBackClick: () -> Unit,
     onThemeSelected: (AppTheme) -> Unit,
+    onPrivacyChange: (Boolean) -> Unit,
     onLogout: () -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -82,7 +86,13 @@ fun SettingsScreenContent(
             SettingsGroup {
                 SettingsItem(icon = Icons.Default.AccountCircle, title = "Account Center")
                 SettingsDivider()
-                SettingsItem(icon = Icons.Default.Lock, title = "Privacy & Security")
+                // Privacy Toggle
+                SwitchSettingsItem(
+                    icon = Icons.Default.Lock,
+                    title = "Private Account",
+                    checked = isPrivate,
+                    onCheckedChange = onPrivacyChange
+                )
                 SettingsDivider()
                 SettingsItem(icon = Icons.Default.Payment, title = "Payments")
             }
@@ -146,7 +156,6 @@ fun SettingsDivider() {
     HorizontalDivider(color = MaterialTheme.colorScheme.background.copy(alpha = 0.5f), thickness = 0.5.dp)
 }
 
-// Re-using the item composables but defining here if they get deleted from ProfileScreen
 @Composable
 fun SettingsItem(
     icon: ImageVector,
@@ -190,6 +199,40 @@ fun SettingsItem(
         )
     }
 }
+
+@Composable
+fun SwitchSettingsItem(
+    icon: ImageVector,
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
 
 @Composable
 fun ThemeSettingsItem(
@@ -249,8 +292,10 @@ fun ThemeOptionBadge(text: String, selected: Boolean, onClick: () -> Unit) {
 fun SettingsScreenPreview() {
     SettingsScreenContent(
         currentTheme = AppTheme.SYSTEM,
+        isPrivate = true,
         onBackClick = {},
         onThemeSelected = {},
+        onPrivacyChange = {},
         onLogout = {}
     )
 }

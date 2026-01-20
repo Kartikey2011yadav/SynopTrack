@@ -1,5 +1,6 @@
 package com.example.synoptrack.social.domain.repository
 
+import com.example.synoptrack.profile.domain.model.NotificationEntity
 import com.example.synoptrack.profile.domain.model.UserProfile
 import com.example.synoptrack.social.domain.model.FriendRequest
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +12,7 @@ interface FriendRepository {
     
     fun getPendingRequests(userId: String): Flow<List<FriendRequest>>
     fun getFriends(userId: String): Flow<List<UserProfile>>
+    fun getNotifications(userId: String): Flow<List<NotificationEntity>>
     
     // Search
     suspend fun searchUsers(nameQuery: String, discriminatorQuery: String = ""): Result<List<UserProfile>>

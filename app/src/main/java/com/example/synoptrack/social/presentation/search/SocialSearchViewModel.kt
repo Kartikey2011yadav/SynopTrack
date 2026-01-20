@@ -7,12 +7,19 @@ import com.example.synoptrack.profile.domain.model.UserProfile
 import com.example.synoptrack.social.domain.repository.FriendRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class RelationshipStatus {
+    NONE,
+    FRIEND,
+    SENT_REQUEST,
+    RECEIVED_REQUEST,
+    SELF
+}
 
 @HiltViewModel
 class SocialSearchViewModel @Inject constructor(
@@ -39,9 +46,11 @@ class SocialSearchViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
-    private val _requestStatus = MutableStateFlow<Map<String, Boolean>>(emptyMap()) // uid -> success
-    val requestStatus: StateFlow<Map<String, Boolean>> = _requestStatus.asStateFlow()
-
+    // Status map: TargetUserID -> Status
+    private val _relationshipStatus = MutableStateFlow<Map<String, RelationshipStatus>>(emptyMap())
+    val relationshipStatus: StateFlow<Map<String, RelationshipStatus>> = _relationshipStatus.asStateFlow()
+    
+    private var currentUserProfile: UserProfile? = null
     private var searchJob: Job? = null
     
     init {
@@ -52,23 +61,32 @@ class SocialSearchViewModel @Inject constructor(
         val uid = authRepository.currentUser?.uid ?: return
         viewModelScope.launch {
             profileRepository.getUserProfile(uid).collect { profile ->
+                currentUserProfile = profile
                 if (profile != null) {
                     _ownInviteCode.value = profile.inviteCode
+                    updateRelationshipStatuses(_searchResults.value)
                 }
             }
         }
     }
+    
+    private fun updateRelationshipStatuses(users: List<UserProfile>) {
+        val current = currentUserProfile ?: return
+        val map = users.associate { user ->
+            val status = when {
+                user.uid == current.uid -> RelationshipStatus.SELF
+                current.friends.contains(user.uid) -> RelationshipStatus.FRIEND
+                current.sentRequests.contains(user.uid) -> RelationshipStatus.SENT_REQUEST
+                current.receivedRequests.contains(user.uid) -> RelationshipStatus.RECEIVED_REQUEST
+                else -> RelationshipStatus.NONE
+            }
+            user.uid to status
+        }
+        _relationshipStatus.value = map
+    }
 
     fun onNameChange(newName: String) {
         _nameQuery.value = newName
-        // Manual search button requested? Or debounce? 
-        // User said "add a seach button below it and when we use this we will get the result"
-        // So maybe disable auto search? 
-        // I'll keep debounce for convenience but also allow button click.
-        // Actually, let's Stick to Debounce for Name/Tag as it's better UX usually, 
-        // but if user insisted on button, I can remove debounce call here.
-        // "when we use this we will get the result" -> implies button trigger.
-        // I will remove scheduleSearch() from here and put it in a explicit function.
     }
     
     fun onTagChange(newTag: String) {
@@ -79,7 +97,7 @@ class SocialSearchViewModel @Inject constructor(
     
     fun onInviteCodeChange(code: String) {
         if (code.length <= 50) {
-           _inviteCodeQuery.value = code
+            _inviteCodeQuery.value = code
         }
     }
 
@@ -91,7 +109,14 @@ class SocialSearchViewModel @Inject constructor(
         if (name.length >= 3) {
             searchJob = viewModelScope.launch {
                 _isLoading.value = true
-                performSearch(name, tag)
+                friendRepository.searchUsers(name, tag)
+                    .onSuccess { users ->
+                         _searchResults.value = users
+                         updateRelationshipStatuses(users)
+                    }
+                    .onFailure {
+                         _searchResults.value = emptyList()
+                    }
                 _isLoading.value = false
             }
         }
@@ -103,8 +128,10 @@ class SocialSearchViewModel @Inject constructor(
              viewModelScope.launch {
                  _isLoading.value = true
                  friendRepository.getUserByInviteCode(code).onSuccess { user ->
-                     if (user != null && user.uid != authRepository.currentUser?.uid) {
-                         _searchResults.value = listOf(user)
+                     if (user != null) {
+                         val list = listOf(user)
+                         _searchResults.value = list
+                         updateRelationshipStatuses(list)
                      } else {
                          _searchResults.value = emptyList()
                      }
@@ -114,27 +141,24 @@ class SocialSearchViewModel @Inject constructor(
          }
     }
 
-    private suspend fun performSearch(name: String, tag: String) {
-        friendRepository.searchUsers(name, tag)
-            .onSuccess { users ->
-                 // Filter out self
-                 val currentUid = authRepository.currentUser?.uid
-                 _searchResults.value = users.filter { it.uid != currentUid }
-            }
-            .onFailure {
-                // Handle error
-            }
-    }
-
     fun sendFriendRequest(targetUserId: String) {
         val currentUid = authRepository.currentUser?.uid ?: return
+        
+        // Optimistic Update
+        val currentMap = _relationshipStatus.value.toMutableMap()
+        currentMap[targetUserId] = RelationshipStatus.SENT_REQUEST
+        _relationshipStatus.value = currentMap
+
         viewModelScope.launch {
             friendRepository.sendFriendRequest(currentUid, targetUserId)
                 .onSuccess {
-                    _requestStatus.value += (targetUserId to true)
+                    // Success
                 }
                 .onFailure {
-                     // Show error
+                     // Revert on failure
+                     val revertMap = _relationshipStatus.value.toMutableMap()
+                     revertMap[targetUserId] = RelationshipStatus.NONE
+                     _relationshipStatus.value = revertMap
                 }
         }
     }

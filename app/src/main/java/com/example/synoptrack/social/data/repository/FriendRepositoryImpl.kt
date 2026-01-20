@@ -1,15 +1,20 @@
 package com.example.synoptrack.social.data.repository
 
+import com.example.synoptrack.profile.domain.model.NotificationEntity
+import com.example.synoptrack.profile.domain.model.NotificationType
 import com.example.synoptrack.profile.domain.model.UserProfile
 import com.example.synoptrack.social.domain.model.FriendRequest
 import com.example.synoptrack.social.domain.model.FriendRequestStatus
 import com.example.synoptrack.social.domain.repository.FriendRepository
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 import javax.inject.Inject
 
 class FriendRepositoryImpl @Inject constructor(
@@ -21,31 +26,51 @@ class FriendRepositoryImpl @Inject constructor(
 
     override suspend fun sendFriendRequest(currentUserId: String, targetUserId: String): Result<Boolean> {
         return try {
-            // Check if request already exists
-            val existing = requestsCollection
-                .whereEqualTo("senderId", currentUserId)
-                .whereEqualTo("receiverId", targetUserId)
-                .whereEqualTo("status", FriendRequestStatus.PENDING.name)
-                .get().await()
+            firestore.runTransaction { transaction ->
+                // 1. Create Request Document
+                val senderDoc = transaction.get(usersCollection.document(currentUserId))
+                val senderProfile = senderDoc.toObject(UserProfile::class.java) 
+                    ?: throw Exception("Sender not found")
+                
+                // Check if already friends or requested
+                if (senderProfile.friends.contains(targetUserId)) throw Exception("Already friends")
+                if (senderProfile.sentRequests.contains(targetUserId)) throw Exception("Request already sent")
 
-            if (!existing.isEmpty) {
-                return Result.failure(Exception("Request already pending"))
-            }
+                val requestId = UUID.randomUUID().toString()
+                val request = FriendRequest(
+                    id = requestId,
+                    senderId = currentUserId,
+                    senderDisplayName = "${senderProfile.username}#${senderProfile.discriminator}",
+                    senderAvatarUrl = senderProfile.avatarUrl,
+                    receiverId = targetUserId,
+                    status = FriendRequestStatus.PENDING,
+                    timestamp = Timestamp.now()
+                )
+                
+                transaction.set(requestsCollection.document(requestId), request)
 
-            // Get sender profile for denormalization
-            val senderProfile = usersCollection.document(currentUserId).get().await().toObject(UserProfile::class.java)
-                ?: return Result.failure(Exception("Sender profile not found"))
+                // 2. Update Sender's sentRequests
+                transaction.update(usersCollection.document(currentUserId), "sentRequests", FieldValue.arrayUnion(targetUserId))
 
-            val request = FriendRequest(
-                id = requestsCollection.document().id,
-                senderId = currentUserId,
-                senderDisplayName = "${senderProfile.username}#${senderProfile.discriminator}", // Use identity format
-                senderAvatarUrl = senderProfile.avatarUrl,
-                receiverId = targetUserId,
-                status = FriendRequestStatus.PENDING
-            )
-
-            requestsCollection.document(request.id).set(request).await()
+                // 3. Update Receiver's receivedRequests AND add Notification
+                val notification = NotificationEntity(
+                    id = UUID.randomUUID().toString(),
+                    type = NotificationType.FRIEND_REQUEST,
+                    senderId = currentUserId,
+                    senderName = request.senderDisplayName,
+                    senderAvatar = request.senderAvatarUrl,
+                    message = "sent you a friend request.",
+                    actionData = requestId,
+                    timestamp = Timestamp.now()
+                )
+                
+                transaction.update(usersCollection.document(targetUserId), 
+                    mapOf(
+                        "receivedRequests" to FieldValue.arrayUnion(currentUserId),
+                        "notifications" to FieldValue.arrayUnion(notification)
+                    )
+                )
+            }.await()
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
@@ -54,26 +79,50 @@ class FriendRepositoryImpl @Inject constructor(
 
     override suspend fun acceptFriendRequest(requestId: String): Result<Boolean> {
         return try {
-            val requestDoc = requestsCollection.document(requestId).get().await()
-            val request = requestDoc.toObject(FriendRequest::class.java)
+            val requestSnap = requestsCollection.document(requestId).get().await()
+            val request = requestSnap.toObject(FriendRequest::class.java) 
                 ?: return Result.failure(Exception("Request not found"))
 
             firestore.runTransaction { transaction ->
-                // Update request status
+                // 1. Update Request Status
                 transaction.update(requestsCollection.document(requestId), "status", FriendRequestStatus.ACCEPTED)
 
-                // Add to each other's friend lists (subcollections or array)
-                // Using 'friends' subcollection for scalability
-                val senderFriendRef = usersCollection.document(request.senderId).collection("friends").document(request.receiverId)
-                val receiverFriendRef = usersCollection.document(request.receiverId).collection("friends").document(request.senderId)
-                
-                // We just store a placeholder timestamp or partial friend object
-                val friendData = mapOf("since" to com.google.firebase.Timestamp.now())
-                
-                transaction.set(senderFriendRef, friendData)
-                transaction.set(receiverFriendRef, friendData)
+                // 2. Add to Friends List & Remove from Requests for BOTH columns
+                val senderRef = usersCollection.document(request.senderId)
+                val receiverRef = usersCollection.document(request.receiverId)
+
+                // Update Sender: Add Friend, Remove Sent Request, Add Notification (Accepted)
+                val receiverSnap = transaction.get(receiverRef)
+                val receiverProfile = receiverSnap.toObject(UserProfile::class.java)
+                val receiverName = receiverProfile?.username ?: "User"
+
+                val notification = NotificationEntity(
+                    id = UUID.randomUUID().toString(),
+                    type = NotificationType.FRIEND_ACCEPTED,
+                    senderId = request.receiverId,
+                    senderName = receiverName,
+                    senderAvatar = receiverProfile?.avatarUrl ?: "",
+                    message = "accepted your friend request.",
+                    timestamp = Timestamp.now()
+                )
+
+                transaction.update(senderRef, 
+                    mapOf(
+                        "friends" to FieldValue.arrayUnion(request.receiverId),
+                        "sentRequests" to FieldValue.arrayRemove(request.receiverId),
+                        "notifications" to FieldValue.arrayUnion(notification)
+                    )
+                )
+
+                // Update Receiver: Add Friend, Remove Received Request
+                transaction.update(receiverRef,
+                    mapOf(
+                        "friends" to FieldValue.arrayUnion(request.senderId),
+                        "receivedRequests" to FieldValue.arrayRemove(request.senderId)
+                        // Notification for receiver is redundant as they clicked accept
+                    )
+                )
             }.await()
-            
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
@@ -81,8 +130,15 @@ class FriendRepositoryImpl @Inject constructor(
     }
 
     override suspend fun rejectFriendRequest(requestId: String): Result<Boolean> {
-         return try {
-            requestsCollection.document(requestId).update("status", FriendRequestStatus.REJECTED).await()
+        return try {
+            val requestSnap = requestsCollection.document(requestId).get().await()
+            val request = requestSnap.toObject(FriendRequest::class.java) ?: return Result.failure(Exception("Request not found"))
+            
+            firestore.runTransaction { transaction ->
+                transaction.update(requestsCollection.document(requestId), "status", FriendRequestStatus.REJECTED)
+                transaction.update(usersCollection.document(request.receiverId), "receivedRequests", FieldValue.arrayRemove(request.senderId))
+                transaction.update(usersCollection.document(request.senderId), "sentRequests", FieldValue.arrayRemove(request.receiverId))
+            }.await()
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
@@ -104,43 +160,53 @@ class FriendRepositoryImpl @Inject constructor(
             }
         awaitClose { listener.remove() }
     }
-
-    override fun getFriends(userId: String): Flow<List<UserProfile>> = callbackFlow {
-        // This is complex with Firestore. 
-        // 1. Listen to 'friends' subcollection IDs.
-        // 2. Query 'users' collection with 'in' clause (chunked by 10).
-        // For simplicity now, we'll verify connection via separate mechanism or implement simpler logic later.
-        // Or: Store basic friend info in the subcollection so we don't need a second query immediately.
-        
-        // Let's implement a basic version that fetches IDs
-        val listener = usersCollection.document(userId).collection("friends")
+    
+    // NEW: Get Users Notifications
+    override fun getNotifications(userId: String): Flow<List<NotificationEntity>> = callbackFlow {
+        val listener = usersCollection.document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
                     return@addSnapshotListener
                 }
-                val friendIds = snapshot?.documents?.map { it.id } ?: emptyList()
+                val profile = snapshot?.toObject(UserProfile::class.java)
+                val notifications = profile?.notifications?.sortedByDescending { it.timestamp } ?: emptyList()
+                trySend(notifications)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override fun getFriends(userId: String): Flow<List<UserProfile>> = callbackFlow {
+        val listener = usersCollection.document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val profile = snapshot?.toObject(UserProfile::class.java)
+                val friendIds = profile?.friends ?: emptyList()
+                
                 if (friendIds.isEmpty()) {
                     trySend(emptyList())
                 } else {
-                    // Fetch profiles
-                    // Note: 'in' queries limited to 10. For production, execute multiple queries.
-                    // For prototype, we fetch one by one or take top 10.
-                    // Let's just do a naive fetch for now suitable for prototype.
-                     usersCollection.whereIn("uid", friendIds.take(10)).get()
-                         .addOnSuccessListener { profileSnap ->
-                             val profiles = profileSnap.toObjects(UserProfile::class.java)
-                             trySend(profiles)
-                         }
+                    // Chunked query for friends
+                    // For prototype, limiting to first 10. In prod, need batching.
+                    usersCollection.whereIn("uid", friendIds.take(10)).get()
+                        .addOnSuccessListener { friendsSnap ->
+                             val friends = friendsSnap.toObjects(UserProfile::class.java)
+                             trySend(friends)
+                        }
+                        .addOnFailureListener {
+                            // On failure (e.g. too many clauses), just send empty or cached
+                        }
                 }
             }
-         awaitClose { listener.remove() }
+        awaitClose { listener.remove() }
     }
 
     override suspend fun searchUsers(nameQuery: String, discriminatorQuery: String): Result<List<UserProfile>> {
         return try {
-            if (discriminatorQuery.isNotEmpty()) {
-                // Exact Match: Username + Discriminator
+             if (discriminatorQuery.isNotEmpty()) {
                 val snapshot = usersCollection
                     .whereEqualTo("username", nameQuery)
                     .whereEqualTo("discriminator", discriminatorQuery)
@@ -148,8 +214,6 @@ class FriendRepositoryImpl @Inject constructor(
                  return Result.success(snapshot.toObjects(UserProfile::class.java))
             } 
             
-            // Search by Invite Code (Check if query matches Invite Code format or just try finding it)
-            // New Format: name#tag@random (contains @)
             if (nameQuery.contains("@")) {
                  val codeSnapshot = usersCollection.whereEqualTo("inviteCode", nameQuery).get().await()
                  if (!codeSnapshot.isEmpty) {
@@ -157,7 +221,6 @@ class FriendRepositoryImpl @Inject constructor(
                  }
             }
 
-            // Username Prefix Search
             val nameSnapshot = usersCollection
                  .whereGreaterThanOrEqualTo("username", nameQuery)
                  .whereLessThanOrEqualTo("username", nameQuery + "\uf8ff")

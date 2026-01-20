@@ -34,5 +34,13 @@ data class UserProfile(
     val discriminator: String = "", // The 4-char hash (e.g., "9uwu")
     val inviteCode: String = "", // Unique Code
     @ServerTimestamp
-    val lastActiveAt: Date? = null
+    val lastActiveAt: Date? = null,
+    
+    // Social Graph
+    val friends: List<String> = emptyList(), // List of accepted friend UIDs
+    val receivedRequests: List<String> = emptyList(), // List of UIDs who sent requests
+    val sentRequests: List<String> = emptyList(), // List of UIDs requested by this user
+    
+    // Notifications (Embedded for simplicity as per requirements)
+    val notifications: List<NotificationEntity> = emptyList()
 )

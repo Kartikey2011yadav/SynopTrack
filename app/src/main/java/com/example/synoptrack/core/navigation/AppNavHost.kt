@@ -219,7 +219,9 @@ fun AppNavHost() {
             }
 
             composable(Screen.Activity.route) {
-                com.example.synoptrack.social.presentation.ActivityScreen()
+                com.example.synoptrack.social.presentation.NotificationScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(
