@@ -5,6 +5,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.synoptrack.core.presentation.components.ButtonVariant
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 
 @Composable
 fun CreateGroupDialog(
@@ -20,26 +23,31 @@ fun CreateGroupDialog(
             Column {
                 Text("Give your convoy a name:")
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                SynopTrackTextField(
                     value = groupName,
                     onValueChange = { groupName = it },
-                    singleLine = true,
-                    label = { Text("Group Name") }
+                    label = "Group Name",
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(
+            SynopTrackButton(
+                text = "Create",
                 onClick = { onCreate(groupName) },
-                enabled = groupName.isNotBlank()
-            ) {
-                Text("Create")
-            }
+                enabled = groupName.isNotBlank(),
+                fullWidth = false,
+                modifier = Modifier.width(100.dp)
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            SynopTrackButton(
+                text = "Cancel",
+                onClick = onDismiss,
+                variant = ButtonVariant.TEXT,
+                fullWidth = false,
+                modifier = Modifier.width(100.dp)
+            )
         }
     )
 }

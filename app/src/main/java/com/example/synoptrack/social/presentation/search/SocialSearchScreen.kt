@@ -4,11 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
@@ -22,8 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.synoptrack.core.presentation.components.ButtonVariant
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 import com.example.synoptrack.profile.domain.model.UserProfile
-
+import java.util.Collections
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +105,7 @@ fun SocialSearchScreenContent(
              modifier = Modifier
                  .padding(padding)
                  .fillMaxSize(),
-             contentPadding = java.util.Collections.nCopies(1, PaddingValues(16.dp))[0] // Simple padding
+             contentPadding = Collections.nCopies(1, PaddingValues(16.dp))[0] // Simple padding
          ) {
              // 1. Your Code Section
              item {
@@ -129,17 +130,19 @@ fun SocialSearchScreenContent(
                                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                                  modifier = Modifier.weight(1f)
                              )
-                             Button(onClick = { onCopyInviteCode(ownInviteCode) }) {
-                                 Text("COPY")
-                             }
+                             SynopTrackButton(
+                                 text = "COPY",
+                                 onClick = { onCopyInviteCode(ownInviteCode) },
+                                 fullWidth = false,
+                                 modifier = Modifier.width(100.dp).height(40.dp)
+                             )
                          }
-                         Spacer(modifier = Modifier.height(8.dp))
-                         OutlinedButton(
+                         Spacer(modifier = Modifier.height(16.dp))
+                         SynopTrackButton(
+                             text = "Show QR Code",
                              onClick = onShowQr,
-                             modifier = Modifier.fillMaxWidth()
-                         ) {
-                             Text("Show QR Code")
-                         }
+                             variant = ButtonVariant.OUTLINED
+                         )
                      }
                  }
              }
@@ -152,32 +155,28 @@ fun SocialSearchScreenContent(
                      modifier = Modifier.padding(bottom = 8.dp)
                  )
                  Row(modifier = Modifier.fillMaxWidth()) {
-                     OutlinedTextField(
+                     SynopTrackTextField(
                          value = nameQuery,
                          onValueChange = onNameChange,
-                         label = { Text("User Name") },
-                         modifier = Modifier.weight(1f),
-                         singleLine = true
+                         label = "User Name",
+                         modifier = Modifier.weight(1f)
                      )
                      Spacer(modifier = Modifier.width(8.dp))
-                     OutlinedTextField(
+                     SynopTrackTextField(
                          value = tagQuery,
                          onValueChange = onTagChange,
-                         label = { Text("Tag") },
+                         label = "Tag",
                          modifier = Modifier.width(100.dp),
-                         singleLine = true,
-                         prefix = { Text("#") }
+                         leadingIcon = { Text("#", modifier = Modifier.padding(start = 12.dp)) }
                      )
                  }
-                 Spacer(modifier = Modifier.height(8.dp))
-                 Button(
+                 Spacer(modifier = Modifier.height(16.dp))
+                 SynopTrackButton(
+                     text = "Search",
                      onClick = onSearchRiot,
-                     modifier = Modifier.fillMaxWidth()
-                 ) {
-                     Icon(Icons.Default.Search, contentDescription = null)
-                     Spacer(modifier = Modifier.width(8.dp))
-                     Text("Search")
-                 }
+                     icon = Icons.Default.Search,
+                     isLoading = isLoading
+                 )
                  Spacer(modifier = Modifier.height(24.dp))
              }
 
@@ -215,27 +214,25 @@ fun SocialSearchScreenContent(
                      style = MaterialTheme.typography.titleMedium,
                      modifier = Modifier.padding(bottom = 8.dp)
                  )
-                 OutlinedTextField(
+                 SynopTrackTextField(
                      value = inviteCodeQuery,
                      onValueChange = onInviteCodeChange,
-                     label = { Text("Friend Code") },
+                     label = "Friend Code",
+                     placeholder = "e.g. User#1234@abcd",
                      modifier = Modifier.fillMaxWidth(),
-                     singleLine = true,
-                     placeholder = { Text("e.g. User#1234@abcd") },
                      trailingIcon = {
                          IconButton(onClick = onScanQr) {
-                             Icon(androidx.compose.material.icons.Icons.Default.QrCodeScanner, contentDescription = "Scan QR")
+                             Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR")
                          }
                      }
                  )
-                 Spacer(modifier = Modifier.height(8.dp))
-                 Button(
+                 Spacer(modifier = Modifier.height(16.dp))
+                 SynopTrackButton(
+                     text = "Send Invite",
                      onClick = onSearchInviteCode,
-                     modifier = Modifier.fillMaxWidth(),
-                     enabled = inviteCodeQuery.length > 8 // Minimal length for new format
-                 ) {
-                     Text("Send Invite")
-                 }
+                     enabled = inviteCodeQuery.length > 8,
+                     isLoading = isLoading
+                 )
                  
                  Spacer(modifier = Modifier.height(32.dp))
              }
@@ -245,7 +242,7 @@ fun SocialSearchScreenContent(
 
 @Composable
 fun UserSearchResultItem(
-    user: com.example.synoptrack.profile.domain.model.UserProfile,
+    user: UserProfile,
     isRequestSent: Boolean,
     onAddClick: () -> Unit
 ) {

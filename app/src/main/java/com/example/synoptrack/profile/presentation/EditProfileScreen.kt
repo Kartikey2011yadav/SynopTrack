@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,10 +27,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 import com.example.synoptrack.core.utils.IdentityUtils
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +62,7 @@ fun EditProfileScreen(
             // Check only if changed from initial
             if (name != currentName || discriminator != currentDiscriminator) {
                 isChecking = true
-                kotlinx.coroutines.delay(500)
+                delay(500)
                 val available = checkAvailability(name, discriminator)
                 if (!available) {
                     isDiscriminatorTaken = true
@@ -98,7 +99,7 @@ fun EditProfileScreen(
                         }
                     }, enabled = isValid) {
                          if (isChecking) {
-                             androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                          } else {
                              Icon(Icons.Default.Check, contentDescription = "Save")
                          }
@@ -116,27 +117,28 @@ fun EditProfileScreen(
             
             // Identity Row
             Text("Identity", style = MaterialTheme.typography.labelMedium)
+            Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                SynopTrackTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("User Name") },
+                    label = "User Name",
                     modifier = Modifier.weight(1f),
-                    isError = errorMessage != null && !isDiscriminatorTaken
+                    error = if (errorMessage != null && !isDiscriminatorTaken) errorMessage else null
                 )
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
-                OutlinedTextField(
+                SynopTrackTextField(
                     value = discriminator,
                     onValueChange = { if (it.length <= 4) discriminator = it },
-                    label = { Text("Tagline") },
+                    label = "Tagline",
                     modifier = Modifier.width(140.dp),
-                    prefix = { Text("#") },
-                    isError = isDiscriminatorTaken
+                    leadingIcon = { Text("#", modifier = Modifier.padding(start = 12.dp)) },
+                    error = if (isDiscriminatorTaken) "Taken" else null
                 )
             }
-            if (errorMessage != null) {
+            if (errorMessage != null && isDiscriminatorTaken) {
                 Text(
                     text = errorMessage!!,
                     color = MaterialTheme.colorScheme.error,
@@ -148,12 +150,14 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Bio
-            OutlinedTextField(
+            SynopTrackTextField(
                 value = bio,
                 onValueChange = { bio = it },
-                label = { Text("Bio") },
-                modifier = Modifier.fillMaxWidth().height(120.dp),
-                maxLines = 5
+                label = "Bio",
+                modifier = Modifier.fillMaxWidth().height(150.dp), // Increased height a bit for padding
+                singleLine = false,
+                maxLines = 5,
+                minLines = 3
             )
         }
     }

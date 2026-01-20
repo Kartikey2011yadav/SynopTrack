@@ -1,13 +1,10 @@
 package com.example.synoptrack.auth.presentation
 
-import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 import com.example.synoptrack.core.theme.ElectricBluePrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,20 +26,13 @@ fun ForgotPasswordScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val signInState by viewModel.signInState.collectAsState()
-    val context = LocalContext.current
     
     var email by remember { mutableStateOf("") }
 
+    // Side effects now handled by Global Toast Service in ViewModel
     LaunchedEffect(signInState) {
-        when (val state = signInState) {
-            is SignInState.MessageSent -> {
-                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
-                onBack() // Go back to login after sending
-            }
-            is SignInState.Error -> {
-                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
-            }
-            else -> {}
+        if (signInState is SignInState.MessageSent) {
+            onBack() // Go back to login after sending
         }
     }
 
@@ -48,14 +40,14 @@ fun ForgotPasswordScreen(
         containerColor = Color.Black,
         topBar = {
              CenterAlignedTopAppBar(
-                title = { Text("Reset Password", color = Color.White) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
-            )
+                 title = { Text("Reset Password", color = Color.White) },
+                 navigationIcon = {
+                     IconButton(onClick = onBack) {
+                         Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
+                     }
+                 },
+                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
+             )
         }
     ) { padding ->
         Column(
@@ -79,39 +71,24 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             // Email Input
-            Text("Email Address", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            SynopTrackTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("youremail@gmail.com") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = ElectricBluePrimary,
-                    unfocusedBorderColor = Color.Transparent
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                label = "Email Address",
+                placeholder = "youremail@gmail.com",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            Button(
+            val isLoading = signInState is SignInState.Loading
+            SynopTrackButton(
+                text = "Send Link",
                 onClick = { viewModel.resetPassword(email) },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricBluePrimary)
-            ) {
-                 if (signInState is SignInState.Loading) {
-                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                     Text("Send Link", color = Color.Black, fontWeight = FontWeight.Bold)
-                }
-            }
+                isLoading = isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

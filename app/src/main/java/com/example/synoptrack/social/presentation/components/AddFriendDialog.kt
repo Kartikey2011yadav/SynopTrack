@@ -5,6 +5,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.synoptrack.core.presentation.components.ButtonVariant
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 
 @Composable
 fun AddFriendDialog(
@@ -20,26 +23,32 @@ fun AddFriendDialog(
             Column {
                 Text("Enter their Invite Code:")
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                SynopTrackTextField(
                     value = code,
                     onValueChange = { code = it },
-                    singleLine = true,
-                    placeholder = { Text("e.g. user#1234@abcd") }
+                    label = "Invite Code", // Changed from placeholder to label for consistency, or keep standard logic
+                    placeholder = "e.g. user#1234@abcd",
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(
+            SynopTrackButton(
+                text = "Add Friend",
                 onClick = { if (code.length > 5) onAdd(code) },
-                enabled = code.length > 5
-            ) {
-                Text("Add Friend")
-            }
+                enabled = code.length > 5,
+                fullWidth = false,
+                modifier = Modifier.width(120.dp) // Slightly wider for text
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            SynopTrackButton(
+                text = "Cancel",
+                onClick = onDismiss,
+                variant = ButtonVariant.TEXT,
+                fullWidth = false,
+                modifier = Modifier.width(100.dp)
+            )
         }
     )
 }

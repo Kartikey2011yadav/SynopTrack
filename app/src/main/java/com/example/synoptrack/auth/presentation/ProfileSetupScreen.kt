@@ -3,7 +3,6 @@ package com.example.synoptrack.auth.presentation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -13,7 +12,6 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
@@ -21,7 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.synoptrack.auth.presentation.model.ProfileSetupState
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 import com.example.synoptrack.core.theme.ElectricBluePrimary
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,16 +38,16 @@ fun ProfileSetupScreen(
     }
     
     // Date Picker Logic
-    val calendar = java.util.Calendar.getInstance()
+    val calendar = Calendar.getInstance()
     val datePickerDialog = android.app.DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
             val formattedDate = "%02d/%02d/%04d".format(dayOfMonth, month + 1, year)
             viewModel.onDobChanged(formattedDate)
         },
-        calendar.get(java.util.Calendar.YEAR),
-        calendar.get(java.util.Calendar.MONTH),
-        calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
     )
     
     ProfileSetupScreenContent(
@@ -72,11 +73,11 @@ fun ProfileSetupScreenContent(
     onSubmit: () -> Unit
 ) {
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Black,
+        containerColor = Color.Black,
         topBar = {
              CenterAlignedTopAppBar(
-                 title = { Text("Complete Profile", color = androidx.compose.ui.graphics.Color.White) },
-                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Black)
+                 title = { Text("Complete Profile", color = Color.White) },
+                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
              )
         }
     ) { padding ->
@@ -99,150 +100,76 @@ fun ProfileSetupScreenContent(
             }
             
             // Name
-            Column {
-                Text("Display Name", color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.displayName,
-                    onValueChange = onNameChanged,
-                    placeholder = { Text("Enter your name") },
-                    leadingIcon = { Icon(Icons.Rounded.Person, null, tint = androidx.compose.ui.graphics.Color.Gray) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = androidx.compose.ui.graphics.Color(0xFF1E1E1E),
-                        unfocusedContainerColor = androidx.compose.ui.graphics.Color(0xFF1E1E1E),
-                        focusedTextColor = androidx.compose.ui.graphics.Color.White,
-                        unfocusedTextColor = androidx.compose.ui.graphics.Color.White,
-                        focusedBorderColor = ElectricBluePrimary,
-                        unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent
-                    ),
-                    singleLine = true
-                )
-            }
+            SynopTrackTextField(
+                value = uiState.displayName,
+                onValueChange = onNameChanged,
+                label = "Display Name",
+                placeholder = "Enter your name",
+                leadingIcon = { Icon(Icons.Rounded.Person, null, tint = Color.Gray) },
+                modifier = Modifier.fillMaxWidth()
+            )
             
             // Bio
-             Column {
-                Text("Bio", color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.bio,
-                    onValueChange = onBioChanged,
-                    placeholder = { Text("Tell us about yourself") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = androidx.compose.ui.graphics.Color(0xFF1E1E1E),
-                        unfocusedContainerColor = androidx.compose.ui.graphics.Color(0xFF1E1E1E),
-                        focusedTextColor = androidx.compose.ui.graphics.Color.White,
-                        unfocusedTextColor = androidx.compose.ui.graphics.Color.White,
-                        focusedBorderColor = ElectricBluePrimary,
-                        unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent
-                    ),
-                    minLines = 3
-                )
-            }
+            SynopTrackTextField(
+                value = uiState.bio,
+                onValueChange = onBioChanged,
+                label = "Bio",
+                placeholder = "Tell us about yourself",
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = false,
+                minLines = 3
+            )
 
             // Email
-             Column {
-                Text("Email Address", color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = uiState.email,
-                    onValueChange = onEmailChanged,
-                    placeholder = { Text("Enter your email") },
-                    leadingIcon = { Icon(Icons.Rounded.Email, null, tint = androidx.compose.ui.graphics.Color.Gray) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = true,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF1E1E1E),
-                        unfocusedContainerColor = Color(0xFF1E1E1E),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = ElectricBluePrimary,
-                        unfocusedBorderColor = Color.Transparent,
-                        cursorColor = ElectricBluePrimary
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    singleLine = true
-                )
-            }
+            SynopTrackTextField(
+                value = uiState.email,
+                onValueChange = onEmailChanged,
+                label = "Email Address",
+                placeholder = "Enter your email",
+                leadingIcon = { Icon(Icons.Rounded.Email, null, tint = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
             
             // Phone (Optional / Data Collection)
-             Column {
-                 Text("Phone Number", color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.bodyMedium)
-                 Spacer(modifier = Modifier.height(8.dp))
-                 OutlinedTextField(
-                     value = uiState.phoneNumber,
-                     onValueChange = onPhoneChanged,
-                     placeholder = { Text("934 567 8900") },
-                     leadingIcon = { Icon(Icons.Rounded.Phone, null, tint = androidx.compose.ui.graphics.Color.Gray) },
-                     modifier = Modifier.fillMaxWidth(),
-                     shape = RoundedCornerShape(12.dp),
-                     colors = OutlinedTextFieldDefaults.colors(
-                         focusedContainerColor = Color(0xFF1E1E1E),
-                         unfocusedContainerColor = Color(0xFF1E1E1E),
-                         focusedTextColor = Color.White,
-                         unfocusedTextColor = Color.White,
-                         focusedBorderColor = ElectricBluePrimary,
-                         unfocusedBorderColor = Color.Transparent,
-                         cursorColor = ElectricBluePrimary
-                     ),
-                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                     singleLine = true
-                 )
-            }
+            SynopTrackTextField(
+                value = uiState.phoneNumber,
+                onValueChange = onPhoneChanged,
+                label = "Phone Number",
+                placeholder = "934 567 8900",
+                leadingIcon = { Icon(Icons.Rounded.Phone, null, tint = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
 
             // DOB
-            Column {
-                Text("Date of Birth", color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = uiState.dob,
-                        onValueChange = {}, // Read only
-                        placeholder = { Text("DD/MM/YYYY") },
-                        leadingIcon = { Icon(Icons.Rounded.CalendarToday, null, tint = androidx.compose.ui.graphics.Color.Gray) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = false, // Disable typing
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledContainerColor = androidx.compose.ui.graphics.Color(0xFF1E1E1E),
-                            disabledTextColor = androidx.compose.ui.graphics.Color.White,
-                            disabledBorderColor = androidx.compose.ui.graphics.Color.Transparent,
-                            disabledPlaceholderColor = androidx.compose.ui.graphics.Color.Gray,
-                            disabledLeadingIconColor = androidx.compose.ui.graphics.Color.Gray
-                        )
-                    )
-                    // Transparent clickable surface over the text field
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable { onDobClick() }
-                    )
-                }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                SynopTrackTextField(
+                    value = uiState.dob,
+                    onValueChange = {}, // Read only
+                    label = "Date of Birth",
+                    placeholder = "DD/MM/YYYY",
+                    leadingIcon = { Icon(Icons.Rounded.CalendarToday, null, tint = Color.Gray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = false
+                )
+                // Transparent clickable surface over the text field
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { onDobClick() }
+                )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            Button(
+            SynopTrackButton(
+                text = "Complete Setup",
                 onClick = onSubmit,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = uiState.isValid && !uiState.isLoading,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ElectricBluePrimary,
-                    disabledContainerColor = androidx.compose.ui.graphics.Color.Gray
-                )
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text("Complete Setup", color = androidx.compose.ui.graphics.Color.Black, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                }
-            }
+                enabled = uiState.isValid,
+                isLoading = uiState.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

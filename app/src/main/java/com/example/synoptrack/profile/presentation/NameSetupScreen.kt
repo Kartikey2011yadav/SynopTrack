@@ -1,13 +1,20 @@
 package com.example.synoptrack.profile.presentation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.synoptrack.R
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 import com.example.synoptrack.core.utils.IdentityUtils
+import kotlinx.coroutines.delay
 
 @Composable
 fun NameSetupScreen(
@@ -24,7 +31,7 @@ fun NameSetupScreen(
     LaunchedEffect(username, discriminator) {
         if (username.length >= 3 && discriminator.length == 4) {
             isChecking = true
-            kotlinx.coroutines.delay(500) // Debounce
+            delay(500) // Debounce
             val available = checkAvailability(username, discriminator)
             if (!available) {
                 isDiscriminatorTaken = true
@@ -50,13 +57,13 @@ fun NameSetupScreen(
         verticalArrangement = Arrangement.Center
     ) {
         // ... (Header)
-        androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(id = com.example.synoptrack.R.drawable.social_hashtag),
+        Image(
+            painter = painterResource(id = R.drawable.social_hashtag),
             contentDescription = null,
             modifier = Modifier
                 .height(180.dp)
                 .fillMaxWidth(),
-            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+            contentScale = ContentScale.Fit
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -68,43 +75,38 @@ fun NameSetupScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        OutlinedTextField(
+        SynopTrackTextField(
             value = username,
             onValueChange = { 
                 username = it 
                 if (it.any { char -> !char.isLetterOrDigit() && char != '_' }) {
                     errorMessage = "Only letters, numbers and _ allowed"
                 } else if (username.length < 3) {
-                     // Keep error null until logic checks len >= 3, or maybe show hints? 
-                     // Usually we don't show error while typing unless invalid char.
                      errorMessage = null
                 } else {
                     errorMessage = null
                 }
             },
-            label = { Text("User Name") },
-            isError = errorMessage != null, 
+            label = "User Name",
+            error = if (username.isNotEmpty() && username.any { char -> !char.isLetterOrDigit() && char != '_' }) errorMessage else null,
+            isSuccess = isValid,
             modifier = Modifier.fillMaxWidth()
         )
         
         Spacer(modifier = Modifier.height(16.dp))
         
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
+            SynopTrackTextField(
                 value = discriminator,
                 onValueChange = { if (it.length <= 4) discriminator = it },
-                label = { Text("Tagline") },
+                label = "Tag",
                 modifier = Modifier.width(140.dp),
-                prefix = { Text("#") },
-                isError = isDiscriminatorTaken,
-                colors = OutlinedTextFieldDefaults.colors(
-                    errorBorderColor = MaterialTheme.colorScheme.error,
-                    errorLabelColor = MaterialTheme.colorScheme.error
-                )
+                leadingIcon = { Text("#", modifier = Modifier.padding(start = 12.dp)) },
+                error = if (isDiscriminatorTaken) "Taken" else null
             )
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(onClick = { discriminator = IdentityUtils.generateDiscriminator() }) {
-                Text("↻") // Randomize button
+                Text("↻", style = MaterialTheme.typography.headlineSmall) 
             }
         }
         
@@ -115,23 +117,17 @@ fun NameSetupScreen(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 8.dp)
             )
-        } else if (errorMessage != null) {
-              Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
         }
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        Button(
+        SynopTrackButton(
+            text = "Next",
             onClick = { onSetupComplete(username, discriminator) },
             enabled = isValid,
+            isLoading = isChecking,
             modifier = Modifier.fillMaxWidth()
-        ) {
-            if (isChecking) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            } else {
-                Text("Next")
-            }
-        }
+        )
     }
 }
 

@@ -3,6 +3,8 @@ package com.example.synoptrack.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.synoptrack.auth.domain.repository.AuthRepository
+import com.example.synoptrack.core.presentation.model.ToastVariant
+import com.example.synoptrack.core.presentation.util.ToastService
 import com.example.synoptrack.profile.domain.repository.ProfileRepository
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.tasks.Task
@@ -15,8 +17,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-
-
 sealed class AuthNavigationEvent {
     object NavigateToNameSetup : AuthNavigationEvent()
     object NavigateToCompleteProfile : AuthNavigationEvent()
@@ -26,7 +26,8 @@ sealed class AuthNavigationEvent {
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val toastService: ToastService
 ) : ViewModel() {
 
     private val _signInState = MutableStateFlow<SignInState>(SignInState.Initial)
@@ -34,8 +35,6 @@ class AuthViewModel @Inject constructor(
 
     private val _navigationEvent = Channel<AuthNavigationEvent>()
     val navigationEvent = _navigationEvent.receiveAsFlow()
-    
-    // Phone Auth Removed
     
     fun handleSignInResult(task: Task<GoogleSignInAccount>) {
         viewModelScope.launch {
@@ -45,23 +44,36 @@ class AuthViewModel @Inject constructor(
                 val idToken = account.idToken
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
                 authRepository.signInWithGoogle(credential)
-                    .onSuccess { checkUserStatus() }
-                    .onFailure { _signInState.value = SignInState.Error(it.message ?: "Sign in failed") }
+                    .onSuccess {
+                        toastService.showToast("Signed in successfully!", ToastVariant.SUCCESS)
+                        checkUserStatus() 
+                    }
+                    .onFailure {
+                        val msg = it.message ?: "Sign in failed"
+                        _signInState.value = SignInState.Error(msg)
+                        toastService.showToast(msg, ToastVariant.ERROR)
+                    }
             } catch (e: Exception) {
-                _signInState.value = SignInState.Error(e.message ?: "Sign in failed")
+                val msg = e.message ?: "Sign in failed"
+                _signInState.value = SignInState.Error(msg)
+                toastService.showToast(msg, ToastVariant.ERROR)
             }
         }
     }
-    
-
-    // Phone Auth Methods Removed
     
     fun signInWithEmail(email: String, pass: String) {
         viewModelScope.launch {
             _signInState.value = SignInState.Loading
             authRepository.signInWithEmail(email, pass)
-                .onSuccess { checkUserStatus() }
-                .onFailure { _signInState.value = SignInState.Error(it.message ?: "Sign in failed") }
+                .onSuccess {
+                    toastService.showToast("Welcome back!", ToastVariant.SUCCESS)
+                    checkUserStatus() 
+                }
+                .onFailure {
+                    val msg = it.message ?: "Sign in failed"
+                    _signInState.value = SignInState.Error(msg)
+                    toastService.showToast(msg, ToastVariant.ERROR)
+                }
         }
     }
 
@@ -69,8 +81,15 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _signInState.value = SignInState.Loading
             authRepository.signUpWithEmail(email, pass)
-                .onSuccess { checkUserStatus() } // Or navigate to profile setup directly
-                .onFailure { _signInState.value = SignInState.Error(it.message ?: "Sign up failed") }
+                .onSuccess { 
+                    toastService.showToast("Account created successfully!", ToastVariant.SUCCESS)
+                    checkUserStatus() 
+                } 
+                .onFailure {
+                    val msg = it.message ?: "Sign up failed"
+                    _signInState.value = SignInState.Error(msg)
+                    toastService.showToast(msg, ToastVariant.ERROR)
+                }
         }
     }
 
@@ -78,8 +97,16 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _signInState.value = SignInState.Loading
             authRepository.resetPassword(email)
-                .onSuccess { _signInState.value = SignInState.MessageSent("Reset link sent to $email") }
-                .onFailure { _signInState.value = SignInState.Error(it.message ?: "Failed to send reset email") }
+                .onSuccess {
+                    val msg = "Reset link sent to $email"
+                    _signInState.value = SignInState.MessageSent(msg)
+                    toastService.showToast(msg, ToastVariant.SUCCESS)
+                }
+                .onFailure {
+                    val msg = it.message ?: "Failed to send reset email"
+                    _signInState.value = SignInState.Error(msg)
+                    toastService.showToast(msg, ToastVariant.ERROR)
+                }
         }
     }
     
@@ -90,14 +117,15 @@ class AuthViewModel @Inject constructor(
             // Check availability one last time
             val isAvailable = profileRepository.checkIdentityAvailability(username, discriminator).getOrDefault(false)
             if (!isAvailable) {
-                 _signInState.value = SignInState.Error("This Username#Hash is already taken. Please choose another hash.")
+                 val msg = "This Username#Hash is already taken. Please choose another hash."
+                 _signInState.value = SignInState.Error(msg)
+                 toastService.showToast(msg, ToastVariant.WARNING)
                  return@launch
             }
             
             val currentUser = authRepository.currentUser
             if (currentUser != null) {
                 val uid = currentUser.uid
-                // We need to fetch current profile or create a default one
                 profileRepository.getUserProfile(uid).collect { profile ->
                     if (profile != null) {
                          val newInviteCode = com.example.synoptrack.core.utils.IdentityUtils.generateInviteCode(username, discriminator)
@@ -108,10 +136,15 @@ class AuthViewModel @Inject constructor(
                          )
                          profileRepository.saveUserProfile(updatedProfile)
                              .onSuccess { 
+                                 toastService.showToast("Identity Saved!", ToastVariant.SUCCESS)
                                  _navigationEvent.send(AuthNavigationEvent.NavigateToCompleteProfile)
                                  _signInState.value = SignInState.Success("Identity Saved")
                              }
-                             .onFailure { _signInState.value = SignInState.Error("Failed to save identity") }
+                             .onFailure {
+                                 val msg = "Failed to save identity"
+                                 _signInState.value = SignInState.Error(msg)
+                                 toastService.showToast(msg, ToastVariant.ERROR)
+                             }
                     }
                 }
             }
@@ -125,14 +158,14 @@ class AuthViewModel @Inject constructor(
     private suspend fun checkUserStatus() {
         val uid = authRepository.currentUser?.uid
         if (uid == null) {
-            _signInState.value = SignInState.Error("User ID null")
+            val msg = "User ID null"
+            _signInState.value = SignInState.Error(msg)
+            toastService.showToast(msg, ToastVariant.ERROR)
             return
         }
         
-        // We use ProfileRepository to get detailed status (username existence)
         profileRepository.getUserProfile(uid).collect { profile ->
              if (profile == null) {
-                 // No profile data at all -> Start with Name Setup
                   _navigationEvent.send(AuthNavigationEvent.NavigateToNameSetup)
              } else {
                  if (profile.username.isEmpty()) {
@@ -151,8 +184,7 @@ class AuthViewModel @Inject constructor(
 sealed class SignInState {
     object Initial : SignInState()
     object Loading : SignInState()
-    // object OtpSent : SignInState()
-    data class MessageSent(val message: String) : SignInState() // For forgot password
+    data class MessageSent(val message: String) : SignInState()
     data class Success(val message: String) : SignInState()
     data class Error(val message: String) : SignInState()
 }

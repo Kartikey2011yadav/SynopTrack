@@ -5,6 +5,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.synoptrack.core.presentation.components.ButtonVariant
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 
 @Composable
 fun JoinGroupDialog(
@@ -20,26 +23,31 @@ fun JoinGroupDialog(
             Column {
                 Text("Enter the 6-character invite code:")
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                SynopTrackTextField(
                     value = inviteCode,
                     onValueChange = { if (it.length <= 6) inviteCode = it.uppercase() },
-                    singleLine = true,
-                    label = { Text("Invite Code") }
+                    label = "Invite Code",
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(
+            SynopTrackButton(
+                text = "Join",
                 onClick = { onJoin(inviteCode) },
-                enabled = inviteCode.length == 6
-            ) {
-                Text("Join")
-            }
+                enabled = inviteCode.length == 6,
+                fullWidth = false,
+                modifier = Modifier.width(100.dp)
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+             SynopTrackButton(
+                text = "Cancel",
+                onClick = onDismiss,
+                variant = ButtonVariant.TEXT,
+                fullWidth = false,
+                modifier = Modifier.width(100.dp)
+            )
         }
     )
 }

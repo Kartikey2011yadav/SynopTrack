@@ -3,14 +3,11 @@ package com.example.synoptrack.auth.presentation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.rounded.Visibility
-import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,19 +16,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.synoptrack.R
+import com.example.synoptrack.core.presentation.components.ButtonVariant
+import com.example.synoptrack.core.presentation.components.SynopTrackButton
+import com.example.synoptrack.core.presentation.components.SynopTrackTextField
 import com.example.synoptrack.core.theme.ElectricBluePrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
     onNavigateToLogin: () -> Unit,
-    // onNavigateToPhone: () -> Unit, // Removed
     onNavigateToGoogle: () -> Unit,
     onNavigateToNameSetup: () -> Unit,
     onNavigateToProfileSetup: () -> Unit,
@@ -92,8 +90,6 @@ fun SignUpScreenContent(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
-    var isConfirmPasswordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -115,7 +111,7 @@ fun SignUpScreenContent(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 24.dp)
-                .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
             // Header Image
@@ -139,81 +135,44 @@ fun SignUpScreenContent(
             Spacer(modifier = Modifier.height(32.dp))
             
             // Email Input
-            Text("Email", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            SynopTrackTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("youremail@gmail.com") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = ElectricBluePrimary,
-                    unfocusedBorderColor = Color.Transparent
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                label = "Email",
+                placeholder = "youremail@gmail.com",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // Password Input
-            Text("Password", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            SynopTrackTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("********") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = ElectricBluePrimary,
-                    unfocusedBorderColor = Color.Transparent
-                ),
+                label = "Password",
+                placeholder = "********",
+                secure = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val image = if (isPasswordVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff
-                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                        Icon(imageVector = image, contentDescription = null, tint = Color.Gray)
-                    }
-                }
+                modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
              // Confirm Password Input
-            Text("Confirm Password", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+            val isPasswordMatch = password.isNotEmpty() && confirmPassword.isNotEmpty() && password == confirmPassword
+            val confirmPasswordError = if (confirmPassword.isNotEmpty() && !isPasswordMatch) "Passwords do not match" else null
+
+            SynopTrackTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                placeholder = { Text("********") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = ElectricBluePrimary,
-                    unfocusedBorderColor = Color.Transparent
-                ),
+                label = "Confirm Password",
+                placeholder = "********",
+                secure = true,
+                error = confirmPasswordError,
+                isSuccess = isPasswordMatch,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val image = if (isConfirmPasswordVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff
-                    IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
-                        Icon(imageVector = image, contentDescription = null, tint = Color.Gray)
-                    }
-                }
+                modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -231,24 +190,18 @@ fun SignUpScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Sign Up Button
-            Button(
+            val isLoading = signInState is SignInState.Loading
+            SynopTrackButton(
+                text = "Sign Up",
                 onClick = { 
                     if (password == confirmPassword) {
                         onSignUp(email, password) 
-                    } else {
-                        // Ideally show error toast
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ElectricBluePrimary)
-            ) {
-                if (signInState is SignInState.Loading) {
-                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                     Text("Sign UP", color = Color.Black, fontWeight = FontWeight.Bold)
-                }
-            }
+                enabled = isPasswordMatch, // Only enable if passwords match
+                isLoading = isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -257,23 +210,20 @@ fun SignUpScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Divider(color = Color.DarkGray, modifier = Modifier.weight(1f))
+                HorizontalDivider(color = Color.DarkGray, modifier = Modifier.weight(1f))
                 Text(" OR ", color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
-                Divider(color = Color.DarkGray, modifier = Modifier.weight(1f))
+                HorizontalDivider(color = Color.DarkGray, modifier = Modifier.weight(1f))
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
             // Social Buttons
-            OutlinedButton(
+            SynopTrackButton(
+                text = "Sign in with Google",
                 onClick = onGoogleSignIn,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-            ) {
-                Text("Sign in with Google") 
-            }
+                variant = ButtonVariant.OUTLINED,
+                modifier = Modifier.fillMaxWidth()
+            )
             
             Spacer(modifier = Modifier.height(32.dp))
             
