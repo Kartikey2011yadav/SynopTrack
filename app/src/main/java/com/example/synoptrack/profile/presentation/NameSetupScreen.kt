@@ -49,6 +49,17 @@ fun NameSetupScreen(
         verticalArrangement = Arrangement.Center
     ) {
         // ... (Header)
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(id = com.example.synoptrack.R.drawable.social_hashtag),
+            contentDescription = null,
+            modifier = Modifier
+                .height(180.dp)
+                .fillMaxWidth(),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
         Text(
             text = "Create Your Identity",
             style = MaterialTheme.typography.headlineMedium

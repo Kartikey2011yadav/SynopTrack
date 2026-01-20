@@ -104,11 +104,10 @@ fun PermissionScreen(
             Spacer(modifier = Modifier.height(20.dp))
             
             // Icon
-            Icon(
-                imageVector = Icons.Default.LocationOn, 
-                contentDescription = null, 
-                modifier = Modifier.size(80.dp),
-                tint = ElectricBluePrimary
+            Image(
+                painter = painterResource(id = R.drawable.permissions_header),
+                contentDescription = null,
+                modifier = Modifier.size(200.dp) // Adjusted size for illustration
             )
             
             Spacer(modifier = Modifier.height(16.dp))

@@ -83,14 +83,15 @@ fun SignUpScreen(
             horizontalAlignment = Alignment.Start
         ) {
             // Header Image
-//             Image(
-//                painter = painterResource(id = R.drawable.register),
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(200.dp),
-//                contentScale = ContentScale.Fit
-//            )
+            // Header Image
+             Image(
+                painter = painterResource(id = R.drawable.register),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                contentScale = ContentScale.Fit
+            )
             
             Spacer(modifier = Modifier.height(12.dp))
             

@@ -157,8 +157,16 @@ fun SocialScreen(
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
                          Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                             Text("No friends or groups yet.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-                             Spacer(modifier = Modifier.height(8.dp))
+                             androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(id = com.example.synoptrack.R.drawable.messages),
+                                contentDescription = "No Messages",
+                                modifier = Modifier.size(200.dp),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                             )
+                             Spacer(modifier = Modifier.height(16.dp))
+                             Text("No messages yet.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                             Text("Add friends or join groups to start chatting.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                             Spacer(modifier = Modifier.height(16.dp))
                              Button(onClick = { showCreateDialog = true }) {
                                  Text("Create New Group")
                              }

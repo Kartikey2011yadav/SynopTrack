@@ -168,24 +168,24 @@ fun ProfileScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Grid
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(3),
+                    // Grid - Showing Empty State for now as requested
+                    Column(
                         modifier = Modifier.fillMaxWidth().weight(1f),
-                        contentPadding = PaddingValues(1.dp),
-                        horizontalArrangement = Arrangement.spacedBy(1.dp),
-                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        items(15) {
-                            Box(
-                                modifier = Modifier
-                                    .aspectRatio(1f)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // Placeholder content
-                            }
-                        }
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.example.synoptrack.R.drawable.empty_posts),
+                            contentDescription = "No Posts",
+                            modifier = Modifier.size(250.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                           text = "No posts to see here yet.",
+                           style = MaterialTheme.typography.bodyLarge,
+                           color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 } else {
                     // Private Lock Screen

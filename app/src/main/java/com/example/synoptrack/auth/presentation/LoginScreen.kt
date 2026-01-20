@@ -85,14 +85,15 @@ fun LoginScreen(
             horizontalAlignment = Alignment.Start
         ) {
             // Header Image (Optional, if fits design. User said "just in two pages" - Login could be one)
-//             Image(
-//                painter = painterResource(id = R.drawable.credentials),
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(200.dp),
-//                contentScale = ContentScale.Fit
-//            )
+            // Header Image
+             Image(
+                painter = painterResource(id = R.drawable.credentials),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                contentScale = ContentScale.Fit
+            )
 //
             Spacer(modifier = Modifier.height(12.dp))
             
