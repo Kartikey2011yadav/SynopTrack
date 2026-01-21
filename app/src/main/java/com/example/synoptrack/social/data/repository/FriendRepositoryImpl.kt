@@ -79,23 +79,35 @@ class FriendRepositoryImpl @Inject constructor(
 
     override suspend fun acceptFriendRequest(requestId: String): Result<Boolean> {
         return try {
+            android.util.Log.d("FriendRepo_Debug", "acceptFriendRequest: Processing ID=$requestId")
+
+            // 1. Diagnostic Read
             val requestSnap = requestsCollection.document(requestId).get().await()
-            val request = requestSnap.toObject(FriendRequest::class.java) 
-                ?: return Result.failure(Exception("Request not found"))
+            if (!requestSnap.exists()) {
+                 android.util.Log.e("FriendRepo_Debug", "CRITICAL: Request document $requestId NOT FOUND.")
+                 return Result.failure(Exception("Request not found"))
+            }
+
+            val request = requestSnap.toObject(FriendRequest::class.java)
+            android.util.Log.d("FriendRepo_Debug", "Request Found: Status=${request?.status}, Sender=${request?.senderId}, Receiver=${request?.receiverId}")
+            
+            if (request == null) return Result.failure(Exception("Failed to map request"))
 
             firestore.runTransaction { transaction ->
-                // 1. Update Request Status
-                transaction.update(requestsCollection.document(requestId), "status", FriendRequestStatus.ACCEPTED)
+                android.util.Log.d("FriendRepo_Debug", "Transaction Started for $requestId")
 
-                // 2. Add to Friends List & Remove from Requests for BOTH columns
                 val senderRef = usersCollection.document(request.senderId)
                 val receiverRef = usersCollection.document(request.receiverId)
+                val requestRef = requestsCollection.document(requestId)
 
-                // Update Sender: Add Friend, Remove Sent Request, Add Notification (Accepted)
+                // 1. READS (Must be first)
                 val receiverSnap = transaction.get(receiverRef)
+                
+                // 2. LOGIC
                 val receiverProfile = receiverSnap.toObject(UserProfile::class.java)
                 val receiverName = receiverProfile?.username ?: "User"
 
+                // Prepare Notification for Sender
                 val notificationForSender = NotificationEntity(
                     id = UUID.randomUUID().toString(),
                     type = NotificationType.FRIEND_ACCEPTED,
@@ -106,6 +118,28 @@ class FriendRepositoryImpl @Inject constructor(
                     timestamp = Timestamp.now()
                 )
 
+                // Prepare Notification Update for Receiver
+                val notifications = receiverProfile?.notifications?.toMutableList() ?: mutableListOf()
+                val targetNotifIndex = notifications.indexOfFirst { 
+                    it.type == NotificationType.FRIEND_REQUEST && it.senderId == request.senderId 
+                }
+                
+                if (targetNotifIndex != -1) {
+                    val oldNotif = notifications[targetNotifIndex]
+                    val newNotif = oldNotif.copy(
+                        status = com.example.synoptrack.profile.domain.model.NotificationStatus.ACCEPTED, 
+                        isRead = true
+                    )
+                    notifications[targetNotifIndex] = newNotif
+                } else {
+                     android.util.Log.w("FriendRepo_Debug", "Original notification not found in receiver's list.")
+                }
+
+                // 3. WRITES (Must be last)
+                // Update Request Status
+                transaction.update(requestRef, "status", FriendRequestStatus.ACCEPTED)
+
+                // Update Sender
                 transaction.update(senderRef, 
                     mapOf(
                         "friends" to FieldValue.arrayUnion(request.receiverId),
@@ -114,27 +148,20 @@ class FriendRepositoryImpl @Inject constructor(
                     )
                 )
 
-                // Update Receiver: Add Friend, Remove Received Request, UPDATE Notification Status
-                // To update array item: Read list, modify item, write back.
-                val notifications = receiverProfile?.notifications?.toMutableList() ?: mutableListOf()
-                val targetNotifIndex = notifications.indexOfFirst { it.type == NotificationType.FRIEND_REQUEST && it.senderId == request.senderId }
-                
-                if (targetNotifIndex != -1) {
-                    val oldNotif = notifications[targetNotifIndex]
-                    val newNotif = oldNotif.copy(status = com.example.synoptrack.profile.domain.model.NotificationStatus.ACCEPTED, isRead = true)
-                    notifications[targetNotifIndex] = newNotif
-                }
-
+                // Update Receiver
                 transaction.update(receiverRef,
                     mapOf(
                         "friends" to FieldValue.arrayUnion(request.senderId),
                         "receivedRequests" to FieldValue.arrayRemove(request.senderId),
-                        "notifications" to notifications // Overwrite full list
+                        "notifications" to notifications
                     )
                 )
             }.await()
+            
+            android.util.Log.d("FriendRepo_Debug", "Transaction Success for $requestId")
             Result.success(true)
         } catch (e: Exception) {
+            android.util.Log.e("FriendRepo_Debug", "acceptFriendRequest FAILED", e)
             Result.failure(e)
         }
     }
@@ -178,18 +205,50 @@ class FriendRepositoryImpl @Inject constructor(
 
     override suspend fun acceptFriendRequestByUserId(currentUserId: String, senderUserId: String): Result<Boolean> {
         return try {
-            val query = requestsCollection
+            android.util.Log.d("FriendRepo_Debug", "Attempting to accept request: Sender=$senderUserId, Receiver=$currentUserId")
+            
+            // 1. Diagnostic Search: Find ANY request between these two
+            val debugQuery = requestsCollection
                 .whereEqualTo("senderId", senderUserId)
                 .whereEqualTo("receiverId", currentUserId)
-                .whereEqualTo("status", FriendRequestStatus.PENDING.name)
                 .get()
                 .await()
+                
+            android.util.Log.d("FriendRepo_Debug", "Diagnostic Query Found: ${debugQuery.size()} documents")
             
-            if (query.isEmpty) return Result.failure(Exception("No pending request found"))
+            if (debugQuery.isEmpty) {
+                 android.util.Log.e("FriendRepo_Debug", "CRITICAL: No request document exists between these users.")
+                 return Result.failure(Exception("No request found"))
+            }
+
+            var requestIdToAccept: String? = null
             
-            val requestId = query.documents[0].id
-            acceptFriendRequest(requestId)
+            for (doc in debugQuery.documents) {
+                val status = doc.get("status")
+                android.util.Log.d("FriendRepo_Debug", "Doc ID: ${doc.id}, Status: $status (Type: ${status?.javaClass?.simpleName})")
+                
+                // Flexible check for Pending
+                val isPending = when (status) {
+                    is String -> status == FriendRequestStatus.PENDING.name
+                    is com.example.synoptrack.social.domain.model.FriendRequestStatus -> status == FriendRequestStatus.PENDING
+                    else -> status.toString() == "PENDING"
+                }
+                
+                if (isPending) {
+                    requestIdToAccept = doc.id
+                    break
+                }
+            }
+            
+            if (requestIdToAccept != null) {
+                android.util.Log.d("FriendRepo_Debug", "Found valid PENDING request: $requestIdToAccept. Proceeding to accept.")
+                acceptFriendRequest(requestIdToAccept)
+            } else {
+                android.util.Log.e("FriendRepo_Debug", "Requests exist but none are PENDING.")
+                Result.failure(Exception("No PENDING request found"))
+            }
         } catch (e: Exception) {
+            android.util.Log.e("FriendRepo_Debug", "Exception in acceptFriendRequestByUserId", e)
             Result.failure(e)
         }
     }

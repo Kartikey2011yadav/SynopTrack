@@ -50,13 +50,15 @@ class NotificationViewModel @Inject constructor(
 
     fun acceptRequest(notification: NotificationEntity) {
         if (notification.type == NotificationType.FRIEND_REQUEST && notification.actionData != null) {
+            android.util.Log.d("NotifVM", "UI Action: Accept Notification ${notification.id} (ReqID: ${notification.actionData})")
             viewModelScope.launch {
                 friendRepository.acceptFriendRequest(notification.actionData)
                     .onSuccess {
                         // Optimistically update or wait for Flow
+                        android.util.Log.d("NotifVM", "Accept success")
                     }
-                    .onFailure {
-                        // Error handling
+                    .onFailure { e ->
+                        android.util.Log.e("NotifVM", "Accept failed", e)
                     }
             }
         }

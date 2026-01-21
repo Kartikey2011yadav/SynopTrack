@@ -45,8 +45,15 @@ class ChatRepositoryImpl @Inject constructor(
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(50)
 
-        query.addSnapshotListener { snapshot, _ ->
+        android.util.Log.d("ChatRepo_Debug", "Starting syncMessages for group: $groupId")
+
+        query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                 android.util.Log.e("ChatRepo_Debug", "syncMessages Listen failed", error)
+                 return@addSnapshotListener
+            }
             if (snapshot != null) {
+                android.util.Log.d("ChatRepo_Debug", "syncMessages: Received ${snapshot.size()} messages. (Empty? ${snapshot.isEmpty})")
                 val messages = snapshot.toObjects(Message::class.java)
                 val entities = messages.map { msg ->
                     com.example.synoptrack.core.database.entity.ChatMessageEntity(
@@ -61,6 +68,7 @@ class ChatRepositoryImpl @Inject constructor(
                 }
                 repositoryScope.launch {
                     chatDao.insertMessages(entities)
+                    android.util.Log.d("ChatRepo_Debug", "Inserted ${entities.size} messages into DAO")
                 }
             }
         }
@@ -187,16 +195,26 @@ class ChatRepositoryImpl @Inject constructor(
         val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
         // Deterministic ID: sort uids
         val uids = listOf(currentUserId, targetUserId).sorted()
-        return "${uids[0]}_${uids[1]}"
+        val id = "${uids[0]}_${uids[1]}"
+        android.util.Log.d("ChatRepo_Debug", "getConversationId: Generated $id (Me: $currentUserId, Target: $targetUserId)")
+        return id
     }
 
     override fun getConversation(conversationId: String): Flow<com.example.synoptrack.social.data.model.ConversationEntity?> {
         return callbackFlow {
+            android.util.Log.d("ChatRepo_Debug", "Listening to conversation: $conversationId")
             val docRef = firestore.collection("conversations").document(conversationId)
-            val registration = docRef.addSnapshotListener { snapshot, _ ->
+            val registration = docRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                     android.util.Log.e("ChatRepo_Debug", "Listen failed for conversation: $conversationId", error)
+                     close(error)
+                     return@addSnapshotListener
+                }
                 if (snapshot != null && snapshot.exists()) {
+                    android.util.Log.d("ChatRepo_Debug", "Conversation update: ${snapshot.id} (Metadata: ${snapshot.metadata.isFromCache})")
                     trySend(snapshot.toObject(com.example.synoptrack.social.data.model.ConversationEntity::class.java))
                 } else {
+                    android.util.Log.w("ChatRepo_Debug", "Conversation document does not exist: $conversationId")
                     trySend(null)
                 }
             }

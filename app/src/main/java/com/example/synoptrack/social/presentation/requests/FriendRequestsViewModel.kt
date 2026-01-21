@@ -38,9 +38,11 @@ class FriendRequestsViewModel @Inject constructor(
     }
 
     fun acceptRequest(requestId: String) {
+        android.util.Log.d("RequestsVM", "UI Action: Accept Request $requestId")
         viewModelScope.launch {
             _isLoading.value = true
             friendRepository.acceptFriendRequest(requestId)
+                .onFailure { e -> android.util.Log.e("RequestsVM", "Accept failed", e) }
             _isLoading.value = false
         }
     }

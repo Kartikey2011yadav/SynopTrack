@@ -35,6 +35,12 @@ class ChatViewModel @Inject constructor(
 
     val currentUser = authRepository.currentUser
 
+    private val _chatTitle = MutableStateFlow("Loading...")
+    val chatTitle: StateFlow<String> = _chatTitle.asStateFlow()
+
+    private val _chatAvatar = MutableStateFlow("")
+    val chatAvatar: StateFlow<String> = _chatAvatar.asStateFlow()
+
     init {
         if (groupId.isNotEmpty()) {
             loadData()
@@ -86,14 +92,19 @@ class ChatViewModel @Inject constructor(
                 // So `messages[0]` should be Newest.
                 // So I definitely should NOT use `asReversed` if Repo is Descending.
                 // I'll trust my analysis and remove `asReversed`.
-                _messages.value = msgs
             }
         }
         
-        // 2. Observe Conversation (for SeenBy)
+        // 2. Observe Conversation (for SeenBy and Title/Avatar)
         viewModelScope.launch {
             chatRepository.getConversation(groupId).collectLatest { conversation ->
                 conversation?.let {
+                    // Title & Avatar Logic
+                    val otherUid = it.participants.find { uid -> uid != currentUser?.uid }
+                    val data = it.participantData[otherUid]
+                    _chatTitle.value = data?.displayName ?: "Chat"
+                    _chatAvatar.value = data?.avatarUrl ?: ""
+
                     // Map SeenBy UIDs to Avatar URLs (excluding current user)
                     val otherSeenParticipants = it.seenBy.filter { uid -> uid != currentUser?.uid }
                     val avatars = otherSeenParticipants.mapNotNull { uid ->

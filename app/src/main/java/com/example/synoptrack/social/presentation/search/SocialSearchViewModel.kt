@@ -163,6 +163,7 @@ class SocialSearchViewModel @Inject constructor(
 
     fun acceptFriendRequest(targetUserId: String) {
         val currentUid = authRepository.currentUser?.uid ?: return
+        android.util.Log.e("SocialSearchVM", "UI Action: Accept Request for $targetUserId")
 
         // Optimistic Update
         val currentMap = _relationshipStatus.value.toMutableMap()
@@ -171,7 +172,8 @@ class SocialSearchViewModel @Inject constructor(
 
         viewModelScope.launch {
             friendRepository.acceptFriendRequestByUserId(currentUid, targetUserId)
-                .onFailure {
+                .onFailure { e ->
+                     android.util.Log.e("SocialSearchVM", "Accept failed", e)
                      // Revert
                      val revertMap = _relationshipStatus.value.toMutableMap()
                      revertMap[targetUserId] = RelationshipStatus.RECEIVED_REQUEST

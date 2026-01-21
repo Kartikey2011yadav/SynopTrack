@@ -57,6 +57,9 @@ import com.example.synoptrack.social.domain.model.Message
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
@@ -66,12 +69,16 @@ fun ChatScreen(
     val messages by viewModel.messages.collectAsState()
     val messageText by viewModel.messageText.collectAsState()
     val seenAvatars by viewModel.seenBy.collectAsState()
+    val chatTitle by viewModel.chatTitle.collectAsState()
+    val chatAvatar by viewModel.chatAvatar.collectAsState()
     val currentUser = viewModel.currentUser
 
     ChatScreenContent(
         messages = messages,
         messageText = messageText,
         seenAvatars = seenAvatars,
+        chatTitle = chatTitle,
+        chatAvatar = chatAvatar,
         currentUserId = currentUser?.uid,
         onBack = { navController.popBackStack() },
         onMessageChange = { viewModel.onMessageChange(it) },
@@ -79,14 +86,14 @@ fun ChatScreen(
     )
 }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreenContent(
     messages: List<Message>,
     messageText: String,
     seenAvatars: List<String>,
+    chatTitle: String,
+    chatAvatar: String,
     currentUserId: String?,
     onBack: () -> Unit,
     onMessageChange: (String) -> Unit,
@@ -117,12 +124,15 @@ fun ChatScreenContent(
                             .clip(CircleShape)
                             .background(Color.Gray)
                     ) {
-                         // Placeholder Avatar - Ideally pass user name/avatarUrl to ChatScreenContent
-                         // Ensure I pass this later or use generic for now
-                         Text("BS", modifier = Modifier.align(Alignment.Center), color = Color.White)
+                         AsyncImage(
+                             model = chatAvatar.ifEmpty { "https://ui-avatars.com/api/?name=$chatTitle" },
+                             contentDescription = null,
+                             modifier = Modifier.fillMaxSize(),
+                             contentScale = ContentScale.Crop
+                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Brooklyn Simmons", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(chatTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             },
             navigationIcon = {
@@ -396,6 +406,8 @@ fun ChatScreenPreview() {
         messages = mockMessages,
         messageText = "",
         seenAvatars = emptyList(),
+        chatTitle = "Brooklyn Simmons",
+        chatAvatar = "",
         currentUserId = "me",
         onBack = {},
         onMessageChange = {},
