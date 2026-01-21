@@ -33,13 +33,9 @@ fun ChatListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Messages", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Chats",
+                onBack = onBack
             )
         }
     ) { padding ->

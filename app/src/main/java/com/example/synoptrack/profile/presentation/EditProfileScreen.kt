@@ -19,7 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -83,13 +83,9 @@ fun EditProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Edit Profile") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            SynopTrackTopBar(
+                title = "Edit Profile",
+                onBack = onBackClick,
                 actions = {
                     IconButton(onClick = {
                         if (isValid) {

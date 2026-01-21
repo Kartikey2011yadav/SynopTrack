@@ -95,14 +95,9 @@ fun SignUpScreenContent(
     Scaffold(
         containerColor = Color.Black,
         topBar = {
-             CenterAlignedTopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Create Account",
+                onBack = onBack
             )
         }
     ) { padding ->

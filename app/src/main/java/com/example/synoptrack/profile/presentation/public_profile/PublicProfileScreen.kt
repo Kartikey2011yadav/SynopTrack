@@ -42,13 +42,9 @@ fun PublicProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(uiState.user?.username ?: "Profile") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            SynopTrackTopBar(
+                title = uiState.user?.username ?: "Profile",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = { /* Report/Block */ }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Options")

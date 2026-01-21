@@ -35,8 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+// Imports removed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -115,8 +114,8 @@ fun ChatScreenContent(
             .background(MaterialTheme.colorScheme.background)
     ) {
         // Top Bar
-        TopAppBar(
-            title = {
+        com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+            titleContent = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // Avatar
                      Box(
@@ -136,18 +135,14 @@ fun ChatScreenContent(
                     Text(chatTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Filled.ArrowBackIosNew, contentDescription = "Back")
-                }
-            },
+            onBack = onBack,
             actions = {
                 // Theme Picker
                 IconButton(onClick = { showThemePicker = !showThemePicker }) {
-                    Icon(Icons.Outlined.Palette, contentDescription = "Theme")
+                    Icon(Icons.Outlined.Palette, contentDescription = "Theme", tint = MaterialTheme.colorScheme.onBackground)
                 }
                 
-                // Theme Dropdown/Grid (simplified as Dropdown for now)
+                // Theme Dropdown/Grid
                 DropdownMenu(
                     expanded = showThemePicker,
                     onDismissRequest = { showThemePicker = false },
@@ -177,7 +172,7 @@ fun ChatScreenContent(
 
                 // More Menu
                 IconButton(onClick = { showMenu = !showMenu }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onBackground)
                 }
                 DropdownMenu(
                     expanded = showMenu,
@@ -205,11 +200,7 @@ fun ChatScreenContent(
                         leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = Color.Red) }
                     )
                 }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background,
-                titleContentColor = MaterialTheme.colorScheme.onBackground
-            )
+            }
         )
 
         // Messages List

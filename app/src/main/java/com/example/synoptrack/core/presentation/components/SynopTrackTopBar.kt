@@ -29,6 +29,30 @@ fun SynopTrackTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
+    SynopTrackTopBar(
+        titleContent = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1
+            )
+        },
+        modifier = modifier,
+        onBack = onBack,
+        actions = actions
+    )
+}
+
+@Composable
+fun SynopTrackTopBar(
+    titleContent: @Composable RowScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxWidth()
@@ -37,10 +61,10 @@ fun SynopTrackTopBar(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp), // Matched HomeTopBar padding but slightly more horizontal space for back button
+                .padding(horizontal = 8.dp, vertical = 4.dp), 
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Back Button or Spacer if none
+            // Left: Back Button
             if (onBack != null) {
                 IconButton(onClick = onBack) {
                     Icon(
@@ -49,25 +73,17 @@ fun SynopTrackTopBar(
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
-            } else {
-                 // If no back button, we might want to ensure title has padding if we want it strictly centered or left aligned consistent with HomeTopBar which has "Add" on left.
-                 // HomeTopBar has SpaceBetween.
-                 // Let's use specific logic: if onBack is null, maybe just a spacer of 48.dp? 
-                 // Or if it's the main root screens, they might use this bar too eventually?
-                 // For now, secondary screens ALL have onBack.
             }
 
-            // Center: Title (Weight 1f to push actions to right)
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
+            // Center: Title Content
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp)
-            )
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                titleContent()
+            }
 
             // Right: Actions
             Row(

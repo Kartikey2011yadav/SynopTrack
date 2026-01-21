@@ -75,10 +75,9 @@ fun ProfileSetupScreenContent(
     Scaffold(
         containerColor = Color.Black,
         topBar = {
-             CenterAlignedTopAppBar(
-                 title = { Text("Complete Profile", color = Color.White) },
-                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
-             )
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Setup Profile"
+            )
         }
     ) { padding ->
         Column(

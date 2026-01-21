@@ -123,11 +123,15 @@ fun SocialSearchScreenContent(
 
      Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Add a Friend") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Add friend",
+                onBack = onBack,
+                actions = {
+                    IconButton(onClick = onShowQr) {
+                        Icon(Icons.Default.QrCode, contentDescription = "My QR Code", tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                    IconButton(onClick = onScanQr) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 }
             )

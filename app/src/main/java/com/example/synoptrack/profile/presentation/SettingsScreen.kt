@@ -70,13 +70,9 @@ fun SettingsScreenContent(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBackIosNew, contentDescription = "Back")
-                    }
-                }
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Settings",
+                onBack = onBackClick
             )
         }
     ) { padding ->

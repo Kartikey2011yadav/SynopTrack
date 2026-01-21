@@ -98,14 +98,9 @@ fun LoginScreenContent(
     Scaffold(
         containerColor = Color.Black,
         topBar = {
-             CenterAlignedTopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
+            SynopTrackTopBar(
+                title = "Sign In",
+                onBack = onBack
             )
         }
     ) { padding ->

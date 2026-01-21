@@ -39,15 +39,10 @@ fun ForgotPasswordScreen(
     Scaffold(
         containerColor = Color.Black,
         topBar = {
-             CenterAlignedTopAppBar(
-                 title = { Text("Reset Password", color = Color.White) },
-                 navigationIcon = {
-                     IconButton(onClick = onBack) {
-                         Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
-                     }
-                 },
-                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Black)
-             )
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "Reset Password",
+                onBack = onBack
+            )
         }
     ) { padding ->
         Column(

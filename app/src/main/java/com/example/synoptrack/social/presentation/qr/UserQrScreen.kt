@@ -28,13 +28,9 @@ fun UserQrScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("My QR Code") },
-                navigationIcon = {
-                     IconButton(onClick = onBack) {
-                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                     }
-                }
+            com.example.synoptrack.core.presentation.components.SynopTrackTopBar(
+                title = "My QR Code",
+                onBack = onBack
             )
         }
     ) { padding ->
