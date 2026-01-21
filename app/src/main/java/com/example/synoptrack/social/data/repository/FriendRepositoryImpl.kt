@@ -96,7 +96,7 @@ class FriendRepositoryImpl @Inject constructor(
                 val receiverProfile = receiverSnap.toObject(UserProfile::class.java)
                 val receiverName = receiverProfile?.username ?: "User"
 
-                val notification = NotificationEntity(
+                val notificationForSender = NotificationEntity(
                     id = UUID.randomUUID().toString(),
                     type = NotificationType.FRIEND_ACCEPTED,
                     senderId = request.receiverId,
@@ -110,16 +110,26 @@ class FriendRepositoryImpl @Inject constructor(
                     mapOf(
                         "friends" to FieldValue.arrayUnion(request.receiverId),
                         "sentRequests" to FieldValue.arrayRemove(request.receiverId),
-                        "notifications" to FieldValue.arrayUnion(notification)
+                        "notifications" to FieldValue.arrayUnion(notificationForSender)
                     )
                 )
 
-                // Update Receiver: Add Friend, Remove Received Request
+                // Update Receiver: Add Friend, Remove Received Request, UPDATE Notification Status
+                // To update array item: Read list, modify item, write back.
+                val notifications = receiverProfile?.notifications?.toMutableList() ?: mutableListOf()
+                val targetNotifIndex = notifications.indexOfFirst { it.type == NotificationType.FRIEND_REQUEST && it.senderId == request.senderId }
+                
+                if (targetNotifIndex != -1) {
+                    val oldNotif = notifications[targetNotifIndex]
+                    val newNotif = oldNotif.copy(status = com.example.synoptrack.profile.domain.model.NotificationStatus.ACCEPTED, isRead = true)
+                    notifications[targetNotifIndex] = newNotif
+                }
+
                 transaction.update(receiverRef,
                     mapOf(
                         "friends" to FieldValue.arrayUnion(request.senderId),
-                        "receivedRequests" to FieldValue.arrayRemove(request.senderId)
-                        // Notification for receiver is redundant as they clicked accept
+                        "receivedRequests" to FieldValue.arrayRemove(request.senderId),
+                        "notifications" to notifications // Overwrite full list
                     )
                 )
             }.await()
@@ -136,7 +146,28 @@ class FriendRepositoryImpl @Inject constructor(
             
             firestore.runTransaction { transaction ->
                 transaction.update(requestsCollection.document(requestId), "status", FriendRequestStatus.REJECTED)
-                transaction.update(usersCollection.document(request.receiverId), "receivedRequests", FieldValue.arrayRemove(request.senderId))
+                
+                // Update Receiver: Remove Request, Update Notification
+                val receiverRef = usersCollection.document(request.receiverId)
+                val receiverSnap = transaction.get(receiverRef)
+                val receiverProfile = receiverSnap.toObject(UserProfile::class.java)
+                
+                val notifications = receiverProfile?.notifications?.toMutableList() ?: mutableListOf()
+                val targetNotifIndex = notifications.indexOfFirst { it.type == NotificationType.FRIEND_REQUEST && it.senderId == request.senderId }
+                
+                if (targetNotifIndex != -1) {
+                    val oldNotif = notifications[targetNotifIndex]
+                    val newNotif = oldNotif.copy(status = com.example.synoptrack.profile.domain.model.NotificationStatus.REJECTED, isRead = true)
+                    notifications[targetNotifIndex] = newNotif
+                }
+
+                transaction.update(receiverRef, 
+                    mapOf(
+                        "receivedRequests" to FieldValue.arrayRemove(request.senderId),
+                        "notifications" to notifications
+                    )
+                )
+
                 transaction.update(usersCollection.document(request.senderId), "sentRequests", FieldValue.arrayRemove(request.receiverId))
             }.await()
             Result.success(true)

@@ -155,19 +155,29 @@ fun NotificationItem(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(4.dp))
+                // Change message based on status if needed, or kept generic.
+                // User requirement: "you received friend request from A and you rejected it"
+                val displayMessage = if (notification.type == NotificationType.FRIEND_REQUEST) {
+                    when (notification.status) {
+                        com.example.synoptrack.profile.domain.model.NotificationStatus.ACCEPTED -> "sent you a friend request and you accepted it."
+                        com.example.synoptrack.profile.domain.model.NotificationStatus.REJECTED -> "sent you a friend request and you rejected it."
+                        else -> notification.message
+                    }
+                } else notification.message
+
                 Text(
-                    text = notification.message,
+                    text = displayMessage,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2
                 )
              }
              
              // Time
-             val timeAgo = DateUtils.getRelativeTimeSpanString(notification.timestamp.toDate().time)
+             val timeAgo = android.text.format.DateUtils.getRelativeTimeSpanString(notification.timestamp.toDate().time)
              Text(text = timeAgo.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
              
              // Action Buttons for Friend Requests
-             if (notification.type == NotificationType.FRIEND_REQUEST) {
+             if (notification.type == NotificationType.FRIEND_REQUEST && notification.status == com.example.synoptrack.profile.domain.model.NotificationStatus.PENDING) {
                  Spacer(modifier = Modifier.height(8.dp))
                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                      SynopTrackButton(

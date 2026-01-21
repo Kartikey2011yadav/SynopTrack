@@ -1,16 +1,19 @@
 package com.example.synoptrack.social.presentation.search
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Timer
@@ -19,7 +22,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -284,84 +290,162 @@ fun UserProfileDialog(
     onCancelRequest: () -> Unit,
     onViewProfile: () -> Unit
 ) {
-    AlertDialog(
+    androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
-        title = null,
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth().clickable(onClick = onViewProfile), // Make entire dialog content clickable to view profile
-                horizontalAlignment = Alignment.CenterHorizontally
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {
+                    // Prevent dismissal when clicking outside content if handled by Dialog, 
+                    // but usually Dialog handles outside clicks. 
+                    // This click listener might be redundant but safely ignores clicks on the transparent box area if strict.
+                },
+            contentAlignment = Alignment.TopCenter
+        ) {
+            // 2. Main Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 50.dp) // Space for half-avatar
+                    .clickable(onClick = onViewProfile),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                AsyncImage(
-                    model = user.avatarUrl.ifEmpty { "https://ui-avatars.com/api/?name=${user.username}" },
-                    contentDescription = null,
+                Column(
                     modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "${user.username}#${user.discriminator}",
-                    style = MaterialTheme.typography.headlineSmall,
-                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-                
-                // Privacy & Bio Logic
-                val isPrivate = user.isPrivate
-                val canSeeDetails = !isPrivate || relationshipStatus == RelationshipStatus.FRIEND || relationshipStatus == RelationshipStatus.SELF
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                if (canSeeDetails) {
+                        .fillMaxWidth()
+                        .padding(top = 60.dp, bottom = 24.dp, start = 24.dp, end = 24.dp), // Top padding pushes content below avatar
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Name and Handle
+                    Text(
+                        text = user.displayName.ifEmpty { user.username },
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Text(
+                        text = "@${user.username}#${user.discriminator}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    // Bio
                     if (user.bio.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = user.bio,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 4,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
-                } else {
-                     Row(verticalAlignment = Alignment.CenterVertically) {
-                         Icon(Icons.Default.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
-                         Spacer(modifier = Modifier.width(4.dp))
-                         Text("Private Account", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                     }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Highlights / Stories Placeholder Removed as per request
 
-                // Action Button
-                 if (relationshipStatus != RelationshipStatus.SELF) {
-                    SynopTrackButton(
-                        text = when (relationshipStatus) {
-                            RelationshipStatus.FRIEND -> "Message"
-                            RelationshipStatus.SENT_REQUEST -> "Cancel Request"
-                            RelationshipStatus.RECEIVED_REQUEST -> "Accept Request"
-                            else -> "Add Friend"
-                        },
-                        onClick = {
-                             when (relationshipStatus) {
-                                RelationshipStatus.NONE -> onAddFriend()
-                                RelationshipStatus.RECEIVED_REQUEST -> onAcceptRequest()
-                                RelationshipStatus.SENT_REQUEST -> onCancelRequest()
-                                else -> {} // Message not impl
-                            }
-                        },
-                        enabled = relationshipStatus != RelationshipStatus.FRIEND, // Disable msg for now
-                        variant = if (relationshipStatus == RelationshipStatus.FRIEND) ButtonVariant.OUTLINED else ButtonVariant.PRIMARY
-                    )
+                    // Divider or Spacer
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Stats (Hardcoded for now as per image inspiration matching)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        DialogStatItem("0", "Followers")
+                        VerticalDivider(modifier = Modifier.height(24.dp))
+                        DialogStatItem("0", "Following")
+                        VerticalDivider(modifier = Modifier.height(24.dp))
+                        DialogStatItem("0", "Likes")
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Action Buttons (Row)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                         // Message Button (Secondary)
+                         SynopTrackButton(
+                             text = "Message",
+                             onClick = { /* TODO: Navigate to Chat */ },
+                             variant = ButtonVariant.OUTLINED,
+                             modifier = Modifier.weight(1f),
+                             fullWidth = false,
+                             size = com.example.synoptrack.core.presentation.components.ButtonSize.MEDIUM
+                         )
+                        
+                        // Action Button (Primary)
+                        val (actionText, action) = when (relationshipStatus) {
+                            RelationshipStatus.FRIEND -> "Friends" to { } // Maybe unfriend text if clicked? or just static? Image had "Follow"
+                            RelationshipStatus.SENT_REQUEST -> "Cancel" to onCancelRequest
+                            RelationshipStatus.RECEIVED_REQUEST -> "Accept" to onAcceptRequest
+                            RelationshipStatus.NONE -> "Add Friend" to onAddFriend
+                            else -> "" to {}
+                        }
+                        
+                        if (relationshipStatus != RelationshipStatus.SELF) {
+                            SynopTrackButton(
+                                text = actionText,
+                                onClick = action,
+                                modifier = Modifier.weight(1f),
+                                fullWidth = false,
+                                enabled = relationshipStatus != RelationshipStatus.FRIEND, // Disable if already friends, or make it "Unfriend" flow
+                                size = com.example.synoptrack.core.presentation.components.ButtonSize.MEDIUM
+                            )
+                        }
+                    }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+
+            // 1. Avatar (Overlapping)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    // No padding top, sits at 0 of Box, overlapping Card which starts at 50
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape) // White/Surface border for cutout effect
+                    .background(MaterialTheme.colorScheme.surface) // Fallback background
+            ) {
+                 AsyncImage(
+                    model = user.avatarUrl.ifEmpty { "https://ui-avatars.com/api/?name=${user.username}" },
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            
+            // 3. Close Button (Floating Top Right)
+            // Visually "outside" the card. Card starts at top=50dp. Box matches Card width approx.
+            // We want it at TopEnd of the BOX.
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 12.dp, y = 40.dp) // Adjusted to sit on the corner edge
+                    .shadow(4.dp, CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
-    )
+    }
+}
+
+@Composable
+fun DialogStatItem(count: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = count, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+    }
 }
 
 @Composable
@@ -433,4 +517,114 @@ fun UserSearchResultItem(
             }
         }
     }
+}
+
+@Preview(showBackground = true, name = "UserProfileDialog - Not Friends")
+@Composable
+fun UserProfileDialogPreview_NotFriends() {
+    val user = UserProfile(
+        uid = "123",
+        username = "TestUser",
+        discriminator = "1234",
+        bio = "This is a test bio.",
+        isPrivate = false,
+        avatarUrl = ""
+    )
+    UserProfileDialog(
+        user = user,
+        relationshipStatus = RelationshipStatus.NONE,
+        onDismiss = { },
+        onAddFriend = { },
+        onAcceptRequest = { },
+        onCancelRequest = { },
+        onViewProfile = { }
+    )
+}
+
+@Preview(showBackground = true, name = "UserProfileDialog - Sent Request")
+@Composable
+fun UserProfileDialogPreview_SentRequest() {
+    val user = UserProfile(
+        uid = "123",
+        username = "TestUser",
+        discriminator = "1234",
+        bio = "This is a test bio.",
+        isPrivate = false,
+        avatarUrl = ""
+    )
+    UserProfileDialog(
+        user = user,
+        relationshipStatus = RelationshipStatus.SENT_REQUEST,
+        onDismiss = { },
+        onAddFriend = { },
+        onAcceptRequest = { },
+        onCancelRequest = { },
+        onViewProfile = { }
+    )
+}
+
+@Preview(showBackground = true, name = "UserProfileDialog - Received Request")
+@Composable
+fun UserProfileDialogPreview_ReceivedRequest() {
+    val user = UserProfile(
+        uid = "123",
+        username = "TestUser",
+        discriminator = "1234",
+        bio = "This is a test bio.",
+        isPrivate = false,
+        avatarUrl = ""
+    )
+    UserProfileDialog(
+        user = user,
+        relationshipStatus = RelationshipStatus.RECEIVED_REQUEST,
+        onDismiss = { },
+        onAddFriend = { },
+        onAcceptRequest = { },
+        onCancelRequest = { },
+        onViewProfile = { }
+    )
+}
+
+@Preview(showBackground = true, name = "UserProfileDialog - Friends")
+@Composable
+fun UserProfileDialogPreview_Friends() {
+    val user = UserProfile(
+        uid = "123",
+        username = "TestUser",
+        discriminator = "1234",
+        bio = "This is a test bio.",
+        isPrivate = false,
+        avatarUrl = ""
+    )
+    UserProfileDialog(
+        user = user,
+        relationshipStatus = RelationshipStatus.FRIEND,
+        onDismiss = { },
+        onAddFriend = { },
+        onAcceptRequest = { },
+        onCancelRequest = { },
+        onViewProfile = { }
+    )
+}
+
+@Preview(showBackground = true, name = "UserProfileDialog - Private")
+@Composable
+fun UserProfileDialogPreview_Private() {
+    val user = UserProfile(
+        uid = "123",
+        username = "TestUser",
+        discriminator = "1234",
+        bio = "This is a test bio.",
+        isPrivate = true,
+        avatarUrl = ""
+    )
+    UserProfileDialog(
+        user = user,
+        relationshipStatus = RelationshipStatus.NONE,
+        onDismiss = { },
+        onAddFriend = { },
+        onAcceptRequest = { },
+        onCancelRequest = { },
+        onViewProfile = { }
+    )
 }

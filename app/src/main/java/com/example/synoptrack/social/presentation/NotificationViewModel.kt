@@ -62,6 +62,7 @@ class NotificationViewModel @Inject constructor(
         }
     }
 
+
     fun rejectRequest(notification: NotificationEntity) {
         if (notification.type == NotificationType.FRIEND_REQUEST && notification.actionData != null) {
               viewModelScope.launch {

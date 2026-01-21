@@ -9,6 +9,12 @@ enum class NotificationType {
     FOLLOW // If implementing one-way follows later
 }
 
+enum class NotificationStatus {
+    PENDING,
+    ACCEPTED,
+    REJECTED
+}
+
 data class NotificationEntity(
     val id: String = java.util.UUID.randomUUID().toString(),
     val type: NotificationType = NotificationType.GENERIC,
@@ -17,6 +23,7 @@ data class NotificationEntity(
     val senderAvatar: String = "",
     val message: String = "",
     val isRead: Boolean = false,
+    val status: NotificationStatus = NotificationStatus.PENDING,
     val actionData: String? = null, // e.g., target ID or link
     val timestamp: Timestamp = Timestamp.now()
 )
