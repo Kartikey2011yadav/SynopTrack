@@ -22,4 +22,6 @@ interface FriendRepository {
     // Search
     suspend fun searchUsers(nameQuery: String, discriminatorQuery: String = ""): Result<List<UserProfile>>
     suspend fun getUserByInviteCode(code: String): Result<UserProfile?>
+
+    suspend fun markNotificationsAsRead(userId: String): Result<Boolean>
 }

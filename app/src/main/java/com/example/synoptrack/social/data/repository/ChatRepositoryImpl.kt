@@ -89,23 +89,19 @@ class ChatRepositoryImpl @Inject constructor(
             android.util.Log.d("ChatRepo", "Sending message to group: $groupId with ID: ${docRef.id}")
 
             firestore.runTransaction { transaction ->
-                // 1. Write Message
-                transaction.set(docRef, messageWithId)
-                
-                // 2. Get Current Conversation Data for Unread Counts
+                // 1. READ (Must be first)
                 val snapshot = transaction.get(conversationRef)
                 
+                // 2. CHECK & CALCULATION
                 if (!snapshot.exists()) {
                      android.util.Log.e("ChatRepo", "Conversation doc does not exist for ID: $groupId")
-                     // You might want to create it here if missing, but for now just log
                      throw IllegalStateException("Conversation not found")
                 }
 
                 val participants = snapshot.get("participants") as? List<String> ?: emptyList()
                 val currentUnread = snapshot.get("unreadCounts") as? Map<String, Long> ?: emptyMap()
                 
-                // 3. Calculate New Unread Counts
-                // Increment for everyone EXCEPT sender
+                // Calculate New Unread Counts
                 val newUnread = currentUnread.toMutableMap()
                 participants.forEach { uid ->
                     if (uid != message.senderId) {
@@ -116,7 +112,11 @@ class ChatRepositoryImpl @Inject constructor(
                     }
                 }
                 
-                // 4. Update Conversation
+                // 3. WRITES (Must be last)
+                // Write Message
+                transaction.set(docRef, messageWithId)
+
+                // Update Conversation
                 transaction.update(conversationRef, mapOf(
                     "lastMessage" to message.content,
                     "lastMessageSenderId" to message.senderId,

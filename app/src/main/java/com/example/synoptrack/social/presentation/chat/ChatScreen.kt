@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.CameraAlt
@@ -255,7 +256,7 @@ fun ChatScreenContent(
         }
 
         // Input Area
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().paddingFromBaseline(bottom = 42.dp)) {
             // Attachments (Hidden by default, shown on Plus click? Or inline?)
             // Image shows them in a small floating card ABOVE the input bar usually.
             // Let's keep it simple: Expandable Row inside the bar.
@@ -337,7 +338,7 @@ fun ChatScreenContent(
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
-                    Text("SEND", modifier = Modifier.padding(horizontal = 16.dp), fontWeight = FontWeight.Bold)
+                    Icon(Icons.Filled.Send, contentDescription = "Send", tint = Color.White)
                     // Or Icon? Design implies TEXT "SEND" or Icon. 
                     // Let's use clean "SEND" text or Icon. The provided image shows "SEND" text in one variant, or arrow.
                     // I'll stick to Text "SEND" as it's clear.

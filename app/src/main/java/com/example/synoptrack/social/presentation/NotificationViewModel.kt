@@ -32,6 +32,13 @@ class NotificationViewModel @Inject constructor(
 
     private fun loadNotifications() {
         val uid = authRepository.currentUser?.uid ?: return
+        
+        // 1. Mark Read Side Effect
+        viewModelScope.launch {
+            friendRepository.markNotificationsAsRead(uid)
+        }
+
+        // 2. Collect Flow
         viewModelScope.launch {
             friendRepository.getNotifications(uid).collect { list ->
                 _notifications.value = list

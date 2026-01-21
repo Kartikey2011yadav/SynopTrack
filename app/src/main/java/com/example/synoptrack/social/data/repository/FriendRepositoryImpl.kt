@@ -382,4 +382,35 @@ class FriendRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+    override suspend fun markNotificationsAsRead(userId: String): Result<Boolean> {
+        return try {
+            firestore.runTransaction { transaction ->
+                val userRef = usersCollection.document(userId)
+                val snapshot = transaction.get(userRef)
+                val profile = snapshot.toObject(UserProfile::class.java) ?: return@runTransaction
+
+                val notifications = profile.notifications.toMutableList()
+                var hasChanges = false
+
+                for (i in notifications.indices) {
+                    val notif = notifications[i]
+                    // Skip if already read
+                    if (notif.isRead) continue
+                    
+                    // Logic: Use domain rule
+                    if (notif.shouldAutoMarkRead()) {
+                        notifications[i] = notif.copy(isRead = true)
+                        hasChanges = true
+                    }
+                }
+
+                if (hasChanges) {
+                    transaction.update(userRef, "notifications", notifications)
+                }
+            }.await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

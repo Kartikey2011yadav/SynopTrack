@@ -26,4 +26,12 @@ data class NotificationEntity(
     val status: NotificationStatus = NotificationStatus.PENDING,
     val actionData: String? = null, // e.g., target ID or link
     val timestamp: Timestamp = Timestamp.now()
-)
+) {
+    fun shouldAutoMarkRead(): Boolean {
+        return when (type) {
+            NotificationType.FRIEND_REQUEST -> status != NotificationStatus.PENDING
+            // Future: NotificationType.GROUP_INVITE -> status != NotificationStatus.PENDING
+            else -> true
+        }
+    }
+}
