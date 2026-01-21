@@ -4,7 +4,9 @@ import com.example.synoptrack.social.domain.model.Message
 import com.example.synoptrack.social.domain.repository.ChatRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -16,11 +18,11 @@ class ChatRepositoryImpl @Inject constructor(
     private val chatDao: com.example.synoptrack.core.database.dao.ChatMessageDao
 ) : ChatRepository {
 
-    override fun getMessages(groupId: String): Flow<List<Message>> {
-        // 1. Trigger background sync
-        syncMessages(groupId)
+    private val repositoryScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())
 
-        // 2. Return local data immediately
+    override fun getMessages(groupId: String): Flow<List<Message>> {
+        // ... (existing implementation)
+        syncMessages(groupId)
         return chatDao.getMessages(groupId).map { entities ->
             entities.map { entity ->
                 Message(
@@ -35,8 +37,10 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun syncMessages(groupId: String) {
-        val query = firestore.collection("groups").document(groupId)
+        // ... (existing implementation)
+         val query = firestore.collection("conversations").document(groupId)
             .collection("messages")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(50)
@@ -55,28 +59,181 @@ class ChatRepositoryImpl @Inject constructor(
                         type = msg.type
                     )
                 }
-                // IO operation in background
-                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                repositoryScope.launch {
                     chatDao.insertMessages(entities)
                 }
             }
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun sendMessage(groupId: String, message: Message): Result<Unit> {
         return try {
             val docRef = if (message.id.isEmpty()) {
-                firestore.collection("groups").document(groupId).collection("messages").document()
+                firestore.collection("conversations").document(groupId).collection("messages").document()
             } else {
-                firestore.collection("groups").document(groupId).collection("messages").document(message.id)
+                firestore.collection("conversations").document(groupId).collection("messages").document(message.id)
             }
             
             val messageWithId = message.copy(id = docRef.id)
-            docRef.set(messageWithId).await()
+            val conversationRef = firestore.collection("conversations").document(groupId)
             
-            // Optimistic update (optional, but good for UX)
-            // chatDao.insertMessage(entity) // Can be done if we want instant local echo before server confirms
+            android.util.Log.d("ChatRepo", "Sending message to group: $groupId with ID: ${docRef.id}")
+
+            firestore.runTransaction { transaction ->
+                // 1. Write Message
+                transaction.set(docRef, messageWithId)
+                
+                // 2. Get Current Conversation Data for Unread Counts
+                val snapshot = transaction.get(conversationRef)
+                
+                if (!snapshot.exists()) {
+                     android.util.Log.e("ChatRepo", "Conversation doc does not exist for ID: $groupId")
+                     // You might want to create it here if missing, but for now just log
+                     throw IllegalStateException("Conversation not found")
+                }
+
+                val participants = snapshot.get("participants") as? List<String> ?: emptyList()
+                val currentUnread = snapshot.get("unreadCounts") as? Map<String, Long> ?: emptyMap()
+                
+                // 3. Calculate New Unread Counts
+                // Increment for everyone EXCEPT sender
+                val newUnread = currentUnread.toMutableMap()
+                participants.forEach { uid ->
+                    if (uid != message.senderId) {
+                        val count = newUnread[uid] ?: 0L
+                        newUnread[uid] = count + 1
+                    } else {
+                         newUnread[uid] = 0L // Sender has seen it
+                    }
+                }
+                
+                // 4. Update Conversation
+                transaction.update(conversationRef, mapOf(
+                    "lastMessage" to message.content,
+                    "lastMessageSenderId" to message.senderId,
+                    "lastMessageTimestamp" to com.google.firebase.Timestamp.now(),
+                    "unreadCounts" to newUnread,
+                    "seenBy" to listOf(message.senderId) // Only sender has seen it initially
+                ))
+            }.await()
             
+            android.util.Log.d("ChatRepo", "Message sent successfully")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("ChatRepo", "Error sending message", e)
+            Result.failure(e)
+        }
+    }
+
+    override fun getConversations(userId: String): Flow<List<com.example.synoptrack.social.data.model.ConversationEntity>> {
+        return kotlinx.coroutines.flow.callbackFlow {
+            val query = firestore.collection("conversations")
+                .whereArrayContains("participants", userId)
+                .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
+
+            val registration = query.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val conversations = snapshot.toObjects(com.example.synoptrack.social.data.model.ConversationEntity::class.java)
+                    trySend(conversations)
+                }
+            }
+            awaitClose { registration.remove() }
+        }
+    }
+
+    override suspend fun startConversation(targetUserId: String): Result<String> {
+         return try {
+             val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return Result.failure(Exception("No user"))
+             val chatId = getConversationId(targetUserId) // Helper to get ID
+             
+             val docRef = firestore.collection("conversations").document(chatId)
+             val snapshot = docRef.get().await()
+             
+             if (!snapshot.exists()) {
+                 // Fetch user data for "participantData"
+                 val userRef = firestore.collection("users").document(currentUserId)
+                 val targetRef = firestore.collection("users").document(targetUserId)
+                 
+                 // Ideally use runBatch but simple gets are fine
+                 val userProfile = userRef.get().await().toObject(com.example.synoptrack.profile.domain.model.UserProfile::class.java)
+                 val targetProfile = targetRef.get().await().toObject(com.example.synoptrack.profile.domain.model.UserProfile::class.java)
+                 
+                 val participantData = mapOf(
+                     currentUserId to com.example.synoptrack.social.data.model.ConversationParticipantData(userProfile?.displayName ?: "User", userProfile?.avatarUrl ?: ""),
+                     targetUserId to com.example.synoptrack.social.data.model.ConversationParticipantData(targetProfile?.displayName ?: "User", targetProfile?.avatarUrl ?: "")
+                 )
+                 
+                 val conversation = com.example.synoptrack.social.data.model.ConversationEntity(
+                     id = chatId,
+                     participants = listOf(currentUserId, targetUserId),
+                     participantData = participantData,
+                     lastMessageTimestamp = null // Empty start
+                 )
+                 docRef.set(conversation).await()
+             }
+             
+             Result.success(chatId)
+         } catch (e: Exception) {
+             Result.failure(e)
+         }
+    }
+    
+    override suspend fun getConversationId(targetUserId: String): String {
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        // Deterministic ID: sort uids
+        val uids = listOf(currentUserId, targetUserId).sorted()
+        return "${uids[0]}_${uids[1]}"
+    }
+
+    override fun getConversation(conversationId: String): Flow<com.example.synoptrack.social.data.model.ConversationEntity?> {
+        return callbackFlow {
+            val docRef = firestore.collection("conversations").document(conversationId)
+            val registration = docRef.addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.exists()) {
+                    trySend(snapshot.toObject(com.example.synoptrack.social.data.model.ConversationEntity::class.java))
+                } else {
+                    trySend(null)
+                }
+            }
+            awaitClose { registration.remove() }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun markAsRead(conversationId: String, userId: String): Result<Unit> {
+        return try {
+            val docRef = firestore.collection("conversations").document(conversationId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                if (snapshot.exists()) {
+                    val currentUnread = snapshot.get("unreadCounts") as? Map<String, Long> ?: emptyMap()
+                    val seenBy = snapshot.get("seenBy") as? List<String> ?: emptyList()
+                    
+                    // Only update if needed
+                    val needUpdateUnread = (currentUnread[userId] ?: 0L) > 0
+                    val needUpdateSeen = !seenBy.contains(userId)
+                    
+                    if (needUpdateUnread || needUpdateSeen) {
+                         val newUnread = currentUnread.toMutableMap()
+                         newUnread[userId] = 0
+                         
+                         val newSeen = seenBy.toMutableList()
+                         if (!newSeen.contains(userId)) {
+                             newSeen.add(userId)
+                         }
+                         
+                         transaction.update(docRef, mapOf(
+                             "unreadCounts" to newUnread,
+                             "seenBy" to newSeen
+                         ))
+                    }
+                }
+            }.await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

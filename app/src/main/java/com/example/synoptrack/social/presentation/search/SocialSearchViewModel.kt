@@ -25,7 +25,8 @@ enum class RelationshipStatus {
 class SocialSearchViewModel @Inject constructor(
     private val friendRepository: FriendRepository,
     private val authRepository: AuthRepository,
-    private val profileRepository: com.example.synoptrack.profile.domain.repository.ProfileRepository
+    private val profileRepository: com.example.synoptrack.profile.domain.repository.ProfileRepository,
+    private val chatRepository: com.example.synoptrack.social.domain.repository.ChatRepository
 ) : ViewModel() {
 
     private val _nameQuery = MutableStateFlow("")
@@ -197,6 +198,14 @@ class SocialSearchViewModel @Inject constructor(
                      revertMap[targetUserId] = RelationshipStatus.SENT_REQUEST
                      _relationshipStatus.value = revertMap
                 }
+        }
+    }
+
+    fun onMessageClick(targetUserId: String, onNavigate: (String) -> Unit) {
+        viewModelScope.launch {
+            chatRepository.startConversation(targetUserId).onSuccess { chatId ->
+                onNavigate(chatId)
+            }
         }
     }
 }

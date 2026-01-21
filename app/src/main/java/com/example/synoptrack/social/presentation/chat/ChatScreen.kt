@@ -1,6 +1,8 @@
 package com.example.synoptrack.social.presentation.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,10 +12,36 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Report
+import androidx.compose.material.icons.outlined.VideoCall
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,11 +65,13 @@ fun ChatScreen(
 ) {
     val messages by viewModel.messages.collectAsState()
     val messageText by viewModel.messageText.collectAsState()
+    val seenAvatars by viewModel.seenBy.collectAsState()
     val currentUser = viewModel.currentUser
 
     ChatScreenContent(
         messages = messages,
         messageText = messageText,
+        seenAvatars = seenAvatars,
         currentUserId = currentUser?.uid,
         onBack = { navController.popBackStack() },
         onMessageChange = { viewModel.onMessageChange(it) },
@@ -49,16 +79,28 @@ fun ChatScreen(
     )
 }
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreenContent(
     messages: List<Message>,
     messageText: String,
+    seenAvatars: List<String>,
     currentUserId: String?,
     onBack: () -> Unit,
     onMessageChange: (String) -> Unit,
     onSendMessage: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showThemePicker by remember { mutableStateOf(false) }
+    
+    // Theme Colors (Mock)
+    val themeColors = listOf(
+        Color(0xFF009688), Color(0xFF8BC34A), Color(0xFF2196F3), Color(0xFF673AB7),
+        Color(0xFFE91E63), Color(0xFFFF9800), Color(0xFF795548), Color(0xFF607D8B)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -66,10 +108,91 @@ fun ChatScreenContent(
     ) {
         // Top Bar
         TopAppBar(
-            title = { Text("Convoy Chat" )}, // Could pass group name via args too
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Avatar
+                     Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.Gray)
+                    ) {
+                         // Placeholder Avatar - Ideally pass user name/avatarUrl to ChatScreenContent
+                         // Ensure I pass this later or use generic for now
+                         Text("BS", modifier = Modifier.align(Alignment.Center), color = Color.White)
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text("Brooklyn Simmons", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+            },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(Icons.Filled.ArrowBackIosNew, contentDescription = "Back")
+                }
+            },
+            actions = {
+                // Theme Picker
+                IconButton(onClick = { showThemePicker = !showThemePicker }) {
+                    Icon(Icons.Outlined.Palette, contentDescription = "Theme")
+                }
+                
+                // Theme Dropdown/Grid (simplified as Dropdown for now)
+                DropdownMenu(
+                    expanded = showThemePicker,
+                    onDismissRequest = { showThemePicker = false },
+                    modifier = Modifier.width(220.dp).background(MaterialTheme.colorScheme.surface)
+                ) {
+                     Text("Choose Theme", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.labelLarge)
+                     // Grid layout inside column
+                     val rows = themeColors.chunked(4)
+                     Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                         rows.forEach { rowColors ->
+                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                 rowColors.forEach { color ->
+                                     Box(
+                                         modifier = Modifier
+                                             .size(40.dp)
+                                             .padding(4.dp)
+                                             .clip(RoundedCornerShape(8.dp))
+                                             .background(color)
+                                             .clickable { showThemePicker = false }
+                                     )
+                                 }
+                             }
+                         }
+                     }
+                     Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // More Menu
+                IconButton(onClick = { showMenu = !showMenu }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface) // Ensure contrast
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Audio Call") },
+                        onClick = { showMenu = false },
+                        leadingIcon = { Icon(Icons.Outlined.Call, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Video Call") },
+                        onClick = { showMenu = false },
+                        leadingIcon = { Icon(Icons.Outlined.VideoCall, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Report") },
+                        onClick = { showMenu = false },
+                        leadingIcon = { Icon(Icons.Outlined.Report, contentDescription = null) }
+                    )
+                     DropdownMenuItem(
+                        text = { Text("Block", color = Color.Red) },
+                        onClick = { showMenu = false },
+                        leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = Color.Red) }
+                    )
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -86,52 +209,129 @@ fun ChatScreenContent(
                 .padding(horizontal = 16.dp),
             reverseLayout = true // Start from bottom
         ) {
-            items(messages) { message ->
+            items(messages.size) { index ->
+                val message = messages[index]
                 val isMe = message.senderId == currentUserId
-                MessageBubble(message = message, isMe = isMe)
+                
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
+                ) {
+                    MessageBubble(message = message, isMe = isMe)
+                    
+                    // Seen Indicator (Only for newest message sent by Me)
+                    if (index == 0 && isMe && seenAvatars.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                             horizontalArrangement = Arrangement.spacedBy((-8).dp) // Overlap slightly implies grouping
+                        ) {
+                            seenAvatars.forEach { url ->
+                                androidx.compose.foundation.Image(
+                                     painter = coil.compose.rememberAsyncImagePainter(url.ifEmpty { "https://ui-avatars.com/api/?name=User" }),
+                                     contentDescription = null,
+                                     modifier = Modifier
+                                         .size(16.dp)
+                                         .clip(CircleShape)
+                                         .background(Color.Gray)
+                                         .border(1.dp, MaterialTheme.colorScheme.background, CircleShape),
+                                     contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
         // Input Area
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextField(
-                value = messageText,
-                onValueChange = onMessageChange,
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Attachments (Hidden by default, shown on Plus click? Or inline?)
+            // Image shows them in a small floating card ABOVE the input bar usually.
+            // Let's keep it simple: Expandable Row inside the bar.
+            var showAttachments by remember { mutableStateOf(false) }
+
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(24.dp)),
-                placeholder = { Text("Type a message...") },
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            val isSendEnabled = messageText.isNotBlank()
-            IconButton(
-                onClick = onSendMessage,
-                enabled = isSendEnabled,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSendEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.Send, 
-                    contentDescription = "Send",
-                    tint = if (isSendEnabled) Color.White else Color.Gray
+                // Plus / Actions Button
+                IconButton(
+                    onClick = { showAttachments = !showAttachments },
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        if (showAttachments) Icons.Default.Close else Icons.Default.Add,
+                        contentDescription = "Attachments",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                // Attachments Row (Animated)
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showAttachments,
+                    enter = androidx.compose.animation.expandHorizontally(),
+                    exit = androidx.compose.animation.shrinkHorizontally()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .height(40.dp)
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(20.dp)),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { }) { Icon(Icons.Outlined.CameraAlt, "Camera") }
+                        IconButton(onClick = { }) { Icon(Icons.Outlined.Image, "Gallery") }
+                        IconButton(onClick = { }) { Icon(Icons.Outlined.EmojiEmotions, "Emoji") }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Text Input
+                TextField(
+                    value = messageText,
+                    onValueChange = onMessageChange,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp), // Fixed height for alignment
+                    placeholder = { Text("Message...", color = Color.Gray) },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f),
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(28.dp),
+                    singleLine = true // Keep it single line like design usually
                 )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Send Button
+                val isSendEnabled = messageText.isNotBlank()
+                Button(
+                    onClick = onSendMessage,
+                    enabled = isSendEnabled,
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.height(48.dp), // Match input roughly
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text("SEND", modifier = Modifier.padding(horizontal = 16.dp), fontWeight = FontWeight.Bold)
+                    // Or Icon? Design implies TEXT "SEND" or Icon. 
+                    // Let's use clean "SEND" text or Icon. The provided image shows "SEND" text in one variant, or arrow.
+                    // I'll stick to Text "SEND" as it's clear.
+                }
             }
         }
     }
@@ -195,6 +395,7 @@ fun ChatScreenPreview() {
     ChatScreenContent(
         messages = mockMessages,
         messageText = "",
+        seenAvatars = emptyList(),
         currentUserId = "me",
         onBack = {},
         onMessageChange = {},

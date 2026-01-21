@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.PersonAdd
@@ -43,6 +43,7 @@ fun SocialSearchScreen(
     onShowQr: () -> Unit,
     onScanQr: () -> Unit,
     onProfileClick: (String) -> Unit,
+    onNavigateToChat: (String) -> Unit, // New callback
     viewModel: SocialSearchViewModel = hiltViewModel()
 ) {
     val nameQuery by viewModel.nameQuery.collectAsState()
@@ -78,6 +79,9 @@ fun SocialSearchScreen(
             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Friend Code", code)
             clipboard.setPrimaryClip(clip)
+        },
+        onMessageClick = { uid -> 
+            viewModel.onMessageClick(uid, onNavigateToChat)
         }
     )
 }
@@ -104,7 +108,8 @@ fun SocialSearchScreenContent(
     onAddFriend: (String) -> Unit,
     onAcceptRequest: (String) -> Unit,
     onCancelRequest: (String) -> Unit,
-    onCopyInviteCode: (String) -> Unit
+    onCopyInviteCode: (String) -> Unit,
+    onMessageClick: (String) -> Unit
 ) {
     // State for Dialog
     var showUserDialog by remember { mutableStateOf<UserProfile?>(null) }
@@ -122,7 +127,7 @@ fun SocialSearchScreenContent(
                 title = { Text("Add a Friend") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -274,6 +279,10 @@ fun SocialSearchScreenContent(
                  onViewProfile = {
                      onProfileClick(showUserDialog!!.uid)
                      showUserDialog = null
+                 },
+                 onMessageClick = {
+                     onMessageClick(showUserDialog!!.uid)
+                     showUserDialog = null
                  }
              )
          }
@@ -288,7 +297,8 @@ fun UserProfileDialog(
     onAddFriend: () -> Unit,
     onAcceptRequest: () -> Unit,
     onCancelRequest: () -> Unit,
-    onViewProfile: () -> Unit
+    onViewProfile: () -> Unit,
+    onMessageClick: () -> Unit
 ) {
     androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
@@ -298,9 +308,7 @@ fun UserProfileDialog(
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {
-                    // Prevent dismissal when clicking outside content if handled by Dialog, 
-                    // but usually Dialog handles outside clicks. 
-                    // This click listener might be redundant but safely ignores clicks on the transparent box area if strict.
+                    // Prevent dismissal
                 },
             contentAlignment = Alignment.TopCenter
         ) {
@@ -317,10 +325,10 @@ fun UserProfileDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 60.dp, bottom = 24.dp, start = 24.dp, end = 24.dp), // Top padding pushes content below avatar
+                        .padding(top = 60.dp, bottom = 24.dp, start = 24.dp, end = 24.dp), 
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Name and Handle
+                    // ... (Existing content)
                     Text(
                         text = user.displayName.ifEmpty { user.username },
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -346,10 +354,9 @@ fun UserProfileDialog(
                         )
                     }
 
-                    // Divider or Spacer
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Stats (Hardcoded for now as per image inspiration matching)
+                    // Stats
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -371,7 +378,7 @@ fun UserProfileDialog(
                          // Message Button (Secondary)
                          SynopTrackButton(
                              text = "Message",
-                             onClick = { /* TODO: Navigate to Chat */ },
+                             onClick = onMessageClick,
                              variant = ButtonVariant.OUTLINED,
                              modifier = Modifier.weight(1f),
                              fullWidth = false,
@@ -380,7 +387,7 @@ fun UserProfileDialog(
                         
                         // Action Button (Primary)
                         val (actionText, action) = when (relationshipStatus) {
-                            RelationshipStatus.FRIEND -> "Friends" to { } // Maybe unfriend text if clicked? or just static? Image had "Follow"
+                            RelationshipStatus.FRIEND -> "Friends" to { }
                             RelationshipStatus.SENT_REQUEST -> "Cancel" to onCancelRequest
                             RelationshipStatus.RECEIVED_REQUEST -> "Accept" to onAcceptRequest
                             RelationshipStatus.NONE -> "Add Friend" to onAddFriend
@@ -393,16 +400,15 @@ fun UserProfileDialog(
                                 onClick = action,
                                 modifier = Modifier.weight(1f),
                                 fullWidth = false,
-                                enabled = relationshipStatus != RelationshipStatus.FRIEND, // Disable if already friends, or make it "Unfriend" flow
+                                enabled = relationshipStatus != RelationshipStatus.FRIEND, 
                                 size = com.example.synoptrack.core.presentation.components.ButtonSize.MEDIUM
                             )
                         }
                     }
                 }
             }
-
-            // 1. Avatar (Overlapping)
-            Box(
+            // ... (Avatar and Close button remain same)
+             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     // No padding top, sits at 0 of Box, overlapping Card which starts at 50
@@ -419,14 +425,11 @@ fun UserProfileDialog(
                 )
             }
             
-            // 3. Close Button (Floating Top Right)
-            // Visually "outside" the card. Card starts at top=50dp. Box matches Card width approx.
-            // We want it at TopEnd of the BOX.
             IconButton(
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = 12.dp, y = 40.dp) // Adjusted to sit on the corner edge
+                    .offset(x = 12.dp, y = 40.dp) 
                     .shadow(4.dp, CircleShape)
                     .background(MaterialTheme.colorScheme.surface, CircleShape)
             ) {
@@ -537,7 +540,8 @@ fun UserProfileDialogPreview_NotFriends() {
         onAddFriend = { },
         onAcceptRequest = { },
         onCancelRequest = { },
-        onViewProfile = { }
+        onViewProfile = { },
+        onMessageClick = { }
     )
 }
 
@@ -559,7 +563,8 @@ fun UserProfileDialogPreview_SentRequest() {
         onAddFriend = { },
         onAcceptRequest = { },
         onCancelRequest = { },
-        onViewProfile = { }
+        onViewProfile = { },
+        onMessageClick = { }
     )
 }
 
@@ -581,7 +586,8 @@ fun UserProfileDialogPreview_ReceivedRequest() {
         onAddFriend = { },
         onAcceptRequest = { },
         onCancelRequest = { },
-        onViewProfile = { }
+        onViewProfile = { },
+        onMessageClick = { }
     )
 }
 
@@ -603,7 +609,8 @@ fun UserProfileDialogPreview_Friends() {
         onAddFriend = { },
         onAcceptRequest = { },
         onCancelRequest = { },
-        onViewProfile = { }
+        onViewProfile = { },
+        onMessageClick = { }
     )
 }
 
@@ -625,6 +632,7 @@ fun UserProfileDialogPreview_Private() {
         onAddFriend = { },
         onAcceptRequest = { },
         onCancelRequest = { },
-        onViewProfile = { }
+        onViewProfile = { },
+        onMessageClick = { }
     )
 }

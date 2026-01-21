@@ -1,17 +1,21 @@
 package com.example.synoptrack.social.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.GroupAdd
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,19 +23,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.synoptrack.core.theme.LiveTeal
+import coil.compose.AsyncImage
 import com.example.synoptrack.mapos.presentation.MapOSViewModel
+import com.example.synoptrack.social.domain.model.Group
 import com.example.synoptrack.social.presentation.components.AddFriendDialog
 import com.example.synoptrack.social.presentation.components.CreateGroupDialog
 import com.example.synoptrack.social.presentation.components.JoinGroupDialog
-import com.example.synoptrack.social.domain.model.Group
-import com.example.synoptrack.social.domain.model.FriendshipStatus
-import com.example.synoptrack.profile.domain.model.UserProfile
-
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SocialScreen(
@@ -41,8 +45,9 @@ fun SocialScreen(
 ) {
     val activeGroup by mapViewModel.activeGroup.collectAsState()
     val isConvoyActive by mapViewModel.isConvoyActive.collectAsState()
-    val friends by socialViewModel.friends.collectAsState()
-    val groups by socialViewModel.groups.collectAsState()
+    val chatItems by socialViewModel.chatItems.collectAsState()
+    val searchQuery by socialViewModel.searchQuery.collectAsState()
+    val selectedFilter by socialViewModel.selectedFilter.collectAsState()
     val toastMessage by socialViewModel.toastMessage.collectAsState()
 
     // Toast Effect
@@ -55,9 +60,21 @@ fun SocialScreen(
     SocialScreenContent(
         activeGroup = activeGroup,
         isConvoyActive = isConvoyActive,
-        friends = friends,
-        groups = groups,
-        onChatClick = onChatClick,
+        chatItems = chatItems,
+        searchQuery = searchQuery,
+        selectedFilter = selectedFilter,
+        onSearchQueryChange = { socialViewModel.onSearchQueryChange(it) },
+        onFilterSelected = { socialViewModel.onFilterSelected(it) },
+        onChatClick = { target ->
+             if (target.startsWith("NEW:")) {
+                 val userId = target.removePrefix("NEW:")
+                 socialViewModel.startNewChat(userId, onChatClick)
+             } else {
+                 val chatId = target.removePrefix("CHAT:")
+                 // Verify if it's a generic string or ID. If just string, assume ID.
+                 onChatClick(chatId)
+             }
+        },
         onStopConvoy = { mapViewModel.stopConvoy() },
         onCreateGroup = { name -> socialViewModel.createGroup(name) },
         onJoinGroup = { code -> socialViewModel.joinGroup(code) },
@@ -69,8 +86,11 @@ fun SocialScreen(
 fun SocialScreenContent(
     activeGroup: Group?,
     isConvoyActive: Boolean,
-    friends: List<UserProfile>,
-    groups: List<Group>,
+    chatItems: List<com.example.synoptrack.social.presentation.ChatItemState>,
+    searchQuery: String,
+    selectedFilter: com.example.synoptrack.social.presentation.ChatFilter,
+    onSearchQueryChange: (String) -> Unit,
+    onFilterSelected: (com.example.synoptrack.social.presentation.ChatFilter) -> Unit,
     onChatClick: (String) -> Unit,
     onStopConvoy: () -> Unit,
     onCreateGroup: (String) -> Unit,
@@ -86,7 +106,7 @@ fun SocialScreenContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp)
-            .padding(top = 48.dp) // Status bar spacing
+            .padding(top = 48.dp) 
     ) {
         // Header
         Row(
@@ -95,20 +115,70 @@ fun SocialScreenContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Social", 
+                "Messages", 
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
             
-            // Header Actions
+            // Actions
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = { showAddFriendDialog = true }) {
-                    Icon(Icons.Default.PersonAdd, contentDescription = "Add Friend", tint = MaterialTheme.colorScheme.primary)
+                IconButton(onClick = { /* Camera? */ }) {
+                    Icon(Icons.Outlined.CameraAlt, contentDescription = "Camera", tint = MaterialTheme.colorScheme.onSurface)
                 }
-                IconButton(onClick = { showJoinDialog = true }) {
-                    Icon(Icons.Default.GroupAdd, contentDescription = "Join Group", tint = MaterialTheme.colorScheme.primary)
+                IconButton(onClick = { showCreateDialog = true }) {
+                    Icon(Icons.Outlined.Edit, contentDescription = "New Message", tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
+        }
+
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            placeholder = { Text("Search") },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.Gray) },
+            shape = RoundedCornerShape(24.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            singleLine = true
+        )
+
+        // Filter Chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = selectedFilter == com.example.synoptrack.social.presentation.ChatFilter.ALL,
+                onClick = { onFilterSelected(com.example.synoptrack.social.presentation.ChatFilter.ALL) },
+                label = "All"
+            )
+            FilterChip(
+                selected = selectedFilter == com.example.synoptrack.social.presentation.ChatFilter.CONTACTS,
+                onClick = { onFilterSelected(com.example.synoptrack.social.presentation.ChatFilter.CONTACTS) },
+                label = "Contacts"
+            )
+            FilterChip(
+                selected = selectedFilter == com.example.synoptrack.social.presentation.ChatFilter.UNKNOWN,
+                onClick = { onFilterSelected(com.example.synoptrack.social.presentation.ChatFilter.UNKNOWN) },
+                label = "Unknown"
+            )
+             FilterChip(
+                selected = selectedFilter == com.example.synoptrack.social.presentation.ChatFilter.NEW,
+                onClick = { onFilterSelected(com.example.synoptrack.social.presentation.ChatFilter.NEW) },
+                label = "New"
+            )
         }
 
         // Active Convoy Card (If Active)
@@ -144,149 +214,156 @@ fun SocialScreenContent(
             }
         }
 
-        // Section: Chats (Friends & Groups Mixed)
-        Text(
-            "Chats",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        
+        // Chat List
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            // GROUPS
-            items(groups) { group ->
-                SocialListItem(
-                    name = group.name,
-                    subtitle = "${group.memberIds.size} members",
-                    initial = group.name.take(1).uppercase(),
-                    isOnline = (activeGroup?.id == group.id && isConvoyActive),
-                    onClick = { onChatClick(group.id) }
-                )
-            }
-            
-            // FRIENDS
-            items(friends) { friend ->
-                SocialListItem(
-                    name = friend.displayName.ifEmpty { "Unknown" },
-                    subtitle = if (friend.isCharging) "Charging..." else "Offline", // Placeholder status
-                    initial = friend.displayName.take(1).uppercase(),
-                    imageUrl = friend.avatarUrl,
-                    isOnline = false, // Todo: Real Presence
-                    onClick = { onChatClick(friend.uid) } // Using UID as Chat ID for now
-                )
-            }
-            
-            if (groups.isEmpty() && friends.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                             androidx.compose.foundation.Image(
-                                painter = androidx.compose.ui.res.painterResource(id = com.example.synoptrack.R.drawable.messages),
-                                contentDescription = "No Messages",
-                                modifier = Modifier.size(200.dp),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                             )
-                             Spacer(modifier = Modifier.height(16.dp))
-                             Text("No messages yet.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                             Text("Add friends or join groups to start chatting.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                             Spacer(modifier = Modifier.height(16.dp))
-                             Button(onClick = { showCreateDialog = true }) {
-                                 Text("Create New Group")
-                             }
-                         }
+            items(chatItems) { item ->
+                MessageListItem(
+                    item = item,
+                    onClick = { 
+                        if (item.id.isNotEmpty()) {
+                            onChatClick("CHAT:${item.id}")
+                        } else {
+                            onChatClick("NEW:${item.targetUserId}")
+                        }
                     }
-                }
+                )
             }
         }
     }
 
+    // Dialogs ... (Keep existing)
     if (showCreateDialog) {
-        CreateGroupDialog(
-            onDismiss = { showCreateDialog = false },
-            onCreate = { name ->
-                onCreateGroup(name)
-                showCreateDialog = false
-            }
-        )
+         CreateGroupDialog(onDismiss={showCreateDialog=false}, onCreate={onCreateGroup(it);showCreateDialog=false})
     }
-
     if (showJoinDialog) {
-        JoinGroupDialog(
-            onDismiss = { showJoinDialog = false },
-            onJoin = { code ->
-                onJoinGroup(code)
-                showJoinDialog = false
-            }
-        )
+         JoinGroupDialog(onDismiss={showJoinDialog=false}, onJoin={onJoinGroup(it);showJoinDialog=false})
     }
-    
     if (showAddFriendDialog) {
-        AddFriendDialog(
-            onDismiss = { showAddFriendDialog = false },
-            onAdd = { code ->
-                onAddFriend(code)
-                showAddFriendDialog = false
-            }
+         AddFriendDialog(onDismiss={showAddFriendDialog=false}, onAdd={onAddFriend(it);showAddFriendDialog=false})
+    }
+}
+
+@Composable
+fun FilterChip(selected: Boolean, onClick: () -> Unit, label: String) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surface,
+        contentColor = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.clickable(onClick = onClick),
+        border = if (selected) null else BorderStroke(1.dp, Color.LightGray)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
         )
     }
 }
 
 @Composable
-fun SocialListItem(
-    name: String,
-    subtitle: String,
-    initial: String,
-    imageUrl: String = "",
-    isOnline: Boolean = false,
+fun MessageListItem(
+    item: com.example.synoptrack.social.presentation.ChatItemState,
     onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            modifier = Modifier.size(56.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceVariant
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                if (imageUrl.isNotEmpty()) {
-                    // Start of Image Loading (Placeholder)
-                     Text(initial, style = MaterialTheme.typography.titleLarge)
-                } else {
-                    Text(initial, style = MaterialTheme.typography.titleLarge)
-                }
+        // Avatar
+        Box {
+             AsyncImage(
+                model = item.avatarUrl.ifEmpty { "https://ui-avatars.com/api/?name=${item.name}" },
+                contentDescription = null,
+                modifier = Modifier.size(56.dp).clip(CircleShape).background(Color.Gray),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            // Online Status Dot
+            if (item.isOnline) {
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(CircleShape)
+                        .background(Color.Green)
+                        .align(Alignment.BottomEnd)
+                        .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                )
             }
         }
+        
         Spacer(modifier = Modifier.width(16.dp))
+        
+        // Content
         Column(modifier = Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-        }
-        if (isOnline) {
-             Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(LiveTeal)
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.lastMessage,
+                style = if (item.unreadCount > 0) MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.bodyMedium,
+                color = if (item.unreadCount > 0) MaterialTheme.colorScheme.onSurface else Color.Gray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        
+        // Metadata
+        Column(horizontalAlignment = Alignment.End) {
+            val dateText = remember(item.timestamp) {
+                // Simple formatting logic
+                if (item.timestamp == null) "Now" else {
+                    val now = Date()
+                    val diff = now.time - item.timestamp.time
+                    when {
+                        diff < 60 * 60 * 1000L -> "${diff / (60 * 1000)}m ago"
+                        diff < 24 * 60 * 60 * 1000L -> SimpleDateFormat("HH:mm", Locale.getDefault()).format(item.timestamp)
+                        else -> "Yesterday" // Simplified
+                    }
+                }
+            }
+            Text(
+                text = dateText,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (item.unreadCount > 0) MaterialTheme.colorScheme.primary else Color.Gray
+            )
+            
+            if (item.unreadCount > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onSurface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = item.unreadCount.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.surface
+                    )
+                }
+            }
         }
     }
 }
 
 @Preview
 @Composable
+
 fun SocialScreenPreview() {
     SocialScreenContent(
         activeGroup = null,
         isConvoyActive = false,
-        friends = emptyList(),
-        groups = emptyList(),
+        chatItems = emptyList(),
+        searchQuery = "",
+        selectedFilter = com.example.synoptrack.social.presentation.ChatFilter.ALL,
+        onSearchQueryChange = {},
+        onFilterSelected = {},
         onChatClick = {},
         onStopConvoy = {},
         onCreateGroup = {},

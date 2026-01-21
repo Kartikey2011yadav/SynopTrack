@@ -52,4 +52,5 @@ sealed class Screen(val route: String, val title: String? = null, val selectedIc
         fun createRoute(userId: String) = "profile/$userId"
     }
     object FriendRequests : Screen("friend_requests")
+    object ChatList : Screen("chat_list")
 }

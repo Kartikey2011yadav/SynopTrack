@@ -212,7 +212,8 @@ fun AppNavHost() {
                     onBack = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
                     onShowQr = { navController.navigate(Screen.ShowQr.route) },
                     onScanQr = { navController.navigate(Screen.QrScan.route) },
-                    onProfileClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) }
+                    onProfileClick = { userId -> navController.navigate(Screen.PublicProfile.createRoute(userId)) },
+                    onNavigateToChat = { chatId -> navController.navigate(Screen.Chat.createRoute(chatId)) }
                 )
             }
             
