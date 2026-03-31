@@ -1,1 +1,0 @@
-$env:JAVA_HOME = "F:\Android Studios\jbr"
