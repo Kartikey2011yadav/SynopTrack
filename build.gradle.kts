@@ -9,4 +9,7 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.ktor) apply false
+    alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.kotlinKsp) apply false
+    alias(libs.plugins.googleGmsGoogleServices) apply false
 }
